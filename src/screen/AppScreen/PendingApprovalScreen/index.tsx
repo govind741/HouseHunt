@@ -44,20 +44,41 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
         text: 'Logout',
         style: 'destructive',
         onPress: async () => {
-          dispatch(clearAuthState());
-          await AsyncStorage.clear();
-          // Navigate back to AuthStack instead of CitySelectionScreen
-          navigation.reset({
-            index: 0,
-            routes: [
-              {
-                name: 'AuthStack',
-                params: {
+          try {
+            // Clear specific auth-related items from AsyncStorage
+            await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
+            
+            // Clear Redux auth state
+            dispatch(clearAuthState());
+            
+            // Navigate back to AuthStack instead of CitySelectionScreen
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'AuthStack',
+                  params: {
                   screen: 'LoginScreen',
                 },
               },
             ],
           });
+          } catch (error) {
+            console.error('Error during logout:', error);
+            // Fallback: still clear Redux state and navigate
+            dispatch(clearAuthState());
+            navigation.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'AuthStack',
+                  params: {
+                  screen: 'LoginScreen',
+                },
+              },
+            ],
+          });
+          }
         },
       },
     ]);

@@ -68,9 +68,21 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         text: 'Logout',
         style: 'destructive',
         onPress: async () => {
-          dispatch(clearAuthState());
-          await AsyncStorage.clear();
-          navigation.navigate('HomeScreen');
+          try {
+            // Clear specific auth-related items from AsyncStorage
+            await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
+            
+            // Clear Redux auth state
+            dispatch(clearAuthState());
+            
+            // Navigate to home screen
+            navigation.navigate('HomeScreen');
+          } catch (error) {
+            console.error('Error during logout:', error);
+            // Fallback: still clear Redux state and navigate
+            dispatch(clearAuthState());
+            navigation.navigate('HomeScreen');
+          }
         },
       },
     ]);

@@ -26,30 +26,51 @@ const ScreenHeader = ({
 
   const getInitial = () => {
     const name = userData?.name;
-    if (typeof name === 'string' && name.length > 0) {
-      return name[0].toUpperCase();
+    if (typeof name === 'string' && name.trim().length > 0) {
+      return name.trim()[0].toUpperCase();
     }
     return 'U'; // fallback if name is empty or undefined
   };
 
   const getProfileImage = () => {
+    // Early return if no userData
+    if (!userData) {
+      return (
+        <View style={styles.profileView}>
+          <MagicText style={styles.userNameText}>U</MagicText>
+        </View>
+      );
+    }
+
     if (userData?.role === 'agent') {
+      const agencyInitial = userData?.agency_name && typeof userData.agency_name === 'string' 
+        ? userData.agency_name.trim()[0]?.toUpperCase() || 'A'
+        : 'A';
+      
       return (
         <View style={styles.profileView}>
           <MagicText style={styles.userNameText}>
-            {userData?.agency_name?.[0]?.toUpperCase() || 'A'}
+            {agencyInitial}
           </MagicText>
         </View>
       );
     }
 
-    const data = userData?.profile ? userData.profile.split('/') : [];
+    // Handle profile image for users
+    const profilePath = userData?.profile;
+    const data = profilePath ? profilePath.split('/') : [];
 
-    if (data?.[2] && data?.[2] !== 'undefined' && userData?.profile) {
-      const url = `${BASE_URL}public/${userData.profile}`;
+    if (data?.[2] && data?.[2] !== 'undefined' && profilePath) {
+      const url = `${BASE_URL}public/${profilePath}`;
       return (
         <View style={styles.profileViewStyle}>
-          <Image source={{uri: url}} style={styles.profileImgStyle} />
+          <Image 
+            source={{uri: url}} 
+            style={styles.profileImgStyle}
+            onError={() => {
+              console.log('Profile image failed to load, falling back to initial');
+            }}
+          />
         </View>
       );
     }
@@ -74,7 +95,10 @@ const ScreenHeader = ({
       </TouchableOpacity>
 
       {token ? (
-        <TouchableOpacity onPress={onPressProfile}>
+        <TouchableOpacity 
+          key={`profile-${userData?.id || 'no-user'}-${userData?.name || 'no-name'}`}
+          onPress={onPressProfile}
+        >
           {getProfileImage()}
         </TouchableOpacity>
       ) : (

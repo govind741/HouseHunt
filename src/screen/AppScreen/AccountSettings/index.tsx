@@ -24,7 +24,8 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
     deleteUser(payload)
       .then(async res => {
         console.log('res in delete user', res);
-        await AsyncStorage.clear();
+        // Clear specific auth-related items from AsyncStorage
+        await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
         dispatch(clearAuthState());
         Toast.show({
           type: 'success',

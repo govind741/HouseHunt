@@ -31,6 +31,7 @@ export const authSlice = createSlice({
       return {
         ...state,
         token: null,
+        userData: null,
         isOnBoardingComplete: false,
       };
     },
