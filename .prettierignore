@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+android/
+ios/
+dist/
+build/
+
+# Generated files
+*.bundle.js
+*.bundle.map
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# React Native
+metro.config.js
+
+# Package manager
+package-lock.json
+yarn.lock
+
+# Git
+.git/
