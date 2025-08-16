@@ -162,7 +162,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         
         // Additional debugging
         if (userData) {
-          console.log('📊 User Data Analysis:', {
+          console.log('User Data Analysis:', {
             id: userData.id,
             name: userData.name,
             phone: userData.phone,
@@ -172,7 +172,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         }
         
         if (!userData && !userDetails) {
-          console.log('🚨 CRITICAL: No user data available anywhere!');
+          console.log(' CRITICAL: No user data available anywhere!');
         }
       };
       debugData();

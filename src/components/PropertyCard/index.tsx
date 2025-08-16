@@ -44,18 +44,43 @@ const PropertyCard = ({
       .catch(err => err && console.log(err));
   };
 
+  const toAbsolute = (img?: string) => {
+    if (!img) return '';
+    if (/^https?:\/\//i.test(img)) return img; // already absolute
+    const base = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+    const cleanImg = img.startsWith('/') ? img : `/${img}`;
+    const finalUrl = `${base}/public${cleanImg}`;
+    console.log('toAbsolute:', {
+      input: img,
+      base: base,
+      cleanImg: cleanImg,
+      finalUrl: finalUrl
+    });
+    return finalUrl;
+  };
+
   const getSliderImages = () => {
+    console.log('=== getSliderImages DEBUG ===');
+    console.log('item.image_urls:', item?.image_urls);
+    console.log('item.image_url:', item?.image_url);
+    console.log('image_urls length:', item?.image_urls?.length);
+    
     if (item?.image_urls?.length > 0) {
-      return item.image_urls.map((image, index) => ({
+      console.log('Using image_urls array');
+      return item.image_urls.map((img: string, index: number) => ({
         id: index.toString(),
-        image: `${BASE_URL}public/${image}`,
+        image: toAbsolute(img),
       }));
     }
     if (item?.image_url) {
-      return [{id: '1', image: item.image_url}];
+      console.log('Using single image_url');
+      return [{ id: '1', image: toAbsolute(item.image_url) }];
     }
+    
+    console.log('No images found - returning empty array');
     return [];
   };
+
 
   return (
     <Pressable style={[styles.parent, containerStyle]} onPress={onPress}>
@@ -81,7 +106,8 @@ const PropertyCard = ({
               {item.agency_name ?? item.name}
             </MagicText>
           </View>
-          <RatingCard rating={item?.rating ?? 0} />
+        <RatingCard rating={String(item?.rating ?? 0)} />
+
         </View>
         
         {/* Address Row */}

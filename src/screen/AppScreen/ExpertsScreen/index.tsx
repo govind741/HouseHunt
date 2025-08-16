@@ -12,12 +12,30 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const data = {
     youWantTo: [{label: 'Sell'}, {label: 'Buy'}, {label: 'Rent'}],
     propertyType: [{label: 'Residential'}, {label: 'Commercial'}],
-    propertySize: [{label: '2 BHK'}, {label: '3 BHK'}, {label: '4 BHK'}, {label: 'Others'}],
+    residentialSizes: [{label: '2 BHK'}, {label: '3 BHK'}, {label: '4 BHK'}, {label: 'Others'}],
+    commercialSizes: [{label: 'Plot'}, {label: 'Office'}, {label: 'Other'}],
   };
   
   const [selectedYouWantTo, setSelectedYouWantTo] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
   const [selectedPropertySize, setSelectedPropertySize] = useState<string>('');
+
+  // Get property size options based on selected property type
+  const getPropertySizeOptions = () => {
+    if (selectedPropertyType === 'Commercial') {
+      return data.commercialSizes;
+    } else if (selectedPropertyType === 'Residential') {
+      return data.residentialSizes;
+    }
+    return []; // No options if no property type is selected
+  };
+
+  // Handle property type selection and reset property size
+  const handlePropertyTypeSelection = (propertyType: string) => {
+    setSelectedPropertyType(propertyType);
+    // Reset property size when property type changes
+    setSelectedPropertySize('');
+  };
 
   const renderFilterButton = (item: {label: string}, isSelected: boolean, onPress: () => void) => {
     return (
@@ -86,7 +104,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
                   renderFilterButton(
                     item, 
                     selectedPropertyType === item.label, 
-                    () => setSelectedPropertyType(item.label)
+                    () => handlePropertyTypeSelection(item.label)
                   )
                 )}
               </View>
@@ -94,15 +112,23 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
 
             <View style={{marginTop: 20}}>
               <MagicText style={styles.subheader}>Property Size</MagicText>
-              <View style={[styles.row, styles.wrapRow]}>
-                {data?.propertySize?.map(item => 
-                  renderFilterButton(
-                    item, 
-                    selectedPropertySize === item.label, 
-                    () => setSelectedPropertySize(item.label)
-                  )
-                )}
-              </View>
+              {selectedPropertyType ? (
+                <View style={[styles.row, styles.wrapRow]}>
+                  {getPropertySizeOptions().map(item => 
+                    renderFilterButton(
+                      item, 
+                      selectedPropertySize === item.label, 
+                      () => setSelectedPropertySize(item.label)
+                    )
+                  )}
+                </View>
+              ) : (
+                <View style={styles.disabledContainer}>
+                  <MagicText style={styles.disabledText}>
+                    Please select a property type first
+                  </MagicText>
+                </View>
+              )}
             </View>
             
             <View style={{marginTop: 20}}>
@@ -222,5 +248,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16, 
     marginHorizontal: 20,
     borderRadius: 12,
+  },
+  disabledContainer: {
+    backgroundColor: COLORS.WHITE_SMOKE,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.GRAY,
+  },
+  disabledText: {
+    color: COLORS.TEXT_GRAY,
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });

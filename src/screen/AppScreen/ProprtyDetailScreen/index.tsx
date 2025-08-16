@@ -24,6 +24,7 @@ import {
 import MagicText from '../../../components/MagicText';
 import RatingCard from '../../../components/RatingCard';
 import {IMAGE, PROPERTY_IMAGES} from '../../../assets/images';
+import {BASE_URL} from '../../../constant/urls';
 import StarRating from 'react-native-star-rating-widget';
 import HR from '../../../components/HR';
 import RatingsReviewsSection from '../../../components/RatingsReviewsSection';
@@ -41,7 +42,7 @@ import Share from 'react-native-share';
 import Toast from 'react-native-toast-message';
 import CustomSlider from '../../../components/CustomSlider';
 import {useAppSelector} from '../../../store';
-import {BASE_URL} from '../../../constant/urls';
+
 import {AgentUserType} from '../../../types';
 import ScreenHeader from '../../../components/ScreenHeader';
 
@@ -73,27 +74,59 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
 
     getAgentDetailsById(agentId)
       .then(res => {
-        console.log('Agent details response:', res?.data);
-        setAgentDetails(res?.data);
+        console.log('=== AGENT DETAILS API RESPONSE DEBUG ===');
+        console.log('Full response:', JSON.stringify(res, null, 2));
+        console.log('res.agentdetail:', res?.agentdetail);
+        console.log('res.agentdetail.data:', res?.agentdetail?.data);
         
-        // Always use local property images for consistent display
-        console.log('Using local property images:', PROPERTY_IMAGES);
-        setPropertyImages(PROPERTY_IMAGES);
+        setAgentDetails(res?.agentdetail); // Store the agentdetail object
         
+        // Debug the agent data structure - CORRECT PATH
+        const agentData = res?.agentdetail?.data;
+        console.log('=== AGENT DATA STRUCTURE ===');
+        console.log('agentData:', agentData);
+        console.log('agentData keys:', agentData ? Object.keys(agentData) : 'No agentData');
+        console.log('Image fields check:');
+        console.log('- agentData.images:', agentData?.images);
+        console.log('- agentData.image_url:', agentData?.image_url);
+        console.log('Name fields check:');
+        console.log('- agentData.agency_name:', agentData?.agency_name);
+        console.log('- agentData.name:', agentData?.name);
+        
+        // Use actual agent images from API response
+        let agentImages = [];
+        
+        if (agentData?.images && Array.isArray(agentData.images) && agentData.images.length > 0) {
+          // Convert API image URLs to slider format - CORRECT FIELD
+          agentImages = agentData.images.map((imageUrl: string, index: number) => ({
+            id: `agent_${index}`,
+            image: imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}public${imageUrl}`,
+          }));
+          console.log('Using agent images from images array:', agentImages);
+        } else if (agentData?.image_url) {
+          // Single image case
+          const imageUrl = agentData.image_url.startsWith('http') ? agentData.image_url : `${BASE_URL}public/${agentData.image_url}`;
+          agentImages = [{
+            id: 'agent_single',
+            image: imageUrl,
+          }];
+          console.log('Using single agent image from API:', agentImages);
+        } else {
+          // Fallback to local property images if no agent images
+          console.log('No agent images found, using local property images:', PROPERTY_IMAGES);
+          agentImages = PROPERTY_IMAGES;
+        }
+        
+        console.log('Final agentImages to be set:', agentImages);
+        setPropertyImages(agentImages);
         setIsLoading(false);
       })
       .catch(error => {
         console.log('error in getAgentDetails', error);
-        // Even if API fails, show local images
+        // If API fails, use local images as fallback
         setPropertyImages(PROPERTY_IMAGES);
         setIsLoading(false);
       });
-  }, []);
-
-  // Initialize with local images immediately
-  useEffect(() => {
-    console.log('Initializing with local property images');
-    setPropertyImages(PROPERTY_IMAGES);
   }, []);
 
   useEffect(() => {
@@ -222,17 +255,17 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         {/* Property Images Slider */}
         <View style={styles.imageSliderContainer}>
           <FlatList
-            data={PROPERTY_IMAGES}
+            data={propertyImages}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id}
             renderItem={({item}) => {
-              console.log('Rendering local image:', item.id);
+              console.log('Rendering image:', item.id);
               return (
                 <View style={[styles.imageContainer, {width: screenWidth}]}>
                   <Image
-                    source={item.image}
+                    source={typeof item.image === 'string' ? {uri: item.image} : item.image}
                     style={styles.propertyImage}
                     onError={(error) => console.log('Image load error:', error.nativeEvent.error)}
                     onLoad={() => console.log('Local image loaded successfully:', item.id)}
@@ -246,7 +279,22 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         {/* Property/Agent Name - Right under the image */}
         <View style={styles.nameContainer}>
           <MagicText style={styles.propertyNameText}>
-            {name || agentDetails?.agency_name || agentDetails?.name || 'Property Details'}
+            {(() => {
+              console.log('=== NAME EXTRACTION DEBUG ===');
+              console.log('agentDetails:', agentDetails);
+              console.log('agentDetails.data:', agentDetails?.data);
+              console.log('agentDetails.data.agency_name:', agentDetails?.data?.agency_name);
+              console.log('agentDetails.data.name:', agentDetails?.data?.name);
+              console.log('name prop:', name);
+              
+              const finalName = agentDetails?.data?.agency_name || 
+                               agentDetails?.data?.name ||
+                               name || 
+                               'Property Details';
+              
+              console.log('Final name selected:', finalName);
+              return finalName;
+            })()}
           </MagicText>
         </View>
         
@@ -268,7 +316,16 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 style={styles.shareIconContainer}>
                 <ShareIcon />
               </TouchableOpacity> */}
-              <RatingCard rating={agentDetails?.rating} />
+              <RatingCard rating={(() => {
+                const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
+                console.log('Rating extraction debug:', {
+                  'agentDetails?.data?.rating': agentDetails?.data?.rating,
+                  'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
+                  'final rating': rating,
+                  'rating type': typeof rating
+                });
+                return String(rating);
+              })()} />
             </View>
           </View>
           {agentDetails?.office_address ? (
