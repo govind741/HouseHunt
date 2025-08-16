@@ -132,7 +132,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
   // Auto-scroll ads every 4 seconds
   useEffect(() => {
-    if (adsData.length === 0) return;
+    if (adsData.length <= 1) return;
 
     const interval = setInterval(() => {
       const nextIndex = (currentAdIndex + 1) % adsData.length;
@@ -140,7 +140,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
       if (adScrollViewRef.current) {
         adScrollViewRef.current.scrollTo({
-          x: nextIndex * (screenWidth - 30),
+          x: nextIndex * (screenWidth - 32),
           animated: true,
         });
       }
@@ -244,7 +244,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
   const handleAdScroll = (event: any) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
-    const index = Math.round(scrollPosition / (screenWidth - 30));
+    const index = Math.round(scrollPosition / (screenWidth - 32));
     setCurrentAdIndex(index);
   };
 
@@ -262,53 +262,66 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={handleAdScroll}
-          style={styles.adsScrollView}>
+          style={styles.adsScrollView}
+          decelerationRate="fast"
+          snapToInterval={screenWidth - 32}
+          snapToAlignment="start">
           {adsData.map((ad, index) => (
             <TouchableOpacity
-              key={ad.id}
+              key={`ad-${ad.id}-${index}`}
               style={styles.adCard}
-              onPress={() => handleAdPress(ad)}>
+              onPress={() => handleAdPress(ad)}
+              activeOpacity={0.9}>
               <Image
                 source={{uri: ad.image}}
                 style={styles.adImage}
                 defaultSource={IMAGE.HouseAppLogo}
+                resizeMode="cover"
               />
               <View style={styles.adContent}>
-                <MagicText style={styles.adTitle}>{ad.title}</MagicText>
-                <MagicText style={styles.adDescription}>
+                <MagicText style={styles.adTitle} numberOfLines={2}>
+                  {ad.title}
+                </MagicText>
+                <MagicText style={styles.adDescription} numberOfLines={3}>
                   {ad.description}
                 </MagicText>
-                <View style={styles.adButton}>
+                <TouchableOpacity 
+                  style={styles.adButton}
+                  onPress={() => handleAdPress(ad)}
+                  activeOpacity={0.8}>
                   <MagicText style={styles.adButtonText}>
                     {ad.buttonText}
                   </MagicText>
-                </View>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Dot indicators */}
-        <View style={styles.dotsContainer}>
-          {adsData.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.dot,
-                currentAdIndex === index
-                  ? styles.activeDot
-                  : styles.inactiveDot,
-              ]}
-              onPress={() => {
-                setCurrentAdIndex(index);
-                adScrollViewRef.current?.scrollTo({
-                  x: index * (screenWidth - 30),
-                  animated: true,
-                });
-              }}
-            />
-          ))}
-        </View>
+        {/* Dot indicators - Only show if more than 1 ad */}
+        {adsData.length > 1 && (
+          <View style={styles.dotsContainer}>
+            {adsData.map((_, index) => (
+              <TouchableOpacity
+                key={`dot-${index}`}
+                style={[
+                  styles.dot,
+                  currentAdIndex === index
+                    ? styles.activeDot
+                    : styles.inactiveDot,
+                ]}
+                onPress={() => {
+                  setCurrentAdIndex(index);
+                  adScrollViewRef.current?.scrollTo({
+                    x: index * (screenWidth - 32),
+                    animated: true,
+                  });
+                }}
+                activeOpacity={0.7}
+              />
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -325,43 +338,47 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       return (
         <View>
           {renderAdsCard()}
-          <PropertyCard
-            item={item}
-            onBookmarkPress={() => addNewBookmark(item?.agent_id)}
-            onPress={() => {
-              if (token) {
-                navigation.navigate('ProprtyDetailScreen', {
-                  agent_id: item.agent_id,
-                  name: item.agency_name ?? item.name,
-                });
-              } else {
-                setShowLoginModal(true);
-              }
-            }}
-            containerStyle={{marginBottom: 15}}
-            isBookmarked={bookmarkedAgents.includes(item?.agent_id)}
-          />
+          <View style={{paddingHorizontal: 16}}>
+            <PropertyCard
+              item={item}
+              onBookmarkPress={() => addNewBookmark(item?.agent_id)}
+              onPress={() => {
+                if (token) {
+                  navigation.navigate('ProprtyDetailScreen', {
+                    agent_id: item.agent_id,
+                    name: item.agency_name ?? item.name,
+                  });
+                } else {
+                  setShowLoginModal(true);
+                }
+              }}
+              containerStyle={{marginBottom: 16}}
+              isBookmarked={bookmarkedAgents.includes(item?.agent_id)}
+            />
+          </View>
         </View>
       );
     }
 
     return (
-      <PropertyCard
-        item={item}
-        onBookmarkPress={() => addNewBookmark(item?.agent_id)}
-        onPress={() => {
-          if (token) {
-            navigation.navigate('ProprtyDetailScreen', {
-              agent_id: item.agent_id,
-              name: item.agency_name ?? item.name,
-            });
-          } else {
-            setShowLoginModal(true);
-          }
-        }}
-        containerStyle={{marginBottom: 15}}
-        isBookmarked={bookmarkedAgents.includes(item?.agent_id)}
-      />
+      <View style={{paddingHorizontal: 16}}>
+        <PropertyCard
+          item={item}
+          onBookmarkPress={() => addNewBookmark(item?.agent_id)}
+          onPress={() => {
+            if (token) {
+              navigation.navigate('ProprtyDetailScreen', {
+                agent_id: item.agent_id,
+                name: item.agency_name ?? item.name,
+              });
+            } else {
+              setShowLoginModal(true);
+            }
+          }}
+          containerStyle={{marginBottom: 16}}
+          isBookmarked={bookmarkedAgents.includes(item?.agent_id)}
+        />
+      </View>
     );
   };
 
@@ -384,62 +401,136 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         }}
         onHomePress={() => navigation.navigate('CitySelectionScreen')}
       />
-      <ScrollView style={styles.scrollContainer} nestedScrollEnabled>
-        <View style={styles.parent}>
-          <SearchContainer
-            placeholder="Search for area, streetname, locality"
-            onChangeText={handleTextChange}
-            value={searchText}
+      <View style={styles.scrollContainer}>
+        {agentList?.length > 0 ? (
+          <FlatList
+            data={agentList}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) => `agent-${item.agent_id}-${index}`}
+            renderItem={renderPropertyItem}
+            ListHeaderComponent={() => (
+              <View style={styles.parent}>
+                <SearchContainer
+                  placeholder="Search for area, streetname, locality"
+                  onChangeText={handleTextChange}
+                  value={searchText}
+                />
+                <MagicText style={styles.locationCrumb}>
+                  {getBreadcrumText(location)}
+                </MagicText>
+
+                {searchList?.length > 0 ? (
+                  <View style={styles.searchView}>
+                    <ScrollView 
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={false}
+                      keyboardShouldPersistTaps="handled">
+                      {searchList?.map((item: any, index: number) => {
+                        const isLastItem = index === searchList.length - 1;
+                        return (
+                          <View 
+                            key={`search-${item.id}-${index}`} 
+                            style={[
+                              styles.searchItem,
+                              isLastItem && {borderBottomWidth: 0}
+                            ]}>
+                            <TouchableOpacity
+                              onPress={async () => {
+                                getAgentList(item?.id);
+                                setSearchList([]);
+                                setSearchText('');
+                                dispatch(setLocation(item));
+                                await AsyncStorage.setItem(
+                                  'location',
+                                  JSON.stringify(item),
+                                );
+                              }}
+                              style={styles.searchRow}
+                              activeOpacity={0.7}>
+                              <CurrentLocationIcon />
+                              <MagicText style={styles.searchText} numberOfLines={2}>
+                                {item?.locality_name}
+                              </MagicText>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                ) : null}
+              </View>
+            )}
+            contentContainerStyle={styles.flatlistView}
+            keyboardShouldPersistTaps="handled"
           />
-          <MagicText style={styles.locationCrumb}>
-            {getBreadcrumText(location)}
-          </MagicText>
-
-          {searchList?.length > 0 ? (
-            <View style={styles.searchView}>
-              <ScrollView nestedScrollEnabled={true}>
-                {searchList?.map((item: any) => {
-                  return (
-                    <View style={styles.searchItem}>
-                      <TouchableOpacity
-                        onPress={async () => {
-                          getAgentList(item?.id);
-                          setSearchList([]);
-                          setSearchText('');
-                          dispatch(setLocation(item));
-                          await AsyncStorage.setItem(
-                            'location',
-                            JSON.stringify(item),
-                          );
-                        }}
-                        style={styles.searchRow}>
-                        <CurrentLocationIcon />
-                        <MagicText style={styles.searchText}>
-                          {item?.locality_name}
-                        </MagicText>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          ) : null}
-
-          {agentList?.length > 0 ? (
-            <View style={styles.flatlistView}>
-              <FlatList
-                data={agentList}
-                nestedScrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={renderPropertyItem}
+        ) : (
+          <ScrollView 
+            style={styles.scrollContainer} 
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            <View style={styles.parent}>
+              <SearchContainer
+                placeholder="Search for area, streetname, locality"
+                onChangeText={handleTextChange}
+                value={searchText}
               />
+              <MagicText style={styles.locationCrumb}>
+                {getBreadcrumText(location)}
+              </MagicText>
+
+              {searchList?.length > 0 ? (
+                <View style={styles.searchView}>
+                  <ScrollView 
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled">
+                    {searchList?.map((item: any, index: number) => {
+                      const isLastItem = index === searchList.length - 1;
+                      return (
+                        <View 
+                          key={`search-${item.id}-${index}`} 
+                          style={[
+                            styles.searchItem,
+                            isLastItem && {borderBottomWidth: 0}
+                          ]}>
+                          <TouchableOpacity
+                            onPress={async () => {
+                              getAgentList(item?.id);
+                              setSearchList([]);
+                              setSearchText('');
+                              dispatch(setLocation(item));
+                              await AsyncStorage.setItem(
+                                'location',
+                                JSON.stringify(item),
+                              );
+                            }}
+                            style={styles.searchRow}
+                            activeOpacity={0.7}>
+                            <CurrentLocationIcon />
+                            <MagicText style={styles.searchText} numberOfLines={2}>
+                              {item?.locality_name}
+                            </MagicText>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
+              
+              {/* Show ads even when no agents available */}
+              {!searchText && adsData.length > 0 && (
+                <View style={{marginTop: 16}}>
+                  {renderAdsCard()}
+                </View>
+              )}
+              
+              <LoadingAndErrorComponent errorMessage="No list found" />
             </View>
-          ) : (
-            <LoadingAndErrorComponent errorMessage="No list found" />
-          )}
-        </View>
-      </ScrollView>
+          </ScrollView>
+        )}
+      </View>
       <LoginModal
         isVisible={showLoginModal}
         closeModal={() => {
@@ -459,45 +550,63 @@ const styles = StyleSheet.create({
   },
   parent: {
     flex: 1,
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   scrollContainer: {
     flex: 1,
+    backgroundColor: COLORS.WHITE,
   },
   flatlistView: {
-    marginBottom: 30,
-    marginTop: 12,
+    paddingBottom: 20,
+    paddingTop: 8,
     backgroundColor: COLORS.WHITE,
   },
   locationCrumb: {
-    marginTop: 8,
-    marginLeft: 12,
+    marginTop: 12,
+    marginBottom: 8,
+    marginLeft: 4,
+    fontSize: 14,
     color: COLORS.TEXT_GRAY,
+    fontWeight: '500',
   },
   searchView: {
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 16,
     borderRadius: 12,
-    backgroundColor: COLORS.WHITE_SMOKE,
-    maxHeight: 200,
+    backgroundColor: COLORS.WHITE,
+    maxHeight: 220,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: COLORS.WHITE_SMOKE,
   },
   searchItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderWidth: 0.8,
-    borderColor: COLORS.WHITE_SMOKE,
-    borderRadius: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.WHITE_SMOKE,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   searchText: {
-    fontSize: 16,
+    fontSize: 15,
     marginLeft: 12,
+    color: COLORS.BLACK,
+    fontWeight: '400',
   },
-  // Ads styles
+  // Ads styles - Smaller size
   adsContainer: {
-    marginBottom: 15,
+    marginBottom: 16,
+    marginHorizontal: 16,
     borderRadius: 12,
     backgroundColor: COLORS.WHITE,
     elevation: 3,
@@ -508,35 +617,40 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    overflow: 'hidden',
   },
   adsScrollView: {
     borderRadius: 12,
   },
   adCard: {
-    width: screenWidth - 30,
+    width: screenWidth - 32,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: COLORS.WHITE,
   },
   adImage: {
     width: '100%',
-    height: 150,
+    height: 120,
     resizeMode: 'cover',
+    backgroundColor: COLORS.WHITE_SMOKE,
   },
   adContent: {
-    padding: 16,
+    padding: 14,
+    paddingBottom: 12,
   },
   adTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.BLACK,
     marginBottom: 6,
+    lineHeight: 20,
   },
   adDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.TEXT_GRAY,
     marginBottom: 12,
-    lineHeight: 20,
+    lineHeight: 18,
+    fontWeight: '400',
   },
   adButton: {
     backgroundColor: '#1976D2',
@@ -544,10 +658,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
     alignSelf: 'flex-start',
+    elevation: 1,
+    shadowColor: '#1976D2',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
   },
   adButtonText: {
     color: COLORS.WHITE,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   dotsContainer: {
@@ -555,7 +677,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingBottom: 16,
+    paddingBottom: 14,
+    backgroundColor: COLORS.WHITE,
   },
   dot: {
     marginHorizontal: 4,
@@ -563,13 +686,15 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 12,
-    height: 12,
+    height: 6,
     backgroundColor: '#1976D2',
+    borderRadius: 3,
   },
   inactiveDot: {
-    width: 8,
-    height: 8,
+    width: 6,
+    height: 6,
     backgroundColor: COLORS.TEXT_GRAY,
-    opacity: 0.5,
+    opacity: 0.4,
+    borderRadius: 3,
   },
 });

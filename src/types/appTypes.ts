@@ -27,6 +27,7 @@ type HomeScreenStackParamList = {
   WorkingLocationsListScreen: undefined;
   AccountSettings: undefined;
   PaymentOptionsScreen: undefined;
+  AboutUsScreen: undefined;
 };
 
 export type HomeScreenProps = CompositeScreenProps<
@@ -48,6 +49,12 @@ export type ProfileScreennProps = CompositeScreenProps<
   NativeStackScreenProps<HomeScreenStackParamList, 'ProfileScreen'>,
   NativeStackScreenProps<MainStackParamList, 'AuthStack'>
 >;
+
+export type AboutUsScreenProps = CompositeScreenProps<
+  NativeStackScreenProps<HomeScreenStackParamList, 'AboutUsScreen'>,
+  NativeStackScreenProps<MainStackParamList, 'AuthStack'>
+>;
+
 export type ExpertsScreenProps = CompositeScreenProps<
   NativeStackScreenProps<HomeScreenStackParamList, 'ExpertsScreen'>,
   NativeStackScreenProps<MainStackParamList, 'AuthStack'>

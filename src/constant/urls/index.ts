@@ -20,7 +20,7 @@ const ENDPOINT = {
 
   //profile
   get_agent_details: 'v1/auth/users/agent-detail',
-  get_user_details: 'v1/auth/users/agent-detail',
+  get_user_details: 'v1/auth/users/user-detail',
   update_agent_profile: 'v1/auth/agent/profile-update',
   update_user_profile: 'v1/auth/users/profile',
 

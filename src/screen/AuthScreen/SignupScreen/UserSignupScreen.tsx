@@ -33,7 +33,7 @@ import {debugUserData} from '../../../utils/debugUser';
 import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 
 const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
-  const {mobile_number, email, googleUser, isGoogleLogin} = route.params;
+  const {mobile_number, email, googleUser, isGoogleLogin, user_id} = route.params;
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -167,7 +167,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       // Step 2: Get updated user details
       let userDetails;
       try {
-        userDetails = await handleUserDetails();
+        userDetails = await handleUserDetails(Number(user_id));
         console.log('👤 Retrieved user details:', userDetails);
       } catch (detailsError) {
         console.warn('⚠️ Failed to fetch user details:', detailsError);

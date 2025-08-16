@@ -97,10 +97,10 @@ export const handleUserSignup = async (payload: {phone: number; name: string}) =
   }
 };
 
-export const handleUserDetails = async () => {
+export const handleUserDetails = async (userId: number) => {
   try {
-    console.log('👤 Get User Details Request');
-    const response = await axiosInstance.get(ENDPOINT.get_user_details);
+    console.log('👤 Get User Details Request:', {userId});
+    const response = await axiosInstance.get(`${ENDPOINT.get_user_details}/${userId}`);
     console.log('✅ Get User Details Success:', response);
     return response;
   } catch (error) {

@@ -122,7 +122,7 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
       // Step 2: Get fresh user details
       let userResponse;
       try {
-        userResponse = await handleUserDetails();
+        userResponse = await handleUserDetails(userDetails.id);
         console.log('Retrieved updated user details:', userResponse);
       } catch (detailsError) {
         console.warn('Failed to fetch updated user details:', detailsError);

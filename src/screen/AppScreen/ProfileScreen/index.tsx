@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState, useRef} from 'react';
 import {
   Alert,
   Image,
@@ -7,7 +7,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  Linking,
 } from 'react-native';
 import CustomBack from '../../../components/CustomBack';
 import MagicText from '../../../components/MagicText';
@@ -48,6 +47,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
     AgentUserType | UserType | null
   >(null);
   const [options, setOptions] = useState<string[]>([]);
+  const lastFetchedUserIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (token && userData?.id) {
@@ -82,7 +82,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
       setIsLoading(true);
       
       const API =
-        role === 'agent' ? handleAgentDetails(userId) : handleUserDetails();
+        role === 'agent' ? handleAgentDetails(userId) : handleUserDetails(userId);
 
       API.then(async res => {
         console.log('✅ API response received:', res);
@@ -97,50 +97,44 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
           // Only update if we got valid data
           if (userObj && userObj.id) {
             await AsyncStorage.setItem('userData', JSON.stringify(userObj));
-            dispatch(setUserData(userObj));
+            // Only update Redux if the data has meaningfully changed
             setUserDetails(userObj);
+            console.log('✅ User details updated successfully');
           } else {
             console.warn('⚠️ Invalid user object, keeping existing data');
-            // Keep existing data if API returned invalid data
-            if (userData) {
-              setUserDetails(userData);
-            }
           }
         } else {
           // For agents
           console.log('🏢 Processing agent data...');
           if (res && res.id) {
             setUserDetails(res);
-            dispatch(setUserData(res));
             await AsyncStorage.setItem('userData', JSON.stringify(res));
+            console.log('✅ Agent details updated successfully');
           } else {
             console.warn('⚠️ Invalid agent data, keeping existing data');
-            if (userData) {
-              setUserDetails(userData);
-            }
           }
         }
       }).catch(error => {
         setIsLoading(false);
         console.log('❌ Error in getDetails:', error);
         
-        // Fallback: Use existing userData from Redux if API fails
-        if (userData) {
-          console.log('⚠️ Using fallback userData from Redux:', userData);
-          setUserDetails(userData);
-        } else {
-          console.error('❌ No fallback data available');
-        }
+        // Don't use userData here to avoid dependency loop
+        console.error('❌ Failed to fetch user details');
       });
     },
-    [dispatch, userData],
+    [dispatch],
   );
 
   useEffect(() => {
-    if (token && userData?.id) {
+    if (token && userData?.id && lastFetchedUserIdRef.current !== userData.id && !isLoading) {
+      console.log('🔄 Fetching user details for new user:', userData.id);
+      lastFetchedUserIdRef.current = userData.id;
       getDetails(userData.id, userData.role);
+    } else if (!token) {
+      // Reset ref when user logs out
+      lastFetchedUserIdRef.current = null;
     }
-  }, [getDetails, token, userData?.id, userData?.role]);
+  }, [token, userData?.id, userData?.role, isLoading]);
 
   // Initialize userDetails from Redux userData if not already set
   useEffect(() => {
@@ -265,7 +259,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         return (
           <TouchableOpacity
             onPress={() => {
-              Linking.openURL(`${BASE_URL}v1/auth/about-us`);
+              navigation.navigate('AboutUsScreen');
             }}>
             <View style={[styles.row, {justifyContent: 'space-between'}]}>
               <View style={styles.row}>

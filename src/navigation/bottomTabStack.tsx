@@ -5,6 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import ProprtyDetailScreen from '../screen/AppScreen/ProprtyDetailScreen';
 import AddReviewScreen from '../screen/AppScreen/AddReviewScreen';
 import ProfileScreen from '../screen/AppScreen/ProfileScreen';
+import AboutUsScreen from '../screen/AppScreen/AboutUsScreen';
 import ExpertsScreen from '../screen/AppScreen/ExpertsScreen';
 import SavedScreen from '../screen/AppScreen/SavedScreen';
 import ReviewDetailsScreen from '../screen/AppScreen/ReviewDetailsScreen';
@@ -34,6 +35,7 @@ const HomeScreenStack = () => {
       <HomeStack.Screen name="AddReviewScreen" component={AddReviewScreen} />
 
       <HomeStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <HomeStack.Screen name="AboutUsScreen" component={AboutUsScreen} />
 
       <HomeStack.Screen name="ExpertsScreen" component={ExpertsScreen} />
       <HomeStack.Screen name="SavedScreen" component={SavedScreen} />
