@@ -56,7 +56,7 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
 
   const handleSearch = (value: string) => {
     const updatedList = locationsList.filter(item =>
-      item.name.toLowerCase().includes(value.toLocaleLowerCase()),
+      item.name.toLowerCase().startsWith(value.toLowerCase()),
     );
     setFilteredList(updatedList);
   };
