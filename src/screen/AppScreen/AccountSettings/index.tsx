@@ -53,6 +53,7 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
         onHomePress={() => navigation.navigate('CitySelectionScreen')}
       />
 
+
       <View style={styles.container}>
         <MagicText style={styles.titleText}>Settings</MagicText>
 

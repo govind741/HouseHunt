@@ -86,11 +86,23 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
     <View style={styles.parent}>
       <View>
         <View style={styles.headerView}>
-          <View style={styles.backButtonContainer}>
-            <CustomBack onPress={() => navigation.navigate('LoginScreen')} />
+          <View style={styles.topRow}>
+            <View style={styles.backButtonContainer}>
+              <CustomBack onPress={() => navigation.navigate('LoginScreen')} />
+            </View>
+            <View style={styles.logoContainer}>
+              <Image source={IMAGE.HouseAppLogo} style={styles.logoImage} />
+            </View>
           </View>
           <View style={styles.titleContainer}>
             <Image source={IMAGE.AGENT_POSTER} style={styles.posterImage} />
+          </View>
+          
+          {/* Login or Sign Up text - styled same as LoginScreen */}
+          <View style={styles.row}>
+            <View style={styles.hr} />
+            <MagicText style={styles.continueText}>Log in or sign up</MagicText>
+            <View style={styles.hr} />
           </View>
         </View>
 
@@ -160,6 +172,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: COLORS.TEXT_GRAY,
     fontWeight: '800',
+  },
+  hr: {
+    flex: 1,
+    borderWidth: 0.2,
+    borderColor: COLORS.GRAY,
+    marginHorizontal: 10,
   },
   inputStyle: {
     marginLeft: 12,
@@ -233,9 +251,24 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 50,
   },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
   backButtonContainer: {
     alignSelf: 'flex-start',
-    marginBottom: 20,
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginLeft: -40, // Offset to center the logo considering back button width
+  },
+  logoImage: {
+    width: 120,
+    height: 40,
+    resizeMode: 'contain',
   },
   titleContainer: {
     alignItems: 'center',
