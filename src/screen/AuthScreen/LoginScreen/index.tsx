@@ -273,18 +273,22 @@ const styles = StyleSheet.create({
     borderColor: COLORS.GRAY,
     marginHorizontal: 10,
   },
-  agentBtn: {
-    borderWidth: 1,
-    borderRadius: 25,
-    borderColor: COLORS.GRAY,
-    paddingHorizontal: 12,
-    marginBottom: 25,
-  },
-  agentText: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: COLORS.GRAY,
-  },
+ agentBtn: {
+   borderRadius: 25,
+   backgroundColor: '#007BFF',
+   paddingHorizontal: 20,
+   paddingVertical: 8,
+   marginBottom: 25,
+   alignItems: 'center',
+ },
+
+ agentText: {
+   fontSize: 14,
+   lineHeight: 21,
+   color: COLORS.WHITE,
+   fontWeight: '600',
+ },
+
   termsHeaderText: {
     textAlign: 'center',
     fontSize: 14,
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
 
   tabButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 999,
   },

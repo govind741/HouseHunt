@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   adImage: {
     width: '100%',
-    height: 120,
+    height: 200,
     resizeMode: 'cover',
     backgroundColor: COLORS.WHITE_SMOKE,
   },
@@ -654,9 +654,9 @@ const styles = StyleSheet.create({
   },
   adButton: {
     backgroundColor: '#1976D2',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 5,
     alignSelf: 'flex-start',
     elevation: 1,
     shadowColor: '#1976D2',
@@ -669,17 +669,18 @@ const styles = StyleSheet.create({
   },
   adButtonText: {
     color: COLORS.WHITE,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingBottom: 14,
-    backgroundColor: COLORS.WHITE,
-  },
+ dotsContainer: {
+   flexDirection: 'row',
+   justifyContent: 'center',
+   alignItems: 'center',
+   paddingVertical: 6,     // was 12
+   backgroundColor: 'transparent', // was COLORS.WHITE
+   marginTop: -8,          // pull up a bit
+   paddingBottom: 8,       // small breathing space
+ },
   dot: {
     marginHorizontal: 4,
     borderRadius: 6,

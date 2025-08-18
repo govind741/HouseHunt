@@ -18,6 +18,7 @@ import {
   workLocationType,
 } from '../../../types';
 import CustomDropdown from '../../../components/CustomDropdown';
+import MultiSelectDropdown from '../../../components/MultiSelectDropdown';
 import {
   getAllCityList,
   getAllLocalitiesList,
@@ -34,25 +35,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface WorkLocation {
   id: number;
   city: CityType | null;
-  locality: LocalityType | null;
+  localities: LocalityType[]; // Changed to array for multiple localities
 }
 
 const tempLocation: WorkLocation = {
   id: 0,
   city: null,
-  locality: null,
+  localities: [], // Initialize as empty array
 };
 
 const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   const [cityList, setCityList] = useState<CityType[]>([]);
   const [localityList, setLocalityList] = useState<LocalityType[]>([]);
-  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([
-    tempLocation, // Keep one initial location for user to fill
-  ]);
-  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
-  const [completedLocations, setCompletedLocations] = useState<WorkLocation[]>([]);
+  const [selectedCity, setSelectedCity] = useState<CityType | null>(null); // Single city selection
+  const [selectedLocalities, setSelectedLocalities] = useState<LocalityType[]>([]); // Multiple localities
   const [loadingCities, setLoadingCities] = useState(true);
   const [loadingLocalities, setLoadingLocalities] = useState(false);
+  const [isCityLocked, setIsCityLocked] = useState(false); // Lock city after selection
 
   const {signupPayload, token} = route.params;
   const dispatch = useAppDispatch();
@@ -118,15 +117,19 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }, []),
   );
 
-  const handleCitySelect = (city: CityType, locationIndex: number) => {
-    const locations = [...workLocations];
-    locations[locationIndex] = {
-      ...locations[locationIndex],
-      city: city,
-      locality: null, // Reset locality when city changes
-    };
-    setWorkLocations(locations);
-    setActiveLocationIndex(locationIndex);
+  const handleCitySelect = (city: CityType) => {
+    if (isCityLocked) {
+      Toast.show({
+        type: 'info',
+        text1: 'City Already Selected',
+        text2: 'You can only select one city. Remove current selection to choose a different city.',
+      });
+      return;
+    }
+
+    setSelectedCity(city);
+    setSelectedLocalities([]); // Reset localities when city changes
+    setIsCityLocked(true); // Lock city selection
     setLoadingLocalities(true);
 
     // Load localities for the selected city
@@ -173,67 +176,41 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       });
   };
 
-  const handleLocalitySelect = (locality: LocalityType, locationIndex: number) => {
-    const locations = [...workLocations];
-    const completedLocation = {
-      ...locations[locationIndex],
-      locality: locality,
-      id: locality.id, // Set the location ID to locality ID for submission
-    };
-
-    // Add to completed locations
-    const newCompletedLocations = [...completedLocations, completedLocation];
-    setCompletedLocations(newCompletedLocations);
-
-    // Remove from active locations and reset to empty if it was the only one
-    const filteredLocations = locations.filter((_, index) => index !== locationIndex);
+  const handleLocalitySelect = (locality: LocalityType) => {
+    // Check if locality is already selected
+    const isAlreadySelected = selectedLocalities.some(loc => loc.id === locality.id);
     
-    // Always keep at least one empty location for adding more (up to 3 total)
-    if (filteredLocations.length === 0 && newCompletedLocations.length < 3) {
-      setWorkLocations([tempLocation]);
-    } else if (newCompletedLocations.length < 3) {
-      setWorkLocations(filteredLocations.length > 0 ? filteredLocations : [tempLocation]);
+    if (isAlreadySelected) {
+      // Remove locality if already selected
+      const updatedLocalities = selectedLocalities.filter(loc => loc.id !== locality.id);
+      setSelectedLocalities(updatedLocalities);
+      Toast.show({
+        type: 'info',
+        text1: 'Locality Removed',
+        text2: `${locality.name} has been removed from your selection.`,
+      });
     } else {
-      // If we have 3 completed locations, don't show any active location forms
-      setWorkLocations([]);
+      // Add locality to selection
+      const updatedLocalities = [...selectedLocalities, locality];
+      setSelectedLocalities(updatedLocalities);
+      Toast.show({
+        type: 'success',
+        text1: 'Locality Added',
+        text2: `${locality.name} has been added to your selection.`,
+      });
     }
+  };
 
-    setActiveLocationIndex(0);
+  const resetCitySelection = () => {
+    setSelectedCity(null);
+    setSelectedLocalities([]);
     setLocalityList([]);
-  };
-
-  const renderRightIcon = (item: WorkLocation, index: number) => {
-    if (item.city || item.locality) {
-      return (
-        <TouchableOpacity
-          onPress={() => {
-            const locations = [...workLocations];
-            locations[index] = {
-              id: 0,
-              city: null,
-              locality: null,
-            };
-            setWorkLocations(locations);
-            // Clear locality list if this was the active location
-            if (index === activeLocationIndex) {
-              setLocalityList([]);
-            }
-          }}>
-          <Image source={IMAGE.CloseIcon} style={styles.closeIcon} />
-        </TouchableOpacity>
-      );
-    }
-    return null;
-  };
-
-  const removeCompletedLocation = (locationIndex: number) => {
-    const newCompletedLocations = completedLocations.filter((_, index) => index !== locationIndex);
-    setCompletedLocations(newCompletedLocations);
-    
-    // If we removed a location and don't have an active form, add one
-    if (workLocations.length === 0) {
-      setWorkLocations([tempLocation]);
-    }
+    setIsCityLocked(false);
+    Toast.show({
+      type: 'info',
+      text1: 'Selection Reset',
+      text2: 'You can now select a different city.',
+    });
   };
 
   const refreshCities = () => {
@@ -291,24 +268,6 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       });
   };
 
-  const addLocation = () => {
-    const totalLocations = completedLocations.length + workLocations.length;
-    if (totalLocations < 3) {
-      const locations = [...workLocations, {
-        id: 0,
-        city: null,
-        locality: null,
-      }];
-      setWorkLocations(locations);
-    } else {
-      Toast.show({
-        type: 'info',
-        text1: 'Maximum Locations',
-        text2: 'You can add up to 3 work locations only.',
-      });
-    }
-  };
-
   const handleSignup = async () => {
     // Validate required data
     if (!signupPayload) {
@@ -330,19 +289,29 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }
 
     // Validate work locations
-    if (completedLocations.length === 0) {
+    if (!selectedCity) {
       Toast.show({
         type: 'error',
-        text1: 'Work Location Required',
-        text2: 'Please select at least one city and locality combination',
+        text1: 'City Required',
+        text2: 'Please select a city for your work location.',
       });
       return;
     }
 
-    const locations: workLocationType[] = completedLocations.map(item => ({
-      location_id: item.id,
+    if (selectedLocalities.length === 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Locality Required',
+        text2: 'Please select at least one locality within the selected city.',
+      });
+      return;
+    }
+
+    // Create locations array from selected city and localities
+    const locations: workLocationType[] = selectedLocalities.map(locality => ({
+      location_id: locality.id,
       area_id: null,
-      city_id: item.city?.id || null,
+      city_id: selectedCity.id,
     }));
 
     try {
@@ -357,16 +326,16 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
             'Accept': 'application/json',
           },
         });
-        console.log('✅ Basic connectivity test:', testResponse.status);
+        console.log('Basic connectivity test:', testResponse.status);
       } catch (connectError) {
-        console.error('❌ Basic connectivity failed:', connectError);
+        console.error('Basic connectivity failed:', connectError);
         throw new Error('Cannot connect to server. Please check your internet connection.');
       }
       
       // Use direct fetch API with timeout
-      console.log('🚀 Making direct request to:', `${BASE_URL}${ENDPOINT.update_agent_profile}`);
-      console.log('🔑 Token:', token ? 'Present' : 'Missing');
-      console.log('📦 Payload:', signupPayload instanceof FormData ? 'FormData' : 'Not FormData');
+      console.log(' Making direct request to:', `${BASE_URL}${ENDPOINT.update_agent_profile}`);
+      console.log('Token:', token ? 'Present' : 'Missing');
+      console.log('Payload:', signupPayload instanceof FormData ? 'FormData' : 'Not FormData');
       
       // Create AbortController for timeout
       const controller = new AbortController();
@@ -383,16 +352,16 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       });
 
       clearTimeout(timeoutId);
-      console.log('📥 Response status:', response.status);
+      console.log('Response status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Server error:', errorText);
+        console.error('Server error:', errorText);
         throw new Error(`Server error: ${response.status}`);
       }
 
       const profileData = await response.json();
-      console.log('✅ Profile update successful:', profileData);
+      console.log(' Profile update successful:', profileData);
       
       // Step 2: Update work locations
       console.log('📍 Step 2: Updating work locations...');
@@ -582,7 +551,10 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
 
       <View style={styles.container}>
         <MagicText style={styles.titleText}>
-          Select Your Working Locations
+          Select Your Working Location
+        </MagicText>
+        <MagicText style={styles.subtitleText}>
+          Choose one city and multiple localities within that city
         </MagicText>
 
         <ScrollView style={{flex: 1}} nestedScrollEnabled>
@@ -601,90 +573,73 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
             </View>
           )}
 
-          {/* Completed Locations as Chips */}
-          {completedLocations.length > 0 && (
-            <View style={styles.completedLocationsContainer}>
-              <MagicText style={styles.completedLocationsTitle}>
-                Selected Locations ({completedLocations.length}/3)
-              </MagicText>
-              <View style={styles.chipsContainer}>
-                {completedLocations.map((location, index) => (
-                  <View key={index} style={styles.locationChip}>
-                    <MagicText style={styles.chipText}>
-                      {location.city?.name}, {location.locality?.name}
-                    </MagicText>
-                    <TouchableOpacity
-                      onPress={() => removeCompletedLocation(index)}
-                      style={styles.chipRemoveButton}>
-                      <Image source={IMAGE.CloseIcon} style={styles.chipRemoveIcon} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
+          {/* City Selection Section */}
+          {(loadingCities || cityList.length > 0) && (
+            <View style={styles.selectionContainer}>
+              <View style={styles.sectionHeader}>
+                <MagicText style={styles.sectionTitle}>Select City</MagicText>
+                {selectedCity && (
+                  <TouchableOpacity
+                    onPress={resetCitySelection}
+                    style={styles.resetButton}
+                  >
+                    <MagicText style={styles.resetButtonText}>Change City</MagicText>
+                  </TouchableOpacity>
+                )}
               </View>
+
+              <CustomDropdown
+                data={cityList}
+                placeholder="Select City"
+                selectedValue={selectedCity}
+                onSelect={handleCitySelect}
+                loading={loadingCities}
+                disabled={isCityLocked}
+                style={[
+                  styles.dropdownStyle,
+                  isCityLocked && styles.lockedDropdown
+                ]}
+              />
             </View>
           )}
 
-          {/* Active Location Forms */}
-          {(loadingCities || cityList.length > 0) && workLocations.map((item, index) => {
-            const currentLocalityList = index === activeLocationIndex ? localityList : [];
-            
-            return (
-              <View key={index} style={styles.locationContainer}>
-                <View style={styles.locationHeader}>
-                  <MagicText style={styles.locationTitle}>
-                    Add Location {completedLocations.length + index + 1}
-                  </MagicText>
-                  {renderRightIcon(item, index)}
-                </View>
-
-                <CustomDropdown
-                  data={cityList}
-                  placeholder="Select City"
-                  selectedValue={item.city}
-                  onSelect={(city: CityType) => handleCitySelect(city, index)}
-                  loading={loadingCities}
-                  style={styles.dropdownStyle}
-                />
-
-                <CustomDropdown
-                  data={currentLocalityList}
-                  placeholder="Select Locality"
-                  selectedValue={item.locality}
-                  onSelect={(locality: LocalityType) => handleLocalitySelect(locality, index)}
-                  disabled={!item.city}
-                  loading={loadingLocalities && index === activeLocationIndex}
-                  style={styles.dropdownStyle}
-                />
+          {/* Locality Selection Section */}
+          {selectedCity && (
+            <View style={styles.selectionContainer}>
+              <View style={styles.sectionHeader}>
+                <MagicText style={styles.sectionTitle}>Select Localities</MagicText>
+                <MagicText style={styles.sectionSubtitle}>
+                  ({selectedLocalities.length} selected)
+                </MagicText>
               </View>
-            );
-          })}
 
-          {/* Show message when max locations reached */}
-          {completedLocations.length === 3 && (
-            <View style={styles.maxLocationsMessage}>
-              <MagicText style={styles.maxLocationsText}>
-                Maximum 3 locations added. Remove a location to add a different one.
-              </MagicText>
+              <MultiSelectDropdown
+                data={localityList}
+                placeholder="Select Localities"
+                selectedValues={selectedLocalities}
+                onSelect={handleLocalitySelect}
+                loading={loadingLocalities}
+                style={styles.dropdownStyle}
+              />
+
+              {selectedLocalities.length > 0 && (
+                <View style={styles.selectedLocalitiesInfo}>
+                  <MagicText style={styles.selectedLocalitiesText}>
+                    You can work in {selectedLocalities.length} localities within {selectedCity.name}
+                  </MagicText>
+                </View>
+              )}
             </View>
           )}
         </ScrollView>
 
-        <View style={styles.buttonRow}>
-          {(completedLocations.length + workLocations.length) < 3 && (
-            <Button
-              label="Add Location"
-              style={{flex: 1}}
-              onPress={addLocation}
-              labelStyle={styles.btnLabel}
-            />
-          )}
-          <Button
-            label="Sign Up"
-            style={{flex: completedLocations.length + workLocations.length >= 3 ? 1 : 1}}
-            labelStyle={styles.btnLabel}
-            onPress={handleSignup}
-          />
-        </View>
+        <Button
+          label="Complete Signup"
+          style={styles.btnStyle}
+          labelStyle={styles.btnLabel}
+          onPress={handleSignup}
+          disabled={!selectedCity || selectedLocalities.length === 0}
+        />
       </View>
     </SafeAreaView>
   );
@@ -719,9 +674,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 30,
     fontWeight: '700',
-    marginBottom: 15,
+    marginBottom: 5,
+    color: COLORS.BLACK,
   },
-  locationContainer: {
+  subtitleText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.TEXT_GRAY,
+    marginBottom: 20,
+  },
+  selectionContainer: {
     marginBottom: 20,
     padding: 15,
     backgroundColor: COLORS.WHITE,
@@ -729,19 +691,48 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.LIGHT_GRAY,
   },
-  locationHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-  locationTitle: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.BLACK,
   },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: COLORS.TEXT_GRAY,
+  },
+  resetButton: {
+    backgroundColor: COLORS.RED,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  resetButtonText: {
+    fontSize: 12,
+    color: COLORS.WHITE,
+    fontWeight: '600',
+  },
   dropdownStyle: {
     marginBottom: 10,
+  },
+  lockedDropdown: {
+    opacity: 0.7,
+  },
+  selectedLocalitiesInfo: {
+    backgroundColor: COLORS.WHITE_SMOKE,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  selectedLocalitiesText: {
+    fontSize: 14,
+    color: COLORS.GREEN,
+    fontWeight: '500',
   },
   refreshContainer: {
     padding: 20,
@@ -770,73 +761,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.WHITE,
   },
-
-  /** 🔧 This block was missing the key name before — add it like this */
-  completedLocationsContainer: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.LIGHT_GRAY,
-  },
-
-  completedLocationsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.BLACK,
-    marginBottom: 10,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  locationChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.LIGHT_GREEN,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 5,
-  },
-  chipText: {
-    fontSize: 14,
-    color: COLORS.GREEN,
-    fontWeight: '500',
-    marginRight: 8,
-  },
-  chipRemoveButton: {
-    padding: 2,
-  },
-  chipRemoveIcon: {
-    width: 12,
-    height: 12,
-    tintColor: COLORS.GREEN,
-  },
-  maxLocationsMessage: {
-    padding: 15,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  maxLocationsText: {
-    fontSize: 14,
-    color: COLORS.GRAY,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  closeIcon: {
-    width: 20,
-    height: 20,
-    resizeMode: 'contain',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginVertical: 20,
+  btnStyle: {
+    marginVertical: 18,
+    paddingVertical: 12,
   },
   btnLabel: {
     fontSize: 18,

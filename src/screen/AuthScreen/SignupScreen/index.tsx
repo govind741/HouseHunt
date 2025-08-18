@@ -39,6 +39,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showLocationOption, setShowLocationOption] = useState(false);
   const [hasLocationData, setHasLocationData] = useState(false);
+  const [mainImageIndex, setMainImageIndex] = useState(0); // Track main image index
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -67,11 +68,39 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       maxHeight: 250,
       maxWidth: 250,
     }).then(response => {
-      formik.setFieldValue('images', [
-        ...formik.values.images,
-        ...(response.assets ?? []),
-      ]);
+      const newImages = [...formik.values.images, ...(response.assets ?? [])];
+      formik.setFieldValue('images', newImages);
+      
+      // If this is the first image, set it as main image
+      if (formik.values.images.length === 0 && response.assets && response.assets.length > 0) {
+        setMainImageIndex(0);
+      }
     });
+  };
+
+  // Remove image function
+  const removeImage = (indexToRemove: number) => {
+    const updatedImages = formik.values.images.filter((_: any, index: number) => index !== indexToRemove);
+    formik.setFieldValue('images', updatedImages);
+    
+    // Adjust main image index if necessary
+    if (indexToRemove === mainImageIndex) {
+      // If removing the main image, set the first remaining image as main
+      setMainImageIndex(0);
+    } else if (indexToRemove < mainImageIndex) {
+      // If removing an image before the main image, adjust the main image index
+      setMainImageIndex(mainImageIndex - 1);
+    }
+    
+    // If no images left, reset main image index
+    if (updatedImages.length === 0) {
+      setMainImageIndex(0);
+    }
+  };
+
+  // Set main image function
+  const setAsMainImage = (index: number) => {
+    setMainImageIndex(index);
   };
 
   const requestLocationPermission = async () => {
@@ -273,11 +302,17 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       
       if (formik.values.images.length > 0) {
         formik.values.images.forEach((image: any, index: number) => {
+          const isMainImage = index === mainImageIndex;
           formData.append('image', {
             uri: image.uri,
             name: image.name || `image_${index}.jpg`,
             type: image.type || 'image/jpeg',
           });
+          
+          // Mark the main image
+          if (isMainImage) {
+            formData.append('main_image_index', index.toString());
+          }
         });
       }
 
@@ -330,11 +365,35 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             keyExtractor={(item, index) => index.toString()}
             horizontal
             scrollEnabled
-            renderItem={({item}: {item: any}) => {
+            renderItem={({item, index}: {item: any; index: number}) => {
+              const isMainImage = index === mainImageIndex;
               return (
-                <View style={{marginRight: 10}}>
+                <TouchableOpacity 
+                  style={[
+                    styles.imageContainer,
+                    isMainImage && styles.mainImageContainer
+                  ]}
+                  onPress={() => setAsMainImage(index)}
+                  activeOpacity={0.8}
+                >
                   <Image source={{uri: item.uri}} style={styles.sliderImage} />
-                </View>
+                  
+                  {/* Remove button */}
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeImage(index)}
+                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                  >
+                    <MagicText style={styles.removeButtonText}>×</MagicText>
+                  </TouchableOpacity>
+                  
+                  {/* Main image indicator */}
+                  {isMainImage && (
+                    <View style={styles.mainImageBadge}>
+                      <MagicText style={styles.mainImageText}>Main</MagicText>
+                    </View>
+                  )}
+                </TouchableOpacity>
               );
             }}
             showsHorizontalScrollIndicator={false}
@@ -542,6 +601,11 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
           </View>
 
           <MagicText style={styles.label}>Listing Page Images</MagicText>
+          {formik.values.images.length > 0 && (
+            <MagicText style={styles.instructionText}>
+              Tap any image to set as main image. Tap × to remove.
+            </MagicText>
+          )}
           {renderImageContainer()}
 
           <Button
@@ -639,6 +703,13 @@ const styles = StyleSheet.create({
     color: COLORS.BLACK,
     fontWeight: '600',
   },
+  instructionText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.TEXT_GRAY,
+    marginTop: 5,
+    fontStyle: 'italic',
+  },
   imageSelectionContainer: {
     borderWidth: 1,
     borderColor: COLORS.GRAY,
@@ -675,6 +746,74 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 8,
     resizeMode: 'cover',
+  },
+  imageContainer: {
+    marginRight: 10,
+    position: 'relative',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  mainImageContainer: {
+    borderColor: COLORS.PRIMARY,
+    borderWidth: 3,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: COLORS.RED,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
+  },
+  removeButtonText: {
+    color: COLORS.WHITE,
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 20,
+  },
+  mainImageBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  mainImageText: {
+    color: COLORS.WHITE,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   addBtn: {
     borderWidth: 1,
