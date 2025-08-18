@@ -6,11 +6,13 @@ import {
   TouchableOpacity,
   View,
   ViewStyle,
+  Linking,
+  Alert,
 } from 'react-native';
 import MagicText from '../MagicText';
 import RatingCard from '../RatingCard';
 import {COLORS} from '../../assets/colors';
-import {BookmarkIcon, GoogleLocationIcon, ShareIcon} from '../../assets/icons';
+import {BookmarkIcon, GoogleLocationIcon, ShareIcon, CallIcon, WhatAppIcon} from '../../assets/icons';
 import CustomSlider from '../CustomSlider';
 import Share from 'react-native-share';
 import {AgentUserType} from '../../types';
@@ -42,6 +44,89 @@ const PropertyCard = ({
     Share.open(shareOptions)
       .then(res => console.log(res))
       .catch(err => err && console.log(err));
+  };
+
+  const handleCall = () => {
+    const phoneNumber = item?.phone || item?.mobile || item?.whatsapp_number;
+    if (phoneNumber) {
+      const url = `tel:${phoneNumber}`;
+      Linking.canOpenURL(url)
+        .then(supported => {
+          if (supported) {
+            Linking.openURL(url);
+          } else {
+            Alert.alert('Error', 'Phone app is not available on this device');
+          }
+        })
+        .catch(err => {
+          console.error('Error opening phone app:', err);
+          Alert.alert('Error', 'Unable to make call');
+        });
+    } else {
+      Alert.alert('No Phone Number', 'Phone number is not available for this property');
+    }
+  };
+
+  const handleWhatsApp = () => {
+    const phoneNumber = item?.whatsapp_number || item?.phone || item?.mobile;
+    if (phoneNumber) {
+      // Clean phone number (remove spaces, dashes, etc.)
+      const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+      // Add country code if not present
+      const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : `+91${cleanNumber}`;
+      
+      const message = `Hi! I'm interested in your property: ${item.agency_name || item.name}`;
+      const url = `whatsapp://send?phone=${formattedNumber}&text=${encodeURIComponent(message)}`;
+      
+      Linking.canOpenURL(url)
+        .then(supported => {
+          if (supported) {
+            Linking.openURL(url);
+          } else {
+            Alert.alert('WhatsApp Not Found', 'WhatsApp is not installed on this device');
+          }
+        })
+        .catch(err => {
+          console.error('Error opening WhatsApp:', err);
+          Alert.alert('Error', 'Unable to open WhatsApp');
+        });
+    } else {
+      Alert.alert('No WhatsApp Number', 'WhatsApp number is not available for this property');
+    }
+  };
+
+  const handleMap = () => {
+    // Try to use coordinates first, then fall back to address
+    const latitude = item?.latitude;
+    const longitude = item?.longitude;
+    const address = item?.office_address || item?.agent_address || item?.address;
+
+    let url = '';
+    
+    if (latitude && longitude) {
+      // Use coordinates for precise location
+      url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    } else if (address) {
+      // Use address for approximate location
+      const encodedAddress = encodeURIComponent(address);
+      url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    } else {
+      Alert.alert('No Location', 'Location information is not available for this property');
+      return;
+    }
+
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          Linking.openURL(url);
+        } else {
+          Alert.alert('Error', 'Unable to open maps application');
+        }
+      })
+      .catch(err => {
+        console.error('Error opening maps:', err);
+        Alert.alert('Error', 'Unable to open location in maps');
+      });
   };
 
   const toAbsolute = (img?: string) => {
@@ -106,10 +191,9 @@ const PropertyCard = ({
               {item.agency_name ?? item.name}
             </MagicText>
           </View>
-        <RatingCard rating={String(item?.rating ?? 0)} />
-
+          <RatingCard rating={String(item?.rating ?? 0)} />
         </View>
-        
+
         {/* Address Row */}
         {token && item?.office_address ? (
           <View style={styles.addressRow}>
@@ -122,24 +206,40 @@ const PropertyCard = ({
           </View>
         ) : null}
         
-        {/* Icons Row */}
+        {/* All Icons Row - Single horizontal row */}
         {token ? (
-          <View style={styles.iconsRow}>
-            <TouchableOpacity onPress={() => onBookmarkPress()}>
-              <View style={[
-                styles.bookmarkIconView,
-                isBookmarked && styles.bookmarkIconViewActive
-              ]}>
-                <BookmarkIcon 
-                  color={isBookmarked ? COLORS.WHITE : COLORS.TEXT_GRAY} 
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleShare()}
-              style={styles.shareIconContainer}>
-              <ShareIcon />
-            </TouchableOpacity>
+          <View style={styles.allIconsRow}>
+            {/* Left Side - Call, WhatsApp, Map */}
+            <View style={styles.leftIconsContainer}>
+              <TouchableOpacity onPress={handleCall} style={styles.actionIconContainer}>
+                <CallIcon />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleWhatsApp} style={styles.actionIconContainer}>
+                <WhatAppIcon />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleMap} style={styles.actionIconContainer}>
+                <GoogleLocationIcon />
+              </TouchableOpacity>
+            </View>
+
+            {/* Right Side - Bookmark and Share */}
+            <View style={styles.rightIconsContainer}>
+              <TouchableOpacity onPress={() => onBookmarkPress()}>
+                <View style={[
+                  styles.bookmarkIconView,
+                  isBookmarked && styles.bookmarkIconViewActive
+                ]}>
+                  <BookmarkIcon 
+                    color={isBookmarked ? COLORS.WHITE : COLORS.TEXT_GRAY} 
+                  />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleShare()}
+                style={styles.shareIconContainer}>
+                <ShareIcon />
+              </TouchableOpacity>
+            </View>
           </View>
         ) : null}
       </View>
@@ -177,7 +277,7 @@ const styles = StyleSheet.create({
     height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginLeft: 8,
   },
   bookmarkIconViewActive: {
     backgroundColor: '#1976D2', // Active blue background when bookmarked
@@ -186,6 +286,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.SHADOW_COLOR,
     borderRadius: 20,
     padding: 4,
+    marginLeft: 8,
   },
   bottomContainer: {
     padding: 15,
@@ -195,13 +296,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  addressRow: {
+  allIconsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     marginTop: 12,
   },
-  iconsRow: {
+  leftIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rightIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIconContainer: {
+    backgroundColor: COLORS.WHITE_SMOKE,
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
