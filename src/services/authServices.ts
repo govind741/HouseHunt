@@ -37,14 +37,25 @@ export const VerifyUserOtp = async (payload: {phone: string; otp: number}) => {
   }
 };
 
-export const VerifyAgentOtp = async (payload: {phone: string; otp: number}) => {
+export const VerifyAgentOtp = async (payload: {phone: string; otp: number | string}) => {
   try {
-    console.log('🔢 Agent OTP Verification Request:', payload);
+    console.log('🔢 Agent OTP Verification Request:', {
+      payload,
+      endpoint: ENDPOINT.verify_agent,
+      payloadType: typeof payload.otp,
+    });
     const response = await axiosInstance.post(ENDPOINT.verify_agent, payload);
     console.log('✅ Agent OTP Verification Success:', response);
     return response;
-  } catch (error) {
-    console.error('❌ Agent OTP Verification Error:', error);
+  } catch (error: any) {
+    console.error('❌ Agent OTP Verification Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      responseData: error?.response?.data,
+      requestPayload: payload,
+      endpoint: ENDPOINT.verify_agent,
+    });
     throw error;
   }
 };
@@ -193,40 +204,6 @@ export const handleSaveWorkingLocations = async (locations: any[]) => {
     return response;
   } catch (error) {
     console.error('❌ Save Working Locations Error:', error);
-    throw error;
-  }
-};
-
-export const handleGoogleAuth = async (googleData: {
-  idToken: string;
-  accessToken: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    photo?: string;
-    familyName?: string;
-    givenName?: string;
-  };
-}) => {
-  try {
-    console.log('🔐 Google Auth Request:', {
-      hasIdToken: !!googleData.idToken,
-      hasAccessToken: !!googleData.accessToken,
-      userEmail: googleData.user.email,
-      userName: googleData.user.name,
-    });
-    
-    const response = await axiosInstance.post(ENDPOINT.google_auth, {
-      idToken: googleData.idToken,
-      accessToken: googleData.accessToken,
-      user: googleData.user,
-    });
-    
-    console.log('✅ Google Auth Success:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ Google Auth Error:', error);
     throw error;
   }
 };

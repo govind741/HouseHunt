@@ -61,11 +61,23 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
       return;
     }
 
+    // Format phone number consistently
+    let formattedPhone = mobile;
+    if (!mobile.startsWith('+91') && !mobile.startsWith('91')) {
+      formattedPhone = `+91${mobile}`;
+    } else if (mobile.startsWith('91') && !mobile.startsWith('+91')) {
+      formattedPhone = `+${mobile}`;
+    }
+
     const payload = {
-      phone: mobile,
+      phone: formattedPhone,
     };
 
-    if (__DEV__) console.log('🏢 Agent login request:', payload);
+    if (__DEV__) console.log('🏢 Agent login request:', {
+      originalMobile: mobile,
+      formattedPhone: formattedPhone,
+      payload
+    });
 
     handleAgentLogin(payload)
       .then(res => {
@@ -74,7 +86,8 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
           type: 'success',
           text1: res?.user?.message || 'OTP sent to your mobile',
         });
-        navigation.navigate('OtpScreen', {mobile, screen: 'agent'});
+        // Pass the formatted phone number to OTP screen
+        navigation.navigate('OtpScreen', {mobile: formattedPhone, screen: 'agent'});
       })
       .catch(error => {
         if (__DEV__) console.log('❌ Agent login error:', error);

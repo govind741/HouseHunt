@@ -39,8 +39,8 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
       getAllCityList()
         .then(res => {
           console.log('✅ Cities List Response:', res);
-          // Handle the response structure: res.formattedData
-          setLocationsList(res?.formattedData ?? []);
+          // Handle the response structure: res.data (not res.formattedData)
+          setLocationsList(res?.data ?? []);
           setIsLoading(false);
         })
         .catch(error => {

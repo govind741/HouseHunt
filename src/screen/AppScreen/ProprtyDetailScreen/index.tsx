@@ -208,7 +208,14 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   };
 
   const whatsappHandler = () => {
-    const whatsappNumber = agentDetails?.whatsapp_number;
+    // Get WhatsApp number from the correct path in agent data
+    const whatsappNumber = agentDetails?.data?.whatsapp_number || agentDetails?.whatsapp_number;
+    
+    console.log('WhatsApp Handler Debug:', {
+      'agentDetails?.data?.whatsapp_number': agentDetails?.data?.whatsapp_number,
+      'agentDetails?.whatsapp_number': agentDetails?.whatsapp_number,
+      'final whatsappNumber': whatsappNumber
+    });
     
     if (!whatsappNumber) {
       Alert.alert('Error', 'WhatsApp number not available for this agent');
@@ -218,25 +225,52 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     // Format the number (remove any non-digit characters and ensure proper format)
     const formattedNumber = whatsappNumber.toString().replace(/\D/g, '');
     
-    // Create WhatsApp URL with the agent's WhatsApp number
-    const whatsappURL = `whatsapp://send?phone=${formattedNumber}`;
+    // Add country code if not present (assuming India +91)
+    const finalNumber = formattedNumber.startsWith('91') ? formattedNumber : `91${formattedNumber}`;
     
-    console.log('Opening WhatsApp with number:', formattedNumber);
+    // Create WhatsApp URL with the agent's WhatsApp number
+    const whatsappURL = `whatsapp://send?phone=${finalNumber}`;
+    
+    console.log('Opening WhatsApp with number:', finalNumber);
     
     Linking.openURL(whatsappURL)
-      .catch(() => {
-        Alert.alert('Error', 'Make sure WhatsApp is installed on your device');
-      })
       .then(() => {
         handleUserInteraction('whatsapp');
+      })
+      .catch(() => {
+        Alert.alert('Error', 'Make sure WhatsApp is installed on your device');
       });
   };
 
   const callHandler = () => {
-    Linking.openURL(`tel:${agentDetails?.phone}`).catch(err =>
-      console.error('Error opening dialer:', err),
-    );
-    handleUserInteraction('call');
+    // Get phone number from the correct path in agent data
+    const phoneNumber = agentDetails?.data?.phone || agentDetails?.phone;
+    
+    console.log('Call Handler Debug:', {
+      'agentDetails?.data?.phone': agentDetails?.data?.phone,
+      'agentDetails?.phone': agentDetails?.phone,
+      'final phoneNumber': phoneNumber
+    });
+    
+    if (!phoneNumber) {
+      Alert.alert('Error', 'Phone number not available for this agent');
+      return;
+    }
+
+    // Format the phone number for dialing
+    const formattedNumber = phoneNumber.toString().replace(/\D/g, '');
+    const dialNumber = `tel:${formattedNumber}`;
+    
+    console.log('Opening dialer with number:', formattedNumber);
+    
+    Linking.openURL(dialNumber)
+      .then(() => {
+        handleUserInteraction('call');
+      })
+      .catch(err => {
+        console.error('Error opening dialer:', err);
+        Alert.alert('Error', 'Unable to open phone dialer');
+      });
   };
 
   return (

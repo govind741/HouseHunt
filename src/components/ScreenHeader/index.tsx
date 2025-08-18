@@ -58,23 +58,43 @@ const ScreenHeader = ({
 
     // Handle profile image for users
     const profilePath = userData?.profile;
-    const data = profilePath ? profilePath.split('/') : [];
-
-    if (data?.[2] && data?.[2] !== 'undefined' && profilePath) {
-      const url = `${BASE_URL}public/${profilePath}`;
-      return (
-        <View style={styles.profileViewStyle}>
-          <Image 
-            source={{uri: url}} 
-            style={styles.profileImgStyle}
-            onError={() => {
-              console.log('Profile image failed to load, falling back to initial');
-            }}
-          />
-        </View>
-      );
+    
+    // Check if profile path is valid and not empty/undefined
+    if (profilePath && 
+        typeof profilePath === 'string' && 
+        profilePath.trim() !== '' && 
+        profilePath !== 'undefined' && 
+        profilePath !== 'null') {
+      
+      // Clean the profile path by removing any extra quotes
+      const cleanedPath = profilePath.replace(/^["']|["']$/g, '').trim();
+      const data = cleanedPath.split('/');
+      
+      // Additional validation for profile path structure
+      if (data?.[2] && data[2] !== 'undefined' && data[2] !== 'null') {
+        const url = `${BASE_URL}public/${cleanedPath}`;
+        
+        return (
+          <View style={styles.profileViewStyle}>
+            <Image 
+              source={{uri: url}} 
+              style={styles.profileImgStyle}
+              onError={(error) => {
+                // Only log if it's a real error, not just missing image
+                if (error.nativeEvent?.error && !error.nativeEvent.error.includes('404')) {
+                  console.log('Profile image error:', error.nativeEvent?.error);
+                }
+              }}
+              onLoad={() => {
+                // Remove success logging to reduce console noise
+              }}
+            />
+          </View>
+        );
+      }
     }
 
+    // Fallback to initial
     return (
       <View style={styles.profileView}>
         <MagicText style={styles.userNameText}>{getInitial()}</MagicText>

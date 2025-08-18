@@ -310,18 +310,50 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
     const currentUser = userDetails || userData;
     
     if (currentUser?.role === 'agent') {
-      const agencyInitial =
-        currentUser?.agency_name && currentUser.agency_name.length > 0
-          ? currentUser.agency_name[0].toUpperCase()
-          : 'A';
+      const agentData = currentUser as AgentUserType;
+      
+      // Check for agent images first
+      if (agentData?.images && agentData.images.length > 0) {
+        const imageUrl = agentData.images[0];
+        const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${BASE_URL}public${imageUrl}`;
+        return (
+          <View style={styles.profileViewStyle}>
+            <Image source={{uri: fullUrl}} style={styles.profileImgStyle} />
+          </View>
+        );
+      }
+      
+      // Check for single image_url
+      if (agentData?.image_url) {
+        const fullUrl = agentData.image_url.startsWith('http') 
+          ? agentData.image_url 
+          : `${BASE_URL}public${agentData.image_url}`;
+        return (
+          <View style={styles.profileViewStyle}>
+            <Image source={{uri: fullUrl}} style={styles.profileImgStyle} />
+          </View>
+        );
+      }
+      
+      // Fallback to agent name initial, then agency initial
+      const agentNameInitial = agentData?.name && agentData.name.length > 0
+        ? agentData.name[0].toUpperCase()
+        : null;
+      
+      const agencyInitial = agentData?.agency_name && agentData.agency_name.length > 0
+        ? agentData.agency_name[0].toUpperCase()
+        : 'A';
+      
+      const displayInitial = agentNameInitial || agencyInitial;
 
       return (
         <View style={styles.profileView}>
-          <MagicText style={styles.userNameText}>{agencyInitial}</MagicText>
+          <MagicText style={styles.userNameText}>{displayInitial}</MagicText>
         </View>
       );
     }
 
+    // For regular users
     const data = currentUser?.profile ? currentUser.profile.split('/') : [];
 
     if (data?.[2] && data?.[2] !== 'undefined' && currentUser?.profile) {
@@ -355,11 +387,25 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         userDetails: userDetails ? 'Present' : 'Missing',
         userData: userData ? 'Present' : 'Missing',
         hasCurrentUser: !!currentUser,
+        userRole: currentUser?.role,
       });
     }
     
-    const displayName = currentUser?.name || 'User Name';
-    const displayPhone = currentUser?.phone || '';
+    // Handle agent vs user display
+    let displayName = 'User Name';
+    let displayPhone = '';
+    let agencyName = '';
+    
+    if (currentUser?.role === 'agent') {
+      // For agents, show agent name and agency name
+      displayName = currentUser?.name || 'Agent Name';
+      agencyName = currentUser?.agency_name || '';
+      displayPhone = currentUser?.phone || '';
+    } else {
+      // For regular users
+      displayName = currentUser?.name || 'User Name';
+      displayPhone = currentUser?.phone || '';
+    }
     
     return (
       <WhiteCardView cardStyle={styles.cardStyle}>
@@ -370,6 +416,11 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
               <MagicText style={styles.userName}>
                 {displayName}
               </MagicText>
+              {currentUser?.role === 'agent' && agencyName && (
+                <MagicText style={styles.agencyName}>
+                  {agencyName}
+                </MagicText>
+              )}
               {displayPhone ? (
                 <MagicText style={styles.userPhone}>
                   {displayPhone}
@@ -548,6 +599,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     fontWeight: '600',
     color: COLORS.BLACK,
+  },
+  agencyName: {
+    fontSize: 14,
+    color: COLORS.TEXT_GRAY,
+    marginBottom: 4,
+    fontStyle: 'italic',
   },
   userPhone: {
     fontSize: 14,

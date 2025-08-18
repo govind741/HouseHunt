@@ -22,16 +22,6 @@ export type AuthStackParamList = {
     token?: string;
     role?: string;
     user_id?: string;
-    // Google login parameters
-    googleUser?: {
-      id: string;
-      name: string;
-      email: string;
-      photo?: string;
-      familyName?: string;
-      givenName?: string;
-    };
-    isGoogleLogin?: boolean;
   };
 };
 

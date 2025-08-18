@@ -41,7 +41,7 @@ interface Review {
 }
 
 const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
-  const {user} = useAppSelector(state => state.auth);
+  const {user, userData} = useAppSelector(state => state.auth);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -59,38 +59,133 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Function to calculate ratings locally from reviews
+  const calculateRatingsFromReviews = useCallback((reviewsList: Review[]) => {
+    if (!reviewsList || reviewsList.length === 0) {
+      setAverageRating(0);
+      setTotalReviews(0);
+      setRatingBreakdown({5: 0, 4: 0, 3: 0, 2: 0, 1: 0});
+      return;
+    }
+
+    // Calculate total reviews
+    const total = reviewsList.length;
+    setTotalReviews(total);
+
+    // Calculate rating breakdown
+    const breakdown = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    let totalRatingSum = 0;
+    let validRatingsCount = 0;
+
+    reviewsList.forEach((review: Review) => {
+      console.log('Processing review:', {
+        id: review.id,
+        rating: review.rating,
+        ratingType: typeof review.rating,
+        comment: review.comment?.substring(0, 50)
+      });
+
+      // Handle different rating formats
+      let rating = 0;
+      if (typeof review.rating === 'number') {
+        rating = review.rating;
+      } else if (typeof review.rating === 'string') {
+        rating = parseFloat(review.rating);
+      }
+
+      // Ensure rating is valid
+      if (!isNaN(rating) && rating > 0 && rating <= 5) {
+        const roundedRating = Math.round(rating); // Use round instead of floor for better accuracy
+        if (roundedRating >= 1 && roundedRating <= 5) {
+          breakdown[roundedRating as keyof typeof breakdown]++;
+          totalRatingSum += rating; // Use original rating for average calculation
+          validRatingsCount++;
+        }
+      }
+    });
+
+    // Calculate average rating
+    const avgRating = validRatingsCount > 0 ? totalRatingSum / validRatingsCount : 0;
+    setAverageRating(Math.round(avgRating * 4) / 4); // Round to nearest 0.25 for proper star display
+    setRatingBreakdown(breakdown);
+
+    console.log('📊 Calculated ratings:', {
+      total,
+      validRatingsCount,
+      avgRating: avgRating.toFixed(2),
+      breakdown,
+      totalRatingSum
+    });
+  }, []);
+
   const fetchReviews = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = {agent_id: agentId};
       const response = await getReviewsList(params);
       
+      console.log('📊 Raw API response:', JSON.stringify(response, null, 2));
+      
       if (response?.data) {
         // Validate and clean the reviews data
-        const validatedReviews = response.data.map((review: any) => ({
-          ...review,
-          rating: typeof review.rating === 'number' ? review.rating : 0,
-          user_name: review.user_name || 'Anonymous User',
-          comment: review.comment || 'No comment provided',
-          total_comments: review.total_comments || 0,
-          created_at: review.created_at || new Date().toISOString(),
-        }));
+        const validatedReviews = response.data.map((review: any) => {
+          // Handle different rating formats and field names
+          let rating = 0;
+          
+          // Try different possible rating field names
+          const possibleRatingFields = ['rating', 'star_rating', 'stars', 'rate', 'review_rating'];
+          
+          for (const field of possibleRatingFields) {
+            if (review[field] !== undefined && review[field] !== null) {
+              if (typeof review[field] === 'number') {
+                rating = review[field];
+                break;
+              } else if (typeof review[field] === 'string') {
+                const parsed = parseFloat(review[field]);
+                if (!isNaN(parsed)) {
+                  rating = parsed;
+                  break;
+                }
+              }
+            }
+          }
+          
+          // Ensure rating is valid, default to 0 if invalid
+          if (isNaN(rating) || rating < 0 || rating > 5) {
+            console.warn('Invalid rating found:', {
+              reviewId: review.id,
+              originalRating: review.rating,
+              allFields: Object.keys(review)
+            });
+            rating = 0;
+          }
+
+          return {
+            ...review,
+            rating: rating,
+            user_name: review.user_name || 'Anonymous User',
+            comment: review.comment || 'No comment provided',
+            total_comments: review.total_comments || 0,
+            created_at: review.created_at || new Date().toISOString(),
+          };
+        });
         
-        console.log('📊 Validated reviews:', validatedReviews);
+        console.log('📊 Validated reviews with ratings:', validatedReviews.map(r => ({
+          id: r.id,
+          rating: r.rating,
+          user_name: r.user_name,
+          comment: r.comment?.substring(0, 30)
+        })));
         
         setReviews(validatedReviews);
-        setAverageRating(response.avergeReview || 0);
-        setTotalReviews(validatedReviews.length);
-
-        // Calculate rating breakdown
-        const breakdown = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
-        validatedReviews.forEach((review: Review) => {
-          const rating = Math.floor(review.rating || 0);
-          if (rating >= 1 && rating <= 5) {
-            breakdown[rating as keyof typeof breakdown]++;
-          }
-        });
-        setRatingBreakdown(breakdown);
+        
+        // Always calculate ratings locally to ensure accuracy
+        calculateRatingsFromReviews(validatedReviews);
+        
+        // Only use API average if local calculation fails
+        if (validatedReviews.length === 0 && (response.avergeReview || response.averageReview)) {
+          setAverageRating(response.avergeReview || response.averageReview || 0);
+        }
       }
     } catch (error) {
       console.log('❌ Error fetching reviews:', error);
@@ -101,7 +196,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [agentId]);
+  }, [agentId, calculateRatingsFromReviews]);
 
   useEffect(() => {
     fetchReviews();
@@ -160,7 +255,25 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       setShowAddReview(false);
       setNewRating(0);
       setNewComment('');
-      fetchReviews();
+      
+      // Immediately update local state with new review
+      const newReview: Review = {
+        id: Date.now(), // Temporary ID until refresh
+        user_id: user?.id || userData?.id || 0,
+        user_name: user?.name || userData?.name || 'You',
+        rating: newRating,
+        comment: newComment.trim(),
+        created_at: new Date().toISOString(),
+        total_comments: 0,
+        profile: user?.profile || userData?.profile,
+      };
+      
+      const updatedReviews = [...reviews, newReview];
+      setReviews(updatedReviews);
+      calculateRatingsFromReviews(updatedReviews);
+      
+      // Fetch fresh data from server
+      setTimeout(() => fetchReviews(), 500);
     } catch (error) {
       console.log('Error adding review:', error);
       Toast.show({
@@ -209,7 +322,18 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       setEditingReview(null);
       setNewRating(0);
       setNewComment('');
-      fetchReviews();
+      
+      // Immediately update local state with edited review
+      const updatedReviews = reviews.map(review => 
+        review.id === editingReview.id 
+          ? { ...review, rating: newRating, comment: newComment.trim() }
+          : review
+      );
+      setReviews(updatedReviews);
+      calculateRatingsFromReviews(updatedReviews);
+      
+      // Fetch fresh data from server
+      setTimeout(() => fetchReviews(), 500);
     } catch (error) {
       console.log('Error updating review:', error);
       Toast.show({
@@ -240,7 +364,13 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
                 text1: 'Review deleted successfully',
               });
 
-              fetchReviews();
+              // Immediately update local state by removing the deleted review
+              const updatedReviews = reviews.filter(review => review.id !== reviewId);
+              setReviews(updatedReviews);
+              calculateRatingsFromReviews(updatedReviews);
+              
+              // Fetch fresh data from server
+              setTimeout(() => fetchReviews(), 500);
             } catch (error) {
               console.log('Error deleting review:', error);
               Toast.show({
@@ -329,7 +459,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
               enableHalfStar={true}
               rating={averageRating}
               maxStars={5}
-              starSize={20}
+              starSize={Math.round(20)}
               emptyColor={COLORS.GRAY}
               starStyle={styles.overviewStarStyle}
             />
@@ -380,7 +510,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
           return (
             <EnhancedReviewCard
               item={item}
-              currentUserId={user?.id}
+              currentUserId={user?.id || userData?.id}
               onEdit={() => openEditModal(item)}
               onDelete={() => handleDeleteReview(item.id)}
             />
@@ -421,7 +551,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
                 enableHalfStar={false}
                 rating={newRating}
                 maxStars={5}
-                starSize={32}
+                starSize={Math.round(32)}
                 emptyColor={COLORS.GRAY}
                 starStyle={styles.modalStarStyle}
               />
@@ -503,9 +633,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   overviewStarStyle: {
-    width: 14,
+    width: Math.round(14),
     marginLeft: 0,
-    marginRight: 2,
+    marginRight: Math.round(2),
   },
   totalReviewsText: {
     fontSize: 13,
@@ -678,9 +808,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalStarStyle: {
-    width: 28,
+    width: Math.round(28),
     marginLeft: 0,
-    marginRight: 12,
+    marginRight: Math.round(12),
   },
   commentSection: {
     marginBottom: 24,

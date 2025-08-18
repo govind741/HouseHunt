@@ -1,4 +1,4 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   Image,
   SafeAreaView,
@@ -14,17 +14,14 @@ import MagicText from '../../../components/MagicText';
 import {COLORS} from '../../../assets/colors';
 import {
   CityType,
-  globalLocationSearch,
-  locationType,
+  LocalityType,
   workLocationType,
 } from '../../../types';
-import SearchContainer from '../../../components/SearchContainer';
+import CustomDropdown from '../../../components/CustomDropdown';
 import {
   getAllCityList,
-  searchLocalities,
+  getAllLocalitiesList,
 } from '../../../services/locationSelectionServices';
-import {LocationIcon} from '../../../assets/icons';
-import {getBreadcrumText} from '../../../utils';
 import {useFocusEffect} from '@react-navigation/native';
 import {IMAGE} from '../../../assets/images';
 import Button from '../../../components/Button';
@@ -34,52 +31,193 @@ import {useAppDispatch} from '../../../store';
 import {setToken, setUserData} from '../../../store/slice/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const tempLocation = {
+interface WorkLocation {
+  id: number;
+  city: CityType | null;
+  locality: LocalityType | null;
+}
+
+const tempLocation: WorkLocation = {
   id: 0,
-  city_name: '',
-  area_name: '',
-  locality_name: '',
+  city: null,
+  locality: null,
 };
 
 const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   const [cityList, setCityList] = useState<CityType[]>([]);
-  const [workLocations, setWorkLocations] = useState<globalLocationSearch[]>([
+  const [localityList, setLocalityList] = useState<LocalityType[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([
     tempLocation, // Keep one initial location for user to fill
   ]);
-  const [searchText, setSearchText] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [searchList, setSearchList] = useState<globalLocationSearch[]>([]);
+  const [activeLocationIndex, setActiveLocationIndex] = useState(0);
+  const [completedLocations, setCompletedLocations] = useState<WorkLocation[]>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
+  const [loadingLocalities, setLoadingLocalities] = useState(false);
 
-  const inputRef = useRef<any>(null);
   const {signupPayload, token} = route.params;
   const dispatch = useAppDispatch();
 
   useFocusEffect(
     useCallback(() => {
-      // Load cities first
-
+      // Load cities on screen focus
+      console.log('🏙️ Loading cities for WorkLocationScreen...');
+      setLoadingCities(true);
+      
       getAllCityList()
         .then(res => {
-          setCityList(res?.data ?? []);
+          console.log('✅ Cities API Response:', res);
+          
+          // Handle different response structures
+          let cities = [];
+          if (res?.formattedData && Array.isArray(res.formattedData)) {
+            cities = res.formattedData;
+          } else if (res?.data && Array.isArray(res.data)) {
+            cities = res.data;
+          } else if (Array.isArray(res)) {
+            cities = res;
+          } else if (res?.cities && Array.isArray(res.cities)) {
+            cities = res.cities;
+          } else {
+            console.warn('⚠️ Unexpected cities response structure:', res);
+          }
+          
+          console.log('📍 Processed cities data:', cities);
+          console.log('📊 Cities count:', cities.length);
+          
+          if (cities.length === 0) {
+            Toast.show({
+              type: 'info',
+              text1: 'No Cities Found',
+              text2: 'No cities available at the moment. Please try again later.',
+            });
+          }
+          
+          setCityList(cities);
         })
         .catch(error => {
-          console.log('error in getting all cities', error);
+          console.error('❌ Error loading cities:', error);
+          console.error('❌ Error details:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url,
+          });
+          
+          Toast.show({
+            type: 'error',
+            text1: 'Error Loading Cities',
+            text2: 'Failed to load cities. Please check your connection and try again.',
+          });
+          
+          // Set empty array to prevent undefined errors
+          setCityList([]);
+        })
+        .finally(() => {
+          setLoadingCities(false);
         });
-      
-      // Only load areas if we have a valid city selected
-      // Don't load areas initially without a city ID
-      // Areas will be loaded when user selects a city
     }, []),
   );
 
-  const renderRightIcon = (item: globalLocationSearch, index: number) => {
-    if (item.id) {
+  const handleCitySelect = (city: CityType, locationIndex: number) => {
+    const locations = [...workLocations];
+    locations[locationIndex] = {
+      ...locations[locationIndex],
+      city: city,
+      locality: null, // Reset locality when city changes
+    };
+    setWorkLocations(locations);
+    setActiveLocationIndex(locationIndex);
+    setLoadingLocalities(true);
+
+    // Load localities for the selected city
+    getAllLocalitiesList({cityId: city.id, areaId: undefined})
+      .then(res => {
+        console.log('✅ Localities API Response for city', city.name, ':', res);
+        
+        // Handle different response structures
+        let localities = [];
+        if (res?.formattedData && Array.isArray(res.formattedData)) {
+          localities = res.formattedData;
+        } else if (res?.data && Array.isArray(res.data)) {
+          localities = res.data;
+        } else if (Array.isArray(res)) {
+          localities = res;
+        } else {
+          console.warn('⚠️ Unexpected localities response structure:', res);
+        }
+        
+        console.log('📍 Processed localities data:', localities);
+        console.log('📊 Localities count:', localities.length);
+        
+        if (localities.length === 0) {
+          Toast.show({
+            type: 'info',
+            text1: 'No Localities Found',
+            text2: `No localities found for ${city.name}. Please try a different city.`,
+          });
+        }
+        
+        setLocalityList(localities);
+      })
+      .catch(error => {
+        console.error('❌ Error loading localities:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error Loading Localities',
+          text2: 'Failed to load localities. Please try again.',
+        });
+        setLocalityList([]);
+      })
+      .finally(() => {
+        setLoadingLocalities(false);
+      });
+  };
+
+  const handleLocalitySelect = (locality: LocalityType, locationIndex: number) => {
+    const locations = [...workLocations];
+    const completedLocation = {
+      ...locations[locationIndex],
+      locality: locality,
+      id: locality.id, // Set the location ID to locality ID for submission
+    };
+
+    // Add to completed locations
+    const newCompletedLocations = [...completedLocations, completedLocation];
+    setCompletedLocations(newCompletedLocations);
+
+    // Remove from active locations and reset to empty if it was the only one
+    const filteredLocations = locations.filter((_, index) => index !== locationIndex);
+    
+    // Always keep at least one empty location for adding more (up to 3 total)
+    if (filteredLocations.length === 0 && newCompletedLocations.length < 3) {
+      setWorkLocations([tempLocation]);
+    } else if (newCompletedLocations.length < 3) {
+      setWorkLocations(filteredLocations.length > 0 ? filteredLocations : [tempLocation]);
+    } else {
+      // If we have 3 completed locations, don't show any active location forms
+      setWorkLocations([]);
+    }
+
+    setActiveLocationIndex(0);
+    setLocalityList([]);
+  };
+
+  const renderRightIcon = (item: WorkLocation, index: number) => {
+    if (item.city || item.locality) {
       return (
         <TouchableOpacity
           onPress={() => {
             const locations = [...workLocations];
-            locations[index] = tempLocation;
+            locations[index] = {
+              id: 0,
+              city: null,
+              locality: null,
+            };
             setWorkLocations(locations);
+            // Clear locality list if this was the active location
+            if (index === activeLocationIndex) {
+              setLocalityList([]);
+            }
           }}>
           <Image source={IMAGE.CloseIcon} style={styles.closeIcon} />
         </TouchableOpacity>
@@ -87,89 +225,88 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }
     return null;
   };
-  const getSearchLocalitiesList = (value: string) => {
-    // Validate input before making API call
-    if (!value || value.trim().length < 2) {
-      console.log('⚠️ Search value too short or empty:', value);
-      setSearchList([]);
-      return;
-    }
 
-    const payload = {
-      name: value.trim(),
-    };
+  const removeCompletedLocation = (locationIndex: number) => {
+    const newCompletedLocations = completedLocations.filter((_, index) => index !== locationIndex);
+    setCompletedLocations(newCompletedLocations);
     
-    console.log('🔍 Searching localities with payload:', payload);
+    // If we removed a location and don't have an active form, add one
+    if (workLocations.length === 0) {
+      setWorkLocations([tempLocation]);
+    }
+  };
+
+  const refreshCities = () => {
+    console.log('🔄 Manual refresh cities...');
+    setLoadingCities(true);
+    setCityList([]);
     
-    searchLocalities(payload)
+    getAllCityList()
       .then(res => {
-        console.log('✅ Search localities success:', res);
+        console.log('✅ Manual refresh - Cities API Response:', res);
         
-        // Handle the nested response structure
-        let data = [];
-        
-        if (res?.data?.data) {
-          data = Array.isArray(res.data.data) ? res.data.data : [];
+        // Handle different response structures
+        let cities = [];
+        if (res?.formattedData && Array.isArray(res.formattedData)) {
+          cities = res.formattedData;
         } else if (res?.data && Array.isArray(res.data)) {
-          data = res.data;
+          cities = res.data;
+        } else if (Array.isArray(res)) {
+          cities = res;
+        } else if (res?.cities && Array.isArray(res.cities)) {
+          cities = res.cities;
+        } else {
+          console.warn('⚠️ Unexpected cities response structure:', res);
         }
         
-        console.log('📍 Processed search data:', {
-          originalResponse: res?.data,
-          processedData: data,
-          dataLength: data.length,
-          searchTerm: payload.name
-        });
+        console.log('📍 Manual refresh - Processed cities data:', cities);
         
-        if (data.length === 0) {
-          console.log('⚠️ No localities found for search term:', payload.name);
+        if (cities.length === 0) {
           Toast.show({
             type: 'info',
-            text1: 'No Results Found',
-            text2: `No localities found for "${payload.name}". Try searching for specific areas or localities.`,
-          });
-        }
-        
-        setSearchList(data);
-      })
-      .catch(error => {
-        console.log('❌ Error in getSearchLocalitiesList:', error);
-        setSearchList([]);
-        
-        // Simple network error handling
-        if (!error.response || error.message?.includes('Network Error')) {
-          Toast.show({
-            type: 'error',
-            text1: 'Network Issue',
-            text2: 'Please check your connection and try again.',
-          });
-        } else if (error?.data?.message) {
-          Toast.show({
-            type: 'error',
-            text1: 'Search Error',
-            text2: error.data.message,
+            text1: 'No Cities Found',
+            text2: 'No cities available. Please contact support.',
           });
         } else {
           Toast.show({
-            type: 'error',
-            text1: 'Search Failed',
-            text2: 'Unable to search locations. Please try again.',
+            type: 'success',
+            text1: 'Cities Loaded',
+            text2: `${cities.length} cities loaded successfully.`,
           });
         }
+        
+        setCityList(cities);
+      })
+      .catch(error => {
+        console.error('❌ Manual refresh error:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Refresh Failed',
+          text2: 'Unable to load cities. Please check your connection.',
+        });
+        setCityList([]);
+      })
+      .finally(() => {
+        setLoadingCities(false);
       });
   };
 
-  const handleLocationPress = (item: globalLocationSearch) => {
-    setSearchList([]);
-    setSearchText('');
-    const locations = [...workLocations];
-    locations[activeIndex] = item;
-    setWorkLocations(locations);
-  };
-
   const addLocation = () => {
-    const locations = [...workLocations, tempLocation];
-    setWorkLocations(locations);
+    const totalLocations = completedLocations.length + workLocations.length;
+    if (totalLocations < 3) {
+      const locations = [...workLocations, {
+        id: 0,
+        city: null,
+        locality: null,
+      }];
+      setWorkLocations(locations);
+    } else {
+      Toast.show({
+        type: 'info',
+        text1: 'Maximum Locations',
+        text2: 'You can add up to 3 work locations only.',
+      });
+    }
   };
 
   const handleSignup = async () => {
@@ -193,23 +330,19 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }
 
     // Validate work locations
-    const validLocations = workLocations.filter(item => 
-      item.id && item.id > 0 && (item.city_name || item.area_name || item.locality_name)
-    );
-    
-    if (validLocations.length === 0) {
+    if (completedLocations.length === 0) {
       Toast.show({
         type: 'error',
         text1: 'Work Location Required',
-        text2: 'Please search and select at least one work location from the dropdown',
+        text2: 'Please select at least one city and locality combination',
       });
       return;
     }
 
-    const locations: workLocationType[] = validLocations.map(item => ({
+    const locations: workLocationType[] = completedLocations.map(item => ({
       location_id: item.id,
       area_id: null,
-      city_id: null,
+      city_id: item.city?.id || null,
     }));
 
     try {
@@ -321,7 +454,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
 
             if (agentDetailsResponse.ok) {
               const agentDetails = await agentDetailsResponse.json();
-              console.log('✅ Agent details fetched:', agentDetails);
+              console.log('Agent details fetched:', agentDetails);
               
               if (agentDetails && agentDetails.data) {
                 const completeAgentData = {
@@ -338,12 +471,12 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
             }
           }
         } catch (fetchError) {
-          console.warn('⚠️ Error fetching agent details:', fetchError);
+          console.warn('Error fetching agent details:', fetchError);
         }
       }
       
       // Step 4: Save token and ensure role is set
-      console.log('💾 Step 4: Saving authentication data...');
+      console.log('Step 4: Saving authentication data...');
       dispatch(setToken(token));
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('role', 'agent');
@@ -351,7 +484,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       // Verify we have agent data - if not, there's a serious issue
       const currentUserData = await AsyncStorage.getItem('userData');
       if (!currentUserData) {
-        console.error('❌ CRITICAL: No agent data found after signup process!');
+        console.error('CRITICAL: No agent data found after signup process!');
         
         // Instead of creating fake data, try to extract from signup payload
         let fallbackAgentData = {
@@ -363,7 +496,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         
         // Try to extract real data from signup payload if it's FormData
         if (signupPayload instanceof FormData) {
-          console.log('📋 Extracting data from signup payload...');
+          console.log('Extracting data from signup payload...');
           fallbackAgentData = {
             ...fallbackAgentData,
             name: signupPayload.get('name') || 'Agent',
@@ -375,15 +508,15 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           };
         }
         
-        console.log('⚠️ Using fallback agent data:', fallbackAgentData);
+        console.log('Using fallback agent data:', fallbackAgentData);
         dispatch(setUserData(fallbackAgentData));
         await AsyncStorage.setItem('userData', JSON.stringify(fallbackAgentData));
         await AsyncStorage.setItem('userId', fallbackAgentData.id.toString());
       } else {
-        console.log('✅ Agent data verified in storage');
+        console.log('Agent data verified in storage');
       }
       
-      console.log('✅ All steps completed successfully');
+      console.log('All steps completed successfully');
       
       Toast.show({
         type: 'success',
@@ -393,7 +526,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       
       // Navigate to PendingApprovalScreen within HomeScreenStack
       // This ensures the user sees the pending approval screen after signup
-      console.log('🚀 Navigating to PendingApprovalScreen...');
+      console.log('Navigating to PendingApprovalScreen...');
       navigation.reset({
         index: 0,
         routes: [
@@ -411,7 +544,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       });
 
     } catch (error: any) {
-      console.error('❌ Signup error:', error);
+      console.error('Signup error:', error);
       
       let errorMessage = 'Something went wrong. Please try again.';
       
@@ -453,85 +586,101 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         </MagicText>
 
         <ScrollView style={{flex: 1}} nestedScrollEnabled>
-          {workLocations.map((item, index) => {
-            return (
-              <SearchContainer
-                placeholder={'Search for city, area, localities'}
-                style={styles.searchStyle}
-                onFocus={() => {
-                  // Agar koi search text nahi hai to cities show karo
-                  if (!searchText.trim()) {
-                    setSearchList(cityList.map(c => ({
-                      id: c.id,
-                      city_name: c.name,
-                      area_name: '',
-                      locality_name: '',
-                    })));
-                  }
-                }}
-                onChangeText={text => {
-                  setSearchText(text);
-                  setActiveIndex(index);
-                  if (inputRef.current) {
-                    clearTimeout(inputRef.current);
-                  }
-                  inputRef.current = setTimeout(() => {
-                    if (text.trim()) {
-                      getSearchLocalitiesList(text);
-                    } else {
-                      // Empty search => show cities
-                      setSearchList(cityList.map(c => ({
-                        id: c.id,
-                        city_name: c.name,
-                        area_name: '',
-                        locality_name: '',
-                      })));
-                    }
-                  }, 300);
-                }}
-                searchValue={
-                  item.id
-                    ? getBreadcrumText(item as locationType).replaceAll(' > ', ', ')
-                    : searchText
-                }
-                rightIcon={renderRightIcon(item, index)}
+          {/* Show refresh button if no cities loaded */}
+          {!loadingCities && cityList.length === 0 && (
+            <View style={styles.refreshContainer}>
+              <MagicText style={styles.refreshText}>
+                Unable to load cities. Please check your connection and try again.
+              </MagicText>
+              <Button
+                label="Refresh Cities"
+                onPress={refreshCities}
+                style={styles.refreshButton}
+                labelStyle={styles.refreshButtonLabel}
               />
+            </View>
+          )}
 
+          {/* Completed Locations as Chips */}
+          {completedLocations.length > 0 && (
+            <View style={styles.completedLocationsContainer}>
+              <MagicText style={styles.completedLocationsTitle}>
+                Selected Locations ({completedLocations.length}/3)
+              </MagicText>
+              <View style={styles.chipsContainer}>
+                {completedLocations.map((location, index) => (
+                  <View key={index} style={styles.locationChip}>
+                    <MagicText style={styles.chipText}>
+                      {location.city?.name}, {location.locality?.name}
+                    </MagicText>
+                    <TouchableOpacity
+                      onPress={() => removeCompletedLocation(index)}
+                      style={styles.chipRemoveButton}>
+                      <Image source={IMAGE.CloseIcon} style={styles.chipRemoveIcon} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Active Location Forms */}
+          {(loadingCities || cityList.length > 0) && workLocations.map((item, index) => {
+            const currentLocalityList = index === activeLocationIndex ? localityList : [];
+            
+            return (
+              <View key={index} style={styles.locationContainer}>
+                <View style={styles.locationHeader}>
+                  <MagicText style={styles.locationTitle}>
+                    Add Location {completedLocations.length + index + 1}
+                  </MagicText>
+                  {renderRightIcon(item, index)}
+                </View>
+
+                <CustomDropdown
+                  data={cityList}
+                  placeholder="Select City"
+                  selectedValue={item.city}
+                  onSelect={(city: CityType) => handleCitySelect(city, index)}
+                  loading={loadingCities}
+                  style={styles.dropdownStyle}
+                />
+
+                <CustomDropdown
+                  data={currentLocalityList}
+                  placeholder="Select Locality"
+                  selectedValue={item.locality}
+                  onSelect={(locality: LocalityType) => handleLocalitySelect(locality, index)}
+                  disabled={!item.city}
+                  loading={loadingLocalities && index === activeLocationIndex}
+                  style={styles.dropdownStyle}
+                />
+              </View>
             );
           })}
 
-          {searchList.length > 0 && (
-            <View style={styles.searchView}>
-              <ScrollView nestedScrollEnabled>
-                {searchList.map(item => {
-                  return (
-                    <View style={styles.searchItem} key={item.id}>
-                      <TouchableOpacity
-                        onPress={() => handleLocationPress(item)}
-                        style={styles.searchRow}>
-                        <LocationIcon />
-                        <MagicText style={styles.searchText}>
-                          {getBreadcrumText(item as locationType)}
-                        </MagicText>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
-              </ScrollView>
+          {/* Show message when max locations reached */}
+          {completedLocations.length === 3 && (
+            <View style={styles.maxLocationsMessage}>
+              <MagicText style={styles.maxLocationsText}>
+                Maximum 3 locations added. Remove a location to add a different one.
+              </MagicText>
             </View>
           )}
         </ScrollView>
 
         <View style={styles.buttonRow}>
-          <Button
-            label="Add Location"
-            style={{flex: 1}}
-            onPress={addLocation}
-            labelStyle={styles.btnLabel}
-          />
+          {(completedLocations.length + workLocations.length) < 3 && (
+            <Button
+              label="Add Location"
+              style={{flex: 1}}
+              onPress={addLocation}
+              labelStyle={styles.btnLabel}
+            />
+          )}
           <Button
             label="Sign Up"
-            style={{flex: 1}}
+            style={{flex: completedLocations.length + workLocations.length >= 3 ? 1 : 1}}
             labelStyle={styles.btnLabel}
             onPress={handleSignup}
           />
@@ -572,24 +721,111 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 15,
   },
-  searchView: {
-    marginBottom: 12,
-    borderRadius: 12,
+  locationContainer: {
+    marginBottom: 20,
+    padding: 15,
     backgroundColor: COLORS.WHITE,
-    maxHeight: 250,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.LIGHT_GRAY,
   },
-  searchItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-  },
-  searchRow: {
+  locationHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  locationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.BLACK,
+  },
+  dropdownStyle: {
+    marginBottom: 10,
+  },
+  refreshContainer: {
+    padding: 20,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.LIGHT_GRAY,
+    marginBottom: 20,
     alignItems: 'center',
   },
-  searchText: {
+  refreshText: {
+    fontSize: 14,
+    color: COLORS.GRAY,
+    textAlign: 'center',
+    marginBottom: 15,
+    lineHeight: 20,
+  },
+  refreshButton: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  refreshButtonLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.WHITE,
+  },
+
+  /** 🔧 This block was missing the key name before — add it like this */
+  completedLocationsContainer: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.LIGHT_GRAY,
+  },
+
+  completedLocationsTitle: {
     fontSize: 16,
-    marginLeft: 12,
+    fontWeight: '600',
+    color: COLORS.BLACK,
+    marginBottom: 10,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.LIGHT_GREEN,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 5,
+  },
+  chipText: {
+    fontSize: 14,
+    color: COLORS.GREEN,
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  chipRemoveButton: {
+    padding: 2,
+  },
+  chipRemoveIcon: {
+    width: 12,
+    height: 12,
+    tintColor: COLORS.GREEN,
+  },
+  maxLocationsMessage: {
+    padding: 15,
+    backgroundColor: COLORS.LIGHT_GRAY,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  maxLocationsText: {
+    fontSize: 14,
+    color: COLORS.GRAY,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   closeIcon: {
     width: 20,
@@ -602,13 +838,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginVertical: 20,
   },
-  searchStyle: {
-    marginBottom: 15,
-  },
   btnLabel: {
     fontSize: 18,
     fontWeight: '600',
   },
 });
+
 
 export default WorkLocationScreen;

@@ -33,79 +33,24 @@ import {debugUserData} from '../../../utils/debugUser';
 import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 
 const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
-  const {mobile_number, email, googleUser, isGoogleLogin, user_id} = route.params;
+  const {mobile_number, email, user_id} = route.params;
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const dispatch = useAppDispatch();
 
   console.log('🔍 UserSignupScreen params:', {
     mobile_number,
     email,
-    googleUser,
-    isGoogleLogin,
   });
 
   const handleSignup = async (values: UserFormValues) => {
     try {
       console.log('🚀 Starting user signup process...');
-      console.log('📊 Signup type:', isGoogleLogin ? 'Google Login' : 'Mobile Login');
+      console.log('📊 Signup type: Mobile Login');
       
       // Debug current state
       await debugUserData();
       
-      if (isGoogleLogin && googleUser) {
-        // Handle Google login signup - complete user registration
-        console.log('🔐 Processing Google login signup...');
-        
-        const finalUserData = {
-          id: googleUser.id,
-          name: values.name || googleUser.name,
-          email: values.email || googleUser.email,
-          dob: moment(values.dob).format('DD/MM/YYYY'),
-          phone: mobile_number || '', // Google login might not have phone
-          profile: values.profile_image || googleUser.photo || '',
-          role: 'user',
-          status: 1,
-          location: {
-            address: '1234 Sunset Blvd, Los Angeles, CA 90026',
-            latitude: 34.09000912,
-            longitude: -118.27498032,
-          },
-        };
-        
-        // Save Google user data with proper token from route params
-        const token = route.params.token || 'google_token_' + googleUser.id;
-        await AsyncStorage.setItem('userData', JSON.stringify(finalUserData));
-        await AsyncStorage.setItem('token', token);
-        await AsyncStorage.setItem('role', 'user');
-        
-        dispatch(setUserData(finalUserData));
-        dispatch(setToken(token));
-        
-        console.log('✅ Google user data saved:', finalUserData);
-        
-        Toast.show({
-          type: 'success',
-          text1: 'Welcome to HouseApp!',
-          text2: `Hello ${finalUserData.name}!`,
-        });
-        
-        // Navigate to home with proper reset
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'HomeScreenStack',
-              params: {
-                screen: 'HomeScreen',
-              },
-            },
-          ],
-        });
-        
-        return;
-      }
-      
-      // Handle regular mobile login signup
+      // Handle mobile login signup
       console.log('📱 Processing mobile login signup...');
       
       const formData = new FormData();
@@ -255,9 +200,9 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
 
   const formik = useFormik<UserFormValues>({
     initialValues: {
-      name: googleUser?.name || '',
-      email: googleUser?.email || email || '',
-      profile_image: googleUser?.photo || null,
+      name: '',
+      email: email || '',
+      profile_image: null,
       dob: '',
     },
     validationSchema: userFormValidationSchema,
@@ -336,36 +281,17 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
           blurOnSubmit={false}
         />
 
-        {!isGoogleLogin && (
-          <>
-            <MagicText style={styles.inputLabel}>
-              Phone <MagicText style={styles.astricStyle}>*</MagicText>
-            </MagicText>
-            <TextField
-              placeholder="Phone"
-              style={[styles.textFieldStyle, {marginBottom: 18}]}
-              value={mobile_number}
-              isValid
-              editable={false}
-              showCountryCode
-            />
-          </>
-        )}
-
-        {isGoogleLogin && (
-          <>
-            <MagicText style={styles.inputLabel}>
-              Google Account
-            </MagicText>
-            <TextField
-              placeholder="Google Account"
-              style={[styles.textFieldStyle, {marginBottom: 18}]}
-              value={googleUser?.email || 'Google User'}
-              isValid
-              editable={false}
-            />
-          </>
-        )}
+        <MagicText style={styles.inputLabel}>
+          Phone <MagicText style={styles.astricStyle}>*</MagicText>
+        </MagicText>
+        <TextField
+          placeholder="Phone"
+          style={[styles.textFieldStyle, {marginBottom: 18}]}
+          value={mobile_number}
+          isValid
+          editable={false}
+          showCountryCode
+        />
 
         <Text style={styles.inputLabel}>
           Email <Text style={styles.optionalTextStyle}>(optional)</Text>

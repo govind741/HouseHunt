@@ -4,7 +4,6 @@ const ENDPOINT = {
   //Auth
   user_login: 'v1/auth/users/login',
   agent_login: 'v1/auth/agent/login',
-  google_auth: 'v1/auth/user/auth/google',
 
   verify_user: 'v1/auth/users/verify-otp',
   verify_agent: 'v1/auth/agent/verify-otp',

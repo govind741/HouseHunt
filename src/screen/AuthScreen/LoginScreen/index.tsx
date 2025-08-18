@@ -13,76 +13,17 @@ import {COLORS} from '../../../assets/colors';
 import {IMAGE} from '../../../assets/images';
 import TextField from '../../../components/TextField';
 import Button from '../../../components/Button';
-import GoogleSignInButton from '../../../components/GoogleSignInButton';
 import {LoginScreenProps} from '../../../types/authTypes';
 import {handleUserLogin} from '../../../services/authServices';
 import Toast from 'react-native-toast-message';
 import {BASE_URL} from '../../../constant/urls';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useAppDispatch} from '../../../store';
-import {setToken, setUserData} from '../../../store/slice/authSlice';
-
-
-// Conditional imports for Google Sign-In to prevent crashes
-let GoogleAuthService: any = null;
-let GoogleIcon: any = null;
-let GOOGLE_CONFIG: any = null;
-
-try {
-  GoogleAuthService = require('../../../services/googleAuthService').default;
-  GoogleIcon = require('../../../components/GoogleIcon').default;
-  GOOGLE_CONFIG = require('../../../config/googleConfig').default;
-} catch (error) {
-  // Google Sign-In components not available
-}
 
 const LoginScreen = ({navigation}: LoginScreenProps) => {
   const [mobile, setMobile] = useState('');
   const [selectedTab, setSelectedTab] = useState<'phone' | 'gmail'>('phone');
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Only attempt Google Sign-In configuration if everything is properly available
-    let shouldConfigureGoogle = false;
-    
-    try {
-      // Check if all required components are available
-      if (GoogleAuthService && 
-          GOOGLE_CONFIG && 
-          GoogleAuthService.isAvailable && 
-          typeof GoogleAuthService.isAvailable === 'function') {
-        
-        // Test availability
-        const isAvailable = GoogleAuthService.isAvailable();
-        if (isAvailable) {
-          shouldConfigureGoogle = true;
-        } else {
-          // Google Sign-In not available
-        }
-      } else {
-        // Google Sign-In components missing or invalid
-      }
-    } catch (error) {
-      // Error checking Google Sign-In availability
-      shouldConfigureGoogle = false;
-    }
-
-    // Only configure if all checks passed
-    if (shouldConfigureGoogle) {
-      try {
-        const configSuccess = GoogleAuthService.configure(GOOGLE_CONFIG.WEB_CLIENT_ID);
-        if (configSuccess) {
-          // Google Sign-In configured successfully
-        } else {
-          // Google Sign-In configuration returned false
-        }
-      } catch (error) {
-        // Exception during Google Sign-In configuration
-      }
-    } else {
-      // Skipping Google Sign-In configuration - not available
-    }
-    
+    // Handle hardware back button
     const backAction = () => {
       Alert.alert('Are you sure want to exit?', '', [
         {text: 'Cancel', style: 'cancel'},
@@ -101,116 +42,6 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
     };
   }, []);
 
-  const handleGoogleSignIn = async () => {
-    if (!GoogleAuthService) {
-      Toast.show({
-        type: 'error',
-        text1: 'Google Sign-In not available',
-        text2: 'Please use mobile number login',
-      });
-      return;
-    }
-
-    if (!GoogleAuthService.isAvailable()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Google Sign-In not configured',
-        text2: 'Please use mobile number login or install Google Play Services',
-      });
-      return;
-    }
-
-    try {
-      // Complete Google Sign-In with backend authentication
-      const {googleAuth, backendAuth} = await GoogleAuthService.completeGoogleSignIn();
-      
-      if (!backendAuth.success) {
-        throw new Error(backendAuth.message || 'Backend authentication failed');
-      }
-
-      Toast.show({
-        type: 'success',
-        text1: 'Google Sign-In successful!',
-        text2: `Welcome ${googleAuth.user.name}`,
-      });
-
-      // Handle the response based on the backend data
-      if (backendAuth.data && backendAuth.data.id) {
-        // User exists in backend, save data and navigate to home
-        const userData = {
-          id: backendAuth.data.id,
-          name: backendAuth.data.name || googleAuth.user.name,
-          email: backendAuth.data.email || googleAuth.user.email,
-          phone: backendAuth.data.phone || '',
-          profile: backendAuth.data.profile || googleAuth.user.photo || '',
-          role: backendAuth.data.role || 'user',
-          status: backendAuth.data.status || 1,
-        };
-
-        // Save to AsyncStorage and Redux
-        await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        await AsyncStorage.setItem('token', backendAuth.tokens || backendAuth.token || '');
-        await AsyncStorage.setItem('role', userData.role);
-        
-        // Update Redux state
-        dispatch(setUserData(userData));
-        dispatch(setToken(backendAuth.tokens || backendAuth.token || ''));
-
-        // Navigate to home
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'HomeScreenStack',
-              params: {
-                screen: 'HomeScreen',
-              },
-            },
-          ],
-        });
-      } else {
-        // New user, navigate to signup screen
-        navigation.navigate('UserSignupScreen', {
-          mobile_number: '', // No mobile for Google login
-          email: googleAuth.user.email,
-          googleUser: googleAuth.user,
-          isGoogleLogin: true,
-          token: backendAuth.tokens || backendAuth.token || '',
-        });
-      }
-      
-    } catch (error: any) {
-      
-      let errorMessage = 'Google Sign-In failed';
-      let errorTitle = 'Google Sign-In Failed';
-      
-      // Handle specific error types
-      if (error.message && error.message.includes('not available')) {
-        errorTitle = 'Google Sign-In Unavailable';
-        errorMessage = 'Google Sign-In is not available on this device. Please use mobile number login.';
-      } else if (error.message && error.message.includes('NativeModule')) {
-        errorTitle = 'Google Services Missing';
-        errorMessage = 'Google Play Services not installed. Please use mobile number login.';
-      } else if (error.code === 'SIGN_IN_CANCELLED') {
-        errorTitle = 'Sign-In Cancelled';
-        errorMessage = 'Google Sign-In was cancelled by user';
-      } else if (error.code === 'IN_PROGRESS') {
-        errorTitle = 'Sign-In In Progress';
-        errorMessage = 'Google Sign-In is already in progress';
-      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-        errorTitle = 'Google Play Services Required';
-        errorMessage = 'Please install Google Play Services or use mobile number login';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      Toast.show({
-        type: 'error',
-        text1: errorTitle,
-        text2: errorMessage,
-      });
-    }
-  };
   const handleSignIn = () => {
     // Basic validation
     if (!mobile.trim()) {
@@ -322,19 +153,34 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           </>
         ) : (
           <>
-            {/* Google Sign-In Section - Only show if available and properly configured */}
-            {GoogleAuthService && GoogleIcon && GoogleAuthService.isAvailable && GoogleAuthService.isAvailable() ? (
-              <GoogleSignInButton onPress={handleGoogleSignIn} />
-            ) : (
-              <View style={styles.unavailableContainer}>
-                <MagicText style={styles.unavailableText}>
-                  Google Sign-In is not available on this device
-                </MagicText>
-                <MagicText style={styles.unavailableSubText}>
-                  Please use phone number login instead
+            <TouchableOpacity
+              style={styles.googleSignInButton}
+              onPress={() => {
+                Alert.alert(
+                  'Google Sign-In Not Available',
+                  'Google sign-in is currently not available. Please use phone number to continue.',
+                  [
+                    {
+                      text: 'Use Phone Number',
+                      onPress: () => setSelectedTab('phone'),
+                      style: 'default',
+                    },
+                    {
+                      text: 'OK',
+                      style: 'cancel',
+                    },
+                  ]
+                );
+              }}>
+              <View style={styles.googleButtonContent}>
+                <View style={styles.googleIconContainer}>
+                  <MagicText style={styles.googleIcon}>G</MagicText>
+                </View>
+                <MagicText style={styles.googleButtonText}>
+                  Sign in with Google
                 </MagicText>
               </View>
-            )}
+            </TouchableOpacity>
           </>
         )}
       </View>
@@ -413,18 +259,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginBottom: 30,
   },
-  signinText: {
-    fontSize: 16,
-  },
-  signinView: {
-    flex: 1,
-    alignItems: 'center',
-    marginRight: 22,
-  },
-  moibleText: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
   btnLabel: {
     fontSize: 20,
     fontWeight: '700',
@@ -434,16 +268,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.2,
     borderColor: COLORS.GRAY,
     marginHorizontal: 10,
-  },
-  orText: {
-    fontSize: 14,
-    color: COLORS.TEXT_GRAY,
-    fontWeight: '600',
-    paddingHorizontal: 15,
-  },
-  socialContainer: {
-    marginTop: 30,
-    marginBottom: 20,
   },
   agentBtn: {
     borderWidth: 1,
@@ -456,12 +280,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     color: COLORS.GRAY,
-    // fontWeight: '700',
-  },
-  agentText1: {
-    fontSize: 12,
-    color: COLORS.WHITE,
-    fontWeight: '700',
   },
   termsHeaderText: {
     textAlign: 'center',
@@ -514,24 +332,43 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: COLORS.BLACK,
   },
-  unavailableContainer: {
+  googleSignInButton: {
     marginHorizontal: 15,
-    marginTop: 20,
-    padding: 20,
-    backgroundColor: COLORS.WHITE_SMOKE,
-    borderRadius: 8,
+    marginTop: 25,
+    backgroundColor: COLORS.WHITE,
+    borderWidth: 1,
+    borderColor: '#dadce0',
+    borderRadius: 6,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  googleButtonContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  unavailableText: {
+  googleIconContainer: {
+    width: 20,
+    height: 20,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleIcon: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.TEXT_GRAY,
-    textAlign: 'center',
-    marginBottom: 8,
+    fontWeight: 'bold',
+    color: '#4285f4',
   },
-  unavailableSubText: {
-    fontSize: 14,
-    color: COLORS.TEXT_GRAY,
-    textAlign: 'center',
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#3c4043',
   },
 });

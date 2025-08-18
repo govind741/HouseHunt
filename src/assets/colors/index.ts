@@ -3,6 +3,7 @@ export enum COLORS {
   'WHITE' = '#FFFFFF',
   'RED' = '#FB1D14',
   'GRAY' = '#B1AFAF',
+  'LIGHT_GRAY' = '#E5E5E5',
   'TEXT_GRAY' = '#7a7979',
   'WHITE_SMOKE' = '#F5F4F8',
   'RATING_BGCOLOR' = '#507089',
