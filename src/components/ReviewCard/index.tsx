@@ -29,9 +29,9 @@ const ReviewCard = ({item}: ReviewCardType) => {
       <StarRating
         onChange={() => {}}
         enableHalfStar={true}
-        rating={item?.rating}
+        rating={Math.max(0, Math.min(5, Number(item?.rating) || 0))} // Ensure valid range
         maxStars={5}
-        starSize={20}
+        starSize={20} // Already an integer
         emptyColor={COLORS.GRAY}
         starStyle={{width: 16, marginLeft: 0, marginRight: 2}}
         style={{

@@ -40,10 +40,12 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
   const [showLocationOption, setShowLocationOption] = useState(false);
   const [hasLocationData, setHasLocationData] = useState(false);
   const [mainImageIndex, setMainImageIndex] = useState(0); // Track main image index
+  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false); // Track geocoding status
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // For debouncing geocoding
 
   useEffect(() => {
-    if (isGettingLocation) {
+    if (isGettingLocation || isGeocodingAddress) {
       // Start rotation animation
       const rotateAnimation = Animated.loop(
         Animated.timing(rotateAnim, {
@@ -59,7 +61,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
         rotateAnim.setValue(0);
       };
     }
-  }, [isGettingLocation, rotateAnim]);
+  }, [isGettingLocation, isGeocodingAddress, rotateAnim]);
 
   const handleImagePicker = () => {
     launchImageLibrary({
@@ -152,6 +154,30 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     }
   };
 
+  const geocodeAddress = async (address: string): Promise<{latitude: number, longitude: number} | null> => {
+    try {
+      // Using OpenStreetMap Nominatim API for geocoding (free alternative to Google Maps)
+      const encodedAddress = encodeURIComponent(address);
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon)
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
   const getCurrentLocation = async () => {
     const hasPermission = await requestLocationPermission();
     
@@ -216,12 +242,67 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
 
   const handleAddressChange = (address: string) => {
     formik.setFieldValue('agent_address', address);
-    // If user manually types, hide location option and reset location data
+    
+    // Clear existing timeout
+    if (geocodingTimeoutRef.current) {
+      clearTimeout(geocodingTimeoutRef.current);
+    }
+    
+    // If user manually types, hide location option initially
     if (address !== formik.values.agent_address) {
-      setHasLocationData(false);
       setShowLocationOption(false);
+    }
+    
+    // Debounce geocoding to avoid too many API calls
+    geocodingTimeoutRef.current = setTimeout(async () => {
+      await performGeocoding(address);
+    }, 1500); // Wait 1.5 seconds after user stops typing
+  };
+
+  const performGeocoding = async (address: string) => {
+    // Auto-fetch coordinates if address is substantial (more than 10 characters)
+    if (address.trim().length > 10) {
+      setIsGeocodingAddress(true);
+      try {
+        console.log('🔍 Geocoding address:', address);
+        const coordinates = await geocodeAddress(address.trim());
+        
+        if (coordinates) {
+          console.log('✅ Coordinates found:', coordinates);
+          formik.setFieldValue('latitude', coordinates.latitude);
+          formik.setFieldValue('longitude', coordinates.longitude);
+          setHasLocationData(true);
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Location Found',
+            text2: 'Coordinates automatically fetched for your address.',
+          });
+        } else {
+          console.log('❌ No coordinates found for address');
+          formik.setFieldValue('latitude', null);
+          formik.setFieldValue('longitude', null);
+          setHasLocationData(false);
+          
+          Toast.show({
+            type: 'info',
+            text1: 'Location Not Found',
+            text2: 'Could not find coordinates for this address. You can still continue.',
+          });
+        }
+      } catch (error) {
+        console.error('Error geocoding address:', error);
+        formik.setFieldValue('latitude', null);
+        formik.setFieldValue('longitude', null);
+        setHasLocationData(false);
+      } finally {
+        setIsGeocodingAddress(false);
+      }
+    } else {
+      // Reset coordinates for short addresses
       formik.setFieldValue('latitude', null);
       formik.setFieldValue('longitude', null);
+      setHasLocationData(false);
     }
   };
 
@@ -553,7 +634,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
 
           <View style={styles.addressContainer}>
             <TextField
-              placeholder="Agent's Address"
+              placeholder="Agent's Address (coordinates will be auto-fetched)"
               leftIcon={hasLocationData ? null : <LocationIcon />}
               style={[
                 styles.textFieldStyle,
@@ -568,6 +649,39 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
               multiline
               numberOfLines={3}
             />
+            
+            {/* Geocoding status indicator */}
+            {isGeocodingAddress && (
+              <View style={styles.geocodingStatus}>
+                <Animated.View 
+                  style={[
+                    styles.loadingIndicator,
+                    {
+                      transform: [{
+                        rotate: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <MagicText style={styles.loadingText}>⟳</MagicText>
+                </Animated.View>
+                <MagicText style={styles.geocodingText}>
+                  Fetching coordinates for your address...
+                </MagicText>
+              </View>
+            )}
+            
+            {/* Location coordinates display */}
+            {hasLocationData && formik.values.latitude && formik.values.longitude && (
+              <View style={styles.coordinatesDisplay}>
+                <MagicText style={styles.coordinatesText}>
+                  📍 Coordinates: {formik.values.latitude.toFixed(6)}, {formik.values.longitude.toFixed(6)}
+                </MagicText>
+              </View>
+            )}
             
             {showLocationOption && (
               <TouchableOpacity 
@@ -827,6 +941,37 @@ const styles = StyleSheet.create({
   },
   addressContainer: {
     marginBottom: 18,
+  },
+  geocodingStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE_SMOKE,
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginTop: 5,
+  },
+  geocodingText: {
+    fontSize: 12,
+    color: COLORS.PRIMARY,
+    marginLeft: 8,
+    fontStyle: 'italic',
+  },
+  coordinatesDisplay: {
+    backgroundColor: COLORS.WHITE_SMOKE,
+    borderWidth: 1,
+    borderColor: COLORS.GREEN,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginTop: 5,
+  },
+  coordinatesText: {
+    fontSize: 12,
+    color: COLORS.GREEN,
+    fontWeight: '500',
   },
   locationOption: {
     flexDirection: 'row',

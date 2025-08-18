@@ -25,7 +25,6 @@ import MagicText from '../../../components/MagicText';
 import RatingCard from '../../../components/RatingCard';
 import {IMAGE, PROPERTY_IMAGES} from '../../../assets/images';
 import {BASE_URL} from '../../../constant/urls';
-import StarRating from 'react-native-star-rating-widget';
 import HR from '../../../components/HR';
 import RatingsReviewsSection from '../../../components/RatingsReviewsSection';
 import {
@@ -310,26 +309,40 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
           />
         </View>
         
-        {/* Property/Agent Name - Right under the image */}
+        {/* Property/Agent Name with Rating - Right under the image */}
         <View style={styles.nameContainer}>
-          <MagicText style={styles.propertyNameText}>
-            {(() => {
-              console.log('=== NAME EXTRACTION DEBUG ===');
-              console.log('agentDetails:', agentDetails);
-              console.log('agentDetails.data:', agentDetails?.data);
-              console.log('agentDetails.data.agency_name:', agentDetails?.data?.agency_name);
-              console.log('agentDetails.data.name:', agentDetails?.data?.name);
-              console.log('name prop:', name);
-              
-              const finalName = agentDetails?.data?.agency_name || 
-                               agentDetails?.data?.name ||
-                               name || 
-                               'Property Details';
-              
-              console.log('Final name selected:', finalName);
-              return finalName;
-            })()}
-          </MagicText>
+          <View style={[styles.row, {justifyContent: 'space-between', alignItems: 'center'}]}>
+            <View style={{flex: 1, marginRight: 10}}>
+              <MagicText style={styles.propertyNameText}>
+                {(() => {
+                  console.log('=== NAME EXTRACTION DEBUG ===');
+                  console.log('agentDetails:', agentDetails);
+                  console.log('agentDetails.data:', agentDetails?.data);
+                  console.log('agentDetails.data.agency_name:', agentDetails?.data?.agency_name);
+                  console.log('agentDetails.data.name:', agentDetails?.data?.name);
+                  console.log('name prop:', name);
+                  
+                  const finalName = agentDetails?.data?.agency_name || 
+                                   agentDetails?.data?.name ||
+                                   name || 
+                                   'Property Details';
+                  
+                  console.log('Final name selected:', finalName);
+                  return finalName;
+                })()}
+              </MagicText>
+            </View>
+            <RatingCard rating={(() => {
+              const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
+              console.log('Rating extraction debug:', {
+                'agentDetails?.data?.rating': agentDetails?.data?.rating,
+                'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
+                'final rating': rating,
+                'rating type': typeof rating
+              });
+              return String(rating);
+            })()} />
+          </View>
         </View>
         
         <View style={styles.innerContainer}>
@@ -350,16 +363,6 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 style={styles.shareIconContainer}>
                 <ShareIcon />
               </TouchableOpacity> */}
-              <RatingCard rating={(() => {
-                const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
-                console.log('Rating extraction debug:', {
-                  'agentDetails?.data?.rating': agentDetails?.data?.rating,
-                  'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
-                  'final rating': rating,
-                  'rating type': typeof rating
-                });
-                return String(rating);
-              })()} />
             </View>
           </View>
           {agentDetails?.office_address ? (
@@ -381,20 +384,20 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
           ) : null}
 
           <View style={styles.actionRows}>
-            <TouchableOpacity onPress={callHandler} style={styles.card}>
-              <Image source={IMAGE.FILL_CALL_IMAGE} style={styles.icon} />
+            <TouchableOpacity onPress={callHandler} style={styles.actionButton}>
+              <Image source={IMAGE.FILL_CALL_IMAGE} style={styles.icon3D} />
               <MagicText style={styles.actionText}>Call</MagicText>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={whatsappHandler} style={styles.card}>
-              <Image source={IMAGE.WHATAPP_IMAGE} style={styles.icon} />
+            <TouchableOpacity onPress={whatsappHandler} style={styles.actionButton}>
+              <Image source={IMAGE.WHATAPP_IMAGE} style={styles.icon3D} />
               <MagicText style={styles.actionText}>WhatsApp</MagicText>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.card}
+              style={styles.actionButton}
               onPress={() => handleUserInteraction('location')}>
-              <Image source={IMAGE.GoogleMapIcon} style={styles.icon} />
+              <Image source={IMAGE.GoogleMapIcon} style={styles.icon3D} />
               <MagicText style={styles.actionText}>Location</MagicText>
             </TouchableOpacity>
           </View>
@@ -484,6 +487,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: COLORS.TEXT_GRAY,
     fontWeight: '400',
+    marginTop: 8,
   },
   label: {
     fontSize: 16,
@@ -493,27 +497,31 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 5,
   },
-  card: {
-    width: 100,
-    height: 100,
-    backgroundColor: COLORS.WHITE,
-    elevation: 4,
-    borderRadius: 12,
+  actionButton: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
+    justifyContent: 'center',
+    padding: 8,
   },
-  icon: {
+  icon3D: {
     width: 60,
     height: 60,
     resizeMode: 'cover',
-    marginBottom: 4,
+    // 3D effect applied directly to icons
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    borderRadius: 30, // Make icons circular for better 3D effect
   },
   actionRows: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-    marginTop: 20,
+    marginTop: 15, // Reduced from 20 to 15 for better visual balance
     marginBottom: 10,
   },
 });

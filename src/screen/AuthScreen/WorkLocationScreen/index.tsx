@@ -490,12 +490,11 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       Toast.show({
         type: 'success',
         text1: 'Account created successfully',
-        text2: 'Your profile is being reviewed. You will be notified once approved.',
+        text2: 'Welcome to HouseApp! You can now start using the app.',
       });
       
-      // Navigate to PendingApprovalScreen within HomeScreenStack
-      // This ensures the user sees the pending approval screen after signup
-      console.log('Navigating to PendingApprovalScreen...');
+      // Navigate directly to HomeScreen instead of PendingApprovalScreen
+      console.log('Navigating to HomeScreen...');
       navigation.reset({
         index: 0,
         routes: [
@@ -504,7 +503,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
             state: {
               routes: [
                 {
-                  name: 'PendingApprovalScreen',
+                  name: 'HomeScreen',
                 },
               ],
             },

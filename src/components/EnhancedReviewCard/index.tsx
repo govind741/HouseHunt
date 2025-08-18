@@ -127,14 +127,14 @@ const EnhancedReviewCard = ({
         <StarRating
           onChange={() => {}}
           enableHalfStar={true}
-          rating={item?.rating || 0}
+          rating={Math.max(0, Math.min(5, Number(item?.rating) || 0))} // Ensure valid range
           maxStars={5}
-          starSize={16}
+          starSize={16} // Already an integer
           emptyColor={COLORS.GRAY}
           starStyle={styles.starStyle}
         />
         <MagicText style={styles.ratingText}>
-          {item?.rating ? item.rating.toFixed(1) : '0.0'}
+          {item?.rating ? Number(item.rating).toFixed(1) : '0.0'}
         </MagicText>
       </View>
 

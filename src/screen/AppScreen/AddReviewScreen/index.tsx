@@ -116,12 +116,12 @@ const AddReviewScreen = ({navigation, route}: AddReviewScreenProps) => {
                   setReviewCount(rating);
                 }}
                 enableHalfStar={true}
-                rating={reviewCount}
+                rating={Math.max(0, Math.min(5, Number(reviewCount) || 0))} // Ensure valid range
                 maxStars={5}
-                starSize={45}
+                starSize={45} // Already an integer
                 emptyColor={COLORS.GRAY}
                 starStyle={{
-                  width: 38,
+                  width: 38, // Already an integer
                   marginLeft: 0,
                   marginRight: 16,
                 }}

@@ -59,7 +59,46 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Function to calculate ratings locally from reviews
+  // Safe StarRating wrapper to prevent precision errors
+  const SafeStarRating = ({rating, onChange, ...props}: any) => {
+    // Ensure rating is always a valid number between 0 and 5
+    let safeRating = 0;
+    
+    try {
+      const numRating = Number(rating);
+      if (isFinite(numRating) && !isNaN(numRating)) {
+        safeRating = Math.max(0, Math.min(5, numRating));
+      }
+    } catch (error) {
+      console.warn('Error processing rating:', rating, error);
+      safeRating = 0;
+    }
+    
+    // Round to avoid precision issues
+    const finalRating = Math.round(safeRating * 100) / 100;
+    
+    console.log('SafeStarRating:', {
+      originalRating: rating,
+      safeRating,
+      finalRating,
+      type: typeof finalRating,
+      isFinite: isFinite(finalRating)
+    });
+    
+    // Safe onChange wrapper
+    const safeOnChange = onChange ? (newRating: number) => {
+      const safeNewRating = Math.max(0, Math.min(5, Number(newRating) || 0));
+      onChange(safeNewRating);
+    } : () => {};
+    
+    return (
+      <StarRating
+        {...props}
+        rating={finalRating}
+        onChange={safeOnChange}
+      />
+    );
+  };
   const calculateRatingsFromReviews = useCallback((reviewsList: Review[]) => {
     if (!reviewsList || reviewsList.length === 0) {
       setAverageRating(0);
@@ -106,7 +145,9 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
 
     // Calculate average rating
     const avgRating = validRatingsCount > 0 ? totalRatingSum / validRatingsCount : 0;
-    setAverageRating(Math.round(avgRating * 4) / 4); // Round to nearest 0.25 for proper star display
+    // Ensure average rating is within valid range (0-5) and round to nearest 0.25
+    const validAvgRating = Math.max(0, Math.min(5, avgRating));
+    setAverageRating(Math.round(validAvgRating * 4) / 4); // Round to nearest 0.25 for proper star display
     setRatingBreakdown(breakdown);
 
     console.log('📊 Calculated ratings:', {
@@ -184,7 +225,10 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
         
         // Only use API average if local calculation fails
         if (validatedReviews.length === 0 && (response.avergeReview || response.averageReview)) {
-          setAverageRating(response.avergeReview || response.averageReview || 0);
+          const apiRating = response.avergeReview || response.averageReview || 0;
+          // Ensure API rating is also within valid range
+          const validApiRating = Math.max(0, Math.min(5, Number(apiRating) || 0));
+          setAverageRating(validApiRating);
         }
       }
     } catch (error) {
@@ -454,12 +498,19 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
             <MagicText style={styles.ratingNumber}>
               {averageRating.toFixed(1)}
             </MagicText>
-            <StarRating
+            {/* Debug logging */}
+            {console.log('🌟 About to render StarRating with:', {
+              averageRating,
+              type: typeof averageRating,
+              isFinite: isFinite(averageRating),
+              isNaN: isNaN(averageRating)
+            })}
+            <SafeStarRating
               onChange={() => {}}
               enableHalfStar={true}
               rating={averageRating}
               maxStars={5}
-              starSize={Math.round(20)}
+              starSize={20}
               emptyColor={COLORS.GRAY}
               starStyle={styles.overviewStarStyle}
             />
@@ -546,12 +597,12 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
 
             <View style={styles.ratingSection}>
               <MagicText style={styles.ratingLabel}>Your Rating:</MagicText>
-              <StarRating
+              <SafeStarRating
                 onChange={setNewRating}
                 enableHalfStar={false}
                 rating={newRating}
                 maxStars={5}
-                starSize={Math.round(32)}
+                starSize={32}
                 emptyColor={COLORS.GRAY}
                 starStyle={styles.modalStarStyle}
               />
@@ -633,9 +684,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   overviewStarStyle: {
-    width: Math.round(14),
+    width: 14, // Use integer instead of Math.round(14)
     marginLeft: 0,
-    marginRight: Math.round(2),
+    marginRight: 2, // Use integer instead of Math.round(2)
   },
   totalReviewsText: {
     fontSize: 13,
@@ -808,9 +859,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalStarStyle: {
-    width: Math.round(28),
+    width: 28, // Use integer instead of Math.round(28)
     marginLeft: 0,
-    marginRight: Math.round(12),
+    marginRight: 12, // Use integer instead of Math.round(12)
   },
   commentSection: {
     marginBottom: 24,

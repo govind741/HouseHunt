@@ -32,6 +32,15 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
     return emailRegex.test(input);
   };
 
+  // Helper function to format phone number for display
+  const formatPhoneForDisplay = (phone: string) => {
+    // Remove any existing country code prefixes and formatting
+    let cleanPhone = phone.replace(/^\+91-?/, '').replace(/^\+?91-?/, '').replace(/^91-?/, '');
+    
+    // Return formatted phone with single +91 prefix
+    return `+91-${cleanPhone}`;
+  };
+
   // Check if the mobile parameter is actually an email
   const isEmailLogin = isEmail(mobile);
 
@@ -400,7 +409,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                     {
                       name: 'HomeScreenStack',
                       params: {
-                        screen: 'PendingApprovalScreen',
+                        screen: 'HomeScreen',
                       },
                     },
                   ],
@@ -540,7 +549,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
             We have sent a verification code to
           </MagicText>
           <MagicText style={[styles.title, {fontWeight: '700'}]}>
-            {isEmailLogin ? mobile : `+91-${mobile}`}
+            {isEmailLogin ? mobile : formatPhoneForDisplay(mobile)}
           </MagicText>
         </View>
         <View style={styles.otpView}>
