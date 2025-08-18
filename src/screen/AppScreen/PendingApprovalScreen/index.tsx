@@ -2,7 +2,6 @@ import React, {useEffect} from 'react';
 import {
   ActivityIndicator,
   Alert,
-  BackHandler,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
@@ -19,23 +18,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert('Exit App', 'Do you really want to exit?', [
-        {text: 'Exit', onPress: () => BackHandler.exitApp()},
-        {text: 'Wait'},
-      ]);
-      return true;
-    };
-    const backhandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => {
-      backhandler.remove();
-    };
-  }, []);
+  // Remove the individual BackHandler - now handled centrally
+  // This screen will now allow natural back navigation
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [

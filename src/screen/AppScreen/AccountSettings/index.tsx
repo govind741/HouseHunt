@@ -5,6 +5,7 @@ import {COLORS} from '../../../assets/colors';
 import ScreenHeader from '../../../components/ScreenHeader';
 import MagicText from '../../../components/MagicText';
 import WhiteCardView from '../../../components/WhiteCardView';
+import NotificationToggle from '../../../components/NotificationToggle';
 import {ContactUsIcon, RightArrowIcon} from '../../../assets/icons';
 import {deleteUser} from '../../../services/HomeService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -53,7 +54,14 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
       />
 
       <View style={styles.container}>
-        <MagicText style={styles.titleText}>Account Settings</MagicText>
+        <MagicText style={styles.titleText}>Settings</MagicText>
+
+        {/* Notification Toggle */}
+        <NotificationToggle 
+          onToggle={(enabled) => {
+            console.log('Notifications toggled:', enabled);
+          }}
+        />
 
         <WhiteCardView
           cardStyle={styles.cardStyle}

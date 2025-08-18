@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
   Alert,
-  BackHandler,
   Image,
   Linking,
   StyleSheet,
@@ -17,30 +16,19 @@ import {LoginScreenProps} from '../../../types/authTypes';
 import {handleUserLogin} from '../../../services/authServices';
 import Toast from 'react-native-toast-message';
 import {BASE_URL} from '../../../constant/urls';
+import {GoogleIcon} from '../../../assets/icons';
+
+// Configuration for Google Sign-In button style
+// 'white' - White background with border (recommended for most cases)
+// 'blue' - Blue background with white text (alternative official style)
+const GOOGLE_BUTTON_VARIANT: 'white' | 'blue' = 'white'; // Change to 'blue' for blue variant
 
 const LoginScreen = ({navigation}: LoginScreenProps) => {
   const [mobile, setMobile] = useState('');
   const [selectedTab, setSelectedTab] = useState<'phone' | 'gmail'>('phone');
 
-  useEffect(() => {
-    // Handle hardware back button
-    const backAction = () => {
-      Alert.alert('Are you sure want to exit?', '', [
-        {text: 'Cancel', style: 'cancel'},
-        {text: 'Exit', onPress: () => BackHandler.exitApp(), style: 'default'},
-      ]);
-      return true;
-    };
-    
-    const backhandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => {
-      backhandler.remove();
-    };
-  }, []);
+  // Remove the individual BackHandler - now handled centrally
+  // The centralized back handler will show exit prompt on LoginScreen
 
   const handleSignIn = () => {
     // Basic validation
@@ -126,7 +114,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
                 styles.tabText,
                 selectedTab === 'gmail' && styles.activeTabText,
               ]}>
-              Gmail
+              Email
             </MagicText>
           </TouchableOpacity>
         </View>
@@ -153,8 +141,13 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           </>
         ) : (
           <>
+            {/* Google Sign-In Button - Following Official Google Design Guidelines */}
             <TouchableOpacity
-              style={styles.googleSignInButton}
+              style={
+                GOOGLE_BUTTON_VARIANT === 'blue'
+                  ? styles.googleSignInButtonBlue
+                  : styles.googleSignInButton
+              }
               onPress={() => {
                 Alert.alert(
                   'Google Sign-In Not Available',
@@ -171,12 +164,23 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
                     },
                   ]
                 );
-              }}>
+              }}
+              activeOpacity={0.8}>
               <View style={styles.googleButtonContent}>
-                <View style={styles.googleIconContainer}>
-                  <MagicText style={styles.googleIcon}>G</MagicText>
+                <View
+                  style={
+                    GOOGLE_BUTTON_VARIANT === 'blue'
+                      ? styles.googleIconContainer
+                      : styles.googleIconContainerWhite
+                  }>
+                  <GoogleIcon width={18} height={18} />
                 </View>
-                <MagicText style={styles.googleButtonText}>
+                <MagicText
+                  style={
+                    GOOGLE_BUTTON_VARIANT === 'blue'
+                      ? styles.googleButtonTextWhite
+                      : styles.googleButtonText
+                  }>
                   Sign in with Google
                 </MagicText>
               </View>
@@ -188,7 +192,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
         <TouchableOpacity
           onPress={() => navigation.navigate('AgentLoginScreen')}
           style={styles.agentBtn}>
-          <MagicText style={styles.agentText}>Agent Log in</MagicText>
+          <MagicText style={styles.agentText}>Agent</MagicText>
         </TouchableOpacity>
         <MagicText style={styles.termsHeaderText}>
           By continuing, you agree to our
@@ -198,14 +202,14 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
             onPress={() => {
               Linking.openURL(`${BASE_URL}/v1/auth/terms`);
             }}>
-            <MagicText style={styles.termsText}>Terms of Service ,</MagicText>
+            <MagicText style={styles.termsText}>Terms of Service </MagicText>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.horizontalView}
             onPress={() => {
               Linking.openURL(`${BASE_URL}v1/auth/privacy-policy`);
             }}>
-            <MagicText style={styles.termsText}>Privacy Policy ,</MagicText>
+            <MagicText style={styles.termsText}>Privacy Policy </MagicText>
           </TouchableOpacity>
           <TouchableOpacity>
             <MagicText style={styles.termsText}>Content Policy</MagicText>
@@ -303,43 +307,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 15,
     marginBottom: 20,
-    backgroundColor: COLORS.WHITE_SMOKE,
-    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 999,
     padding: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
+
   tabButton: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 999,
   },
+
   activeTabButton: {
     backgroundColor: COLORS.WHITE,
-    shadowColor: COLORS.BLACK,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    // subtle “raised” feel
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 2,
   },
+
   tabText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.TEXT_GRAY,
+    color: '#9CA3AF',
   },
+
   activeTabText: {
-    color: COLORS.BLACK,
+    color: '#111827',
+    fontWeight: '700',
   },
+
+  // Google Sign-In Button Styles (White variant - Official Google Design)
   googleSignInButton: {
     marginHorizontal: 15,
     marginTop: 25,
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#dadce0',
-    borderRadius: 6,
+    borderColor: '#DADCE0',
+    borderRadius: 8,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -348,7 +360,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    // Hover and focus states would be handled by activeOpacity
   },
+  
+  // Alternative Blue Google Sign-In Button (also official)
+  googleSignInButtonBlue: {
+    marginHorizontal: 15,
+    marginTop: 25,
+    backgroundColor: '#4285F4',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  
   googleButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -360,15 +392,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF', // White background for icon in blue button
+    borderRadius: 2,
+    padding: 1,
   },
-  googleIcon: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4285f4',
+  googleIconContainerWhite: {
+    width: 20,
+    height: 20,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   googleButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    color: '#3c4043',
+    color: '#3C4043',
+    fontFamily: 'Roboto', // Google's preferred font
+    letterSpacing: 0.25,
+  },
+  googleButtonTextWhite: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    fontFamily: 'Roboto',
+    letterSpacing: 0.25,
   },
 });

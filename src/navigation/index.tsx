@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import React, {useState, useEffect, useRef} from 'react';
+import {NavigationContainer, NavigationContainerRef} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
 import AppRoutes from './AppRoutes';
@@ -7,10 +7,11 @@ import {setToken, setUserData} from '../store/slice/authSlice';
 import SplashScreen from '../screen/AuthScreen/SplashScreen';
 import {setLocation} from '../store/slice/locationSlice';
 import {defaultLocation} from '../constant';
+import {AppBackHandler} from '../utils/backHandlerUtils';
 
 const RootNavigator = () => {
   const [loading, setLoading] = useState<boolean>(true);
-
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -41,6 +42,17 @@ const RootNavigator = () => {
     getToken();
   }, [dispatch]);
 
+  useEffect(() => {
+    // Initialize the centralized back handler
+    const backHandler = AppBackHandler.getInstance();
+    backHandler.initialize(navigationRef);
+
+    return () => {
+      // Cleanup on unmount
+      backHandler.cleanup();
+    };
+  }, []);
+
   const getRoute = () => {
     if (loading) {
       return <SplashScreen />;
@@ -48,7 +60,12 @@ const RootNavigator = () => {
 
     return <AppRoutes />;
   };
-  return <NavigationContainer>{getRoute()}</NavigationContainer>;
+  
+  return (
+    <NavigationContainer ref={navigationRef}>
+      {getRoute()}
+    </NavigationContainer>
+  );
 };
 
 export default RootNavigator;

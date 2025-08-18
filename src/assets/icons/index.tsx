@@ -32,6 +32,7 @@ import StarIcon from './StarIcon';
 import TimerIcon from './TimerIcon';
 import VerifiedIcon from './VerifiedIcon';
 import WhatAppIcon from './WhatAppIcon';
+import GoogleIcon from './GoogleIcon';
 
 export {
   DelhiIcon,
@@ -68,4 +69,5 @@ export {
   ExperienceIcon,
   HouseAppIcon,
   PaymentIcon,
+  GoogleIcon,
 };

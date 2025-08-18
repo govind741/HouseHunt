@@ -1,6 +1,5 @@
 import {
   Alert,
-  BackHandler,
   Image,
   Linking,
   StyleSheet,
@@ -23,23 +22,8 @@ import CustomBack from '../../../components/CustomBack';
 const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
   const [mobile, setMobile] = useState('');
 
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert('Are you sure want to exit?', '', [
-        {text: 'Cancel', style: 'cancel'},
-        {text: 'Exit', onPress: () => BackHandler.exitApp(), style: 'default'},
-      ]);
-      return true;
-    };
-    const backhandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => {
-      backhandler.remove();
-    };
-  }, []);
+  // Remove the individual BackHandler - now handled centrally
+  // The centralized back handler will show exit prompt on AgentLoginScreen
 
   const handleSignIn = () => {
     // Basic validation

@@ -346,7 +346,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }));
 
     try {
-      console.log('📝 Step 1: Updating agent profile...');
+      console.log('Step 1: Updating agent profile...');
       
       // First, test basic connectivity
       console.log('🔗 Testing basic connectivity...');

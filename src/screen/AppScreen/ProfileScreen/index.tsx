@@ -36,8 +36,9 @@ import AuthDebugger from '../../../components/AuthDebugger';
 import {prepareUserObj} from '../../../utils';
 import {debugUserData} from '../../../utils/debugUser';
 
-const UserMenuOptions = ['experthelp', 'bookmarks', 'accountSettings', 'aboutUs', 'contactUs'];
-const AgentMenuOptions = ['paymentOptions', 'locations', 'accountSettings', 'aboutUs', 'contactUs'];
+// replace old arrays with this final version
+const UserMenuOptions  = ['experthelp', 'bookmarks', 'aboutUs', 'customerCare', 'settings'];
+const AgentMenuOptions = ['paymentOptions', 'locations', 'aboutUs', 'customerCare', 'settings'];
 
 const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   const dispatch = useAppDispatch();
@@ -189,121 +190,117 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
     return <LoadingAndErrorComponent />;
   }
 
-  const renderOption = (option: string) => {
-    switch (option) {
-      case 'experthelp':
-        return (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ExpertsScreen')}
-            activeOpacity={0.7}>
-            <View style={styles.getHelpView}>
-              <MagicText style={styles.getHelpText}>Get Expert Help</MagicText>
-              <MagicText style={styles.sellbuyText}>
-                BUY | SELL | RENT
+const renderOption = (option: string) => {
+  switch (option) {
+    case 'experthelp':
+      return (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ExpertsScreen')}
+          activeOpacity={0.7}>
+          <View style={styles.getHelpView}>
+            <MagicText style={styles.getHelpText}>Get Expert Help</MagicText>
+            <MagicText style={styles.sellbuyText}>
+              BUY | SELL | RENT
+            </MagicText>
+          </View>
+        </TouchableOpacity>
+      );
+
+    case 'bookmarks':
+      return (
+        <TouchableOpacity onPress={() => navigation.navigate('SavedScreen')}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={styles.row}>
+              <BookmarkIcon color={COLORS.BLACK} />
+              <MagicText style={{marginLeft: 12, fontSize: 16}}>
+                Bookmarks
               </MagicText>
             </View>
-          </TouchableOpacity>
-        );
+            <RightArrowIcon />
+          </View>
+        </TouchableOpacity>
+      );
 
-      case 'paymentOptions':
-        return (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('PaymentOptionsScreen')}
-            activeOpacity={0.7}>
-            <View style={styles.getHelpView}>
-              <PaymentIcon color={COLORS.APP_RED} width={28} height={28} />
-              <MagicText style={styles.getHelpText}>Payment Options</MagicText>
-              <MagicText style={styles.sellbuyText}>
-                UPI | BANK | QR CODE
+    case 'aboutUs':
+      return (
+        <TouchableOpacity onPress={() => navigation.navigate('AboutUsScreen')}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={styles.row}>
+              <ContactUsIcon />
+              <MagicText style={{marginLeft: 12, fontSize: 16}}>
+                About
               </MagicText>
             </View>
-          </TouchableOpacity>
-        );
+            <RightArrowIcon />
+          </View>
+        </TouchableOpacity>
+      );
 
-      case 'bookmarks':
-        return (
-          <TouchableOpacity onPress={() => navigation.navigate('SavedScreen')}>
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={styles.row}>
-                <BookmarkIcon color={COLORS.BLACK} />
-                <MagicText style={{marginLeft: 12, fontSize: 16}}>
-                  Bookmarks
-                </MagicText>
-              </View>
-              <RightArrowIcon />
+    case 'customerCare':
+    case 'contactUs':
+      return (
+        <TouchableOpacity onPress={() => {
+          // support screen / call / chat link
+        }}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={styles.row}>
+              <ContactUsIcon />
+              <MagicText style={{marginLeft: 12, fontSize: 16}}>
+                Customer Care
+              </MagicText>
             </View>
-          </TouchableOpacity>
-        );
+            <RightArrowIcon />
+          </View>
+        </TouchableOpacity>
+      );
 
-      case 'locations':
-        return (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('WorkingLocationsListScreen')}>
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={styles.row}>
-                <LocationIcon />
-                <MagicText style={{marginLeft: 12, fontSize: 16}}>
-                  Working Locations
-                </MagicText>
-              </View>
-              <RightArrowIcon />
+    case 'settings':
+    case 'accountSettings':
+      return (
+        <TouchableOpacity onPress={() => navigation.navigate('AccountSettings')}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={styles.row}>
+              <Image source={IMAGE.SettingsIcon} style={styles.icon} />
+              <MagicText style={{marginLeft: 12, fontSize: 16}}>
+                Settings
+              </MagicText>
             </View>
-          </TouchableOpacity>
-        );
+            <RightArrowIcon />
+          </View>
+        </TouchableOpacity>
+      );
 
-      case 'accountSettings':
-        return (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('AccountSettings')}>
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={styles.row}>
-                <Image source={IMAGE.SettingsIcon} style={styles.icon} />
-                <MagicText style={{marginLeft: 12, fontSize: 16}}>
-                  Account Settings
-                </MagicText>
-              </View>
-              <RightArrowIcon />
+    case 'paymentOptions':
+      return (
+        <TouchableOpacity onPress={() => navigation.navigate('PaymentOptionsScreen')} activeOpacity={0.7}>
+          <View style={styles.getHelpView}>
+            <PaymentIcon color={COLORS.APP_RED} width={28} height={28} />
+            <MagicText style={styles.getHelpText}>Payment Options</MagicText>
+            <MagicText style={styles.sellbuyText}>UPI | BANK | QR CODE</MagicText>
+          </View>
+        </TouchableOpacity>
+      );
+
+    case 'locations':
+      return (
+        <TouchableOpacity onPress={() => navigation.navigate('WorkingLocationsListScreen')}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={styles.row}>
+              <LocationIcon />
+              <MagicText style={{marginLeft: 12, fontSize: 16}}>
+                Working Locations
+              </MagicText>
             </View>
-          </TouchableOpacity>
-        );
+            <RightArrowIcon />
+          </View>
+        </TouchableOpacity>
+      );
 
-      case 'aboutUs':
-        return (
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('AboutUsScreen');
-            }}>
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={styles.row}>
-                <ContactUsIcon />
-                <MagicText style={{marginLeft: 12, fontSize: 16}}>
-                  About US
-                </MagicText>
-              </View>
-              <RightArrowIcon />
-            </View>
-          </TouchableOpacity>
-        );
+    default:
+      return null;
+  }
+};
 
-      case 'contactUs':
-        return (
-          <TouchableOpacity onPress={() => {}}>
-            <View style={[styles.row, {justifyContent: 'space-between'}]}>
-              <View style={styles.row}>
-                <ContactUsIcon />
-                <MagicText style={{marginLeft: 12, fontSize: 16}}>
-                  Contact US
-                </MagicText>
-              </View>
-              <RightArrowIcon />
-            </View>
-          </TouchableOpacity>
-        );
-
-      default:
-        return null;
-    }
-  };
 
   const getProfileImage = () => {
     // Use userDetails first, fallback to userData
