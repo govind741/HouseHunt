@@ -30,6 +30,7 @@ import RatingsReviewsSection from '../../../components/RatingsReviewsSection';
 import {
   handleAddBookmark,
   handleSliderData,
+  getAgentRatingCount,
 } from '../../../services/PropertyServices';
 import {
   getAgentDetailsById,
@@ -53,6 +54,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
 
   const [agentDetails, setAgentDetails] = useState<AgentUserType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
   const [sliderData, setSliderData] = useState<{id: string; image: string}[]>(
     [],
   );
@@ -118,6 +120,10 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         
         console.log('Final agentImages to be set:', agentImages);
         setPropertyImages(agentImages);
+        
+        // Fetch rating count for the agent
+        fetchAgentRatingCount(agentId);
+        
         setIsLoading(false);
       })
       .catch(error => {
@@ -126,6 +132,17 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         setPropertyImages(PROPERTY_IMAGES);
         setIsLoading(false);
       });
+  }, []);
+
+  // Function to fetch agent rating count
+  const fetchAgentRatingCount = useCallback(async (agentId: number) => {
+    try {
+      const count = await getAgentRatingCount(agentId);
+      setTotalRatings(count);
+    } catch (error) {
+      console.log('Error fetching rating count:', error);
+      setTotalRatings(0);
+    }
   }, []);
 
   useEffect(() => {
@@ -332,16 +349,23 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 })()}
               </MagicText>
             </View>
-            <RatingCard rating={(() => {
-              const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
-              console.log('Rating extraction debug:', {
-                'agentDetails?.data?.rating': agentDetails?.data?.rating,
-                'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
-                'final rating': rating,
-                'rating type': typeof rating
-              });
-              return String(rating);
-            })()} />
+            <View style={styles.ratingContainer}>
+              <RatingCard 
+                rating={(() => {
+                  const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
+                  console.log('Rating extraction debug:', {
+                    'agentDetails?.data?.rating': agentDetails?.data?.rating,
+                    'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
+                    'final rating': rating,
+                    'rating type': typeof rating,
+                    'totalRatings': totalRatings
+                  });
+                  return String(rating);
+                })()} 
+                totalRatings={totalRatings}
+                showTotalRatings={true}
+              />
+            </View>
           </View>
         </View>
         
@@ -456,6 +480,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  ratingContainer: {
+    alignItems: 'flex-end',
   },
   titleText: {
     fontSize: 18,

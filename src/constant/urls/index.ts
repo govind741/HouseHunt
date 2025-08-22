@@ -23,6 +23,11 @@ const ENDPOINT = {
   update_agent_profile: 'v1/auth/agent/profile-update',
   update_user_profile: 'v1/auth/users/profile',
 
+  // Agent specific endpoints
+  agent_profile: 'v1/auth/agent/profile',
+  agent_office_address: 'v1/auth/agent/office-address',
+  agent_working_locations: 'v1/auth/agent/working-locations',
+
   //delete
   delete_agent: 'v1/auth/agent/verify-delete-account',
   delete_user: 'v1/auth/users/delete-account',

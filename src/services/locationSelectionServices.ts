@@ -6,21 +6,41 @@ const getAllCityList = async () => {
     console.log('🏙️ Get All Cities Request to:', ENDPOINT.get_city);
     
     const response = await axiosInstance.get(ENDPOINT.get_city);
-    console.log('✅ Get All Cities Success:', response);
+    console.log('✅ Get All Cities Success:', {
+      hasResponse: !!response,
+      responseType: typeof response,
+      hasData: !!response?.data,
+      hasFormattedData: !!response?.formattedData,
+      isArray: Array.isArray(response),
+      responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+    });
     
-    // The API returns data in 'formattedData' field
+    // Handle different response structures and return consistent format
     if (response && response.formattedData && Array.isArray(response.formattedData)) {
-      return { data: response.formattedData };
+      return { 
+        data: response.formattedData,
+        formattedData: response.formattedData 
+      };
     } else if (response && response.data && Array.isArray(response.data)) {
-      return { data: response.data };
+      return { 
+        data: response.data,
+        formattedData: response.data 
+      };
     } else if (response && Array.isArray(response)) {
-      return { data: response };
+      return { 
+        data: response,
+        formattedData: response 
+      };
     } else {
       console.warn('⚠️ Unexpected response structure:', response);
-      return { data: [] };
+      return { data: [], formattedData: [] };
     }
-  } catch (error) {
-    console.error('❌ Get All Cities Error:', error);
+  } catch (error: any) {
+    console.error('❌ Get All Cities Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      url: error?.config?.url,
+    });
     
     // Try alternative approach - direct fetch without authentication
     try {
@@ -35,18 +55,32 @@ const getAllCityList = async () => {
       
       if (alternativeResponse.ok) {
         const data = await alternativeResponse.json();
-        console.log('✅ Alternative cities API success:', data);
+        console.log('✅ Alternative cities API success:', {
+          hasData: !!data,
+          dataType: typeof data,
+          hasFormattedData: !!data?.formattedData,
+          isArray: Array.isArray(data),
+        });
         
         // Handle the response structure from direct fetch
         if (data.formattedData && Array.isArray(data.formattedData)) {
-          return { data: data.formattedData };
+          return { 
+            data: data.formattedData,
+            formattedData: data.formattedData 
+          };
         } else if (data.data && Array.isArray(data.data)) {
-          return { data: data.data };
+          return { 
+            data: data.data,
+            formattedData: data.data 
+          };
         } else if (Array.isArray(data)) {
-          return { data: data };
+          return { 
+            data: data,
+            formattedData: data 
+          };
         } else {
           console.warn('⚠️ Alternative API returned unexpected structure:', data);
-          return { data: [] };
+          return { data: [], formattedData: [] };
         }
       } else {
         console.error('❌ Alternative API failed with status:', alternativeResponse.status);
@@ -57,15 +91,21 @@ const getAllCityList = async () => {
       
       // Return mock data as last resort to prevent app crash
       console.log('🔄 Returning mock city data as fallback');
+      const mockCities = [
+        { id: 1, name: 'Delhi' },
+        { id: 2, name: 'Mumbai' },
+        { id: 3, name: 'Bangalore' },
+        { id: 4, name: 'Chennai' },
+        { id: 5, name: 'Hyderabad' },
+        { id: 6, name: 'Pune' },
+        { id: 7, name: 'Kolkata' },
+        { id: 8, name: 'Ahmedabad' },
+        { id: 9, name: 'Jaipur' },
+        { id: 10, name: 'Lucknow' },
+      ];
       return {
-        data: [
-          { id: 1, name: 'Delhi' },
-          { id: 2, name: 'Mumbai' },
-          { id: 3, name: 'Bangalore' },
-          { id: 4, name: 'Chennai' },
-          { id: 5, name: 'Hyderabad' },
-          { id: 6, name: 'Pune' },
-        ]
+        data: mockCities,
+        formattedData: mockCities
       };
     }
   }
@@ -85,11 +125,45 @@ const getAllAreasList = async (cityId?: number) => {
     url += `?cityId=${cityId}`;
     
     const response = await axiosInstance.get(url);
-    console.log('✅ Get All Areas Success:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ Get All Areas Error:', error);
-    throw error;
+    console.log('✅ Get All Areas Success:', {
+      hasResponse: !!response,
+      responseType: typeof response,
+      hasData: !!response?.data,
+      hasFormattedData: !!response?.formattedData,
+      isArray: Array.isArray(response),
+      responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+    });
+    
+    // Handle different response structures and return consistent format
+    if (response && response.formattedData && Array.isArray(response.formattedData)) {
+      return { 
+        data: response.formattedData,
+        formattedData: response.formattedData 
+      };
+    } else if (response && response.data && Array.isArray(response.data)) {
+      return { 
+        data: response.data,
+        formattedData: response.data 
+      };
+    } else if (response && Array.isArray(response)) {
+      return { 
+        data: response,
+        formattedData: response 
+      };
+    } else {
+      console.warn('⚠️ Unexpected areas response structure:', response);
+      return { data: [], formattedData: [] };
+    }
+  } catch (error: any) {
+    console.error('❌ Get All Areas Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      url: error?.config?.url,
+      cityId,
+    });
+    
+    // Return empty arrays instead of throwing to prevent crashes
+    return { data: [], formattedData: [] };
   }
 };
 
@@ -105,22 +179,45 @@ const getAllLocalitiesList = async (payload: {
     }
     
     const response = await axiosInstance.get(url);
-    console.log('✅ Get All Localities Success:', response);
+    console.log('✅ Get All Localities Success:', {
+      hasResponse: !!response,
+      responseType: typeof response,
+      hasData: !!response?.data,
+      hasFormattedData: !!response?.formattedData,
+      isArray: Array.isArray(response),
+      responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+    });
     
-    // The API returns data in 'formattedData' field
+    // Handle different response structures and return consistent format
     if (response && response.formattedData && Array.isArray(response.formattedData)) {
-      return { data: response.formattedData };
+      return { 
+        data: response.formattedData,
+        formattedData: response.formattedData 
+      };
     } else if (response && response.data && Array.isArray(response.data)) {
-      return { data: response.data };
+      return { 
+        data: response.data,
+        formattedData: response.data 
+      };
     } else if (response && Array.isArray(response)) {
-      return { data: response };
+      return { 
+        data: response,
+        formattedData: response 
+      };
     } else {
       console.warn('⚠️ Unexpected localities response structure:', response);
-      return { data: [] };
+      return { data: [], formattedData: [] };
     }
-  } catch (error) {
-    console.error('❌ Get All Localities Error:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('❌ Get All Localities Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      url: error?.config?.url,
+      payload,
+    });
+    
+    // Return empty arrays instead of throwing to prevent crashes
+    return { data: [], formattedData: [] };
   }
 };
 

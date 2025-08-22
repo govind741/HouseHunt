@@ -168,6 +168,29 @@ const handleSliderData = async (cityId: number) => {
   }
 };
 
+/**
+ * Get the total number of ratings/reviews for an agent
+ */
+const getAgentRatingCount = async (agentId: number): Promise<number> => {
+  try {
+    console.log('📊 Get Agent Rating Count Request:', {agentId});
+    const params = {agent_id: agentId};
+    const response = await getReviewsList(params);
+    
+    if (response?.data && Array.isArray(response.data)) {
+      const totalCount = response.data.length;
+      console.log('✅ Agent Rating Count Success:', {agentId, totalCount});
+      return totalCount;
+    }
+    
+    console.log('⚠️ No reviews data found for agent:', agentId);
+    return 0;
+  } catch (error) {
+    console.error('❌ Get Agent Rating Count Error:', error);
+    return 0; // Return 0 instead of throwing to prevent crashes
+  }
+};
+
 export {
   getReviewsList,
   AddNewReview,
@@ -177,4 +200,5 @@ export {
   handleGetAgentBookmark,
   handleDeleteAgentBookmark,
   handleSliderData,
+  getAgentRatingCount,
 };

@@ -191,20 +191,14 @@ const PropertyCard = ({
               {item.agency_name ?? item.name}
             </MagicText>
           </View>
-          <RatingCard rating={String(item?.rating ?? 0)} />
-        </View>
-
-        {/* Address Row */}
-        {token && item?.office_address ? (
-          <View style={styles.addressRow}>
-            <View>
-              <GoogleLocationIcon />
-            </View>
-            <MagicText style={styles.addressText}>
-              {item.office_address}
-            </MagicText>
+          <View style={styles.ratingContainer}>
+            <RatingCard 
+              rating={String(item?.rating ?? 0)} 
+              totalRatings={item?.total_ratings}
+              showTotalRatings={item?.total_ratings !== undefined}
+            />
           </View>
-        ) : null}
+        </View>
         
         {/* All Icons Row - Single horizontal row */}
         {token ? (
@@ -241,6 +235,18 @@ const PropertyCard = ({
               </TouchableOpacity>
             </View>
           </View>
+        ) : null}
+
+        {/* Address Row - Now below the icons */}
+        {token && item?.office_address ? (
+          <TouchableOpacity onPress={handleMap} style={styles.addressRow}>
+            <View>
+              <GoogleLocationIcon />
+            </View>
+            <MagicText style={styles.addressText}>
+              {item.office_address}
+            </MagicText>
+          </TouchableOpacity>
         ) : null}
       </View>
     </Pressable>
@@ -296,6 +302,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  ratingContainer: {
+    alignItems: 'flex-end',
+  },
   allIconsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -332,6 +341,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
   },
   heading: {
     fontSize: 20,

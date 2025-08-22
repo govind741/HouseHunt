@@ -60,7 +60,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Safe StarRating wrapper to prevent precision errors
-  const SafeStarRating = ({rating, onChange, ...props}: any) => {
+  const SafeStarRating = ({rating, onChange, starSize, maxStars, ...props}: any) => {
     // Ensure rating is always a valid number between 0 and 5
     let safeRating = 0;
     
@@ -74,13 +74,19 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       safeRating = 0;
     }
     
-    // Round to avoid precision issues
-    const finalRating = Math.round(safeRating * 100) / 100;
+    // Round to avoid precision issues - use 0.5 increments for better display
+    const finalRating = Math.round(safeRating * 2) / 2;
+    
+    // Ensure starSize and maxStars are integers
+    const safeStarSize = Math.round(Number(starSize) || 20);
+    const safeMaxStars = Math.round(Number(maxStars) || 5);
     
     console.log('SafeStarRating:', {
       originalRating: rating,
       safeRating,
       finalRating,
+      starSize: safeStarSize,
+      maxStars: safeMaxStars,
       type: typeof finalRating,
       isFinite: isFinite(finalRating)
     });
@@ -96,6 +102,8 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
         {...props}
         rating={finalRating}
         onChange={safeOnChange}
+        starSize={safeStarSize}
+        maxStars={safeMaxStars}
       />
     );
   };
@@ -145,9 +153,10 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
 
     // Calculate average rating
     const avgRating = validRatingsCount > 0 ? totalRatingSum / validRatingsCount : 0;
-    // Ensure average rating is within valid range (0-5) and round to nearest 0.25
+    // Ensure average rating is within valid range (0-5) and round to nearest 0.5 for proper star display
     const validAvgRating = Math.max(0, Math.min(5, avgRating));
-    setAverageRating(Math.round(validAvgRating * 4) / 4); // Round to nearest 0.25 for proper star display
+    const roundedAvgRating = Math.round(validAvgRating * 2) / 2; // Round to nearest 0.5
+    setAverageRating(roundedAvgRating);
     setRatingBreakdown(breakdown);
 
     console.log('📊 Calculated ratings:', {
@@ -684,9 +693,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   overviewStarStyle: {
-    width: 14, // Use integer instead of Math.round(14)
+    width: 14, // Integer value
     marginLeft: 0,
-    marginRight: 2, // Use integer instead of Math.round(2)
+    marginRight: 2, // Integer value
   },
   totalReviewsText: {
     fontSize: 13,
@@ -859,9 +868,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalStarStyle: {
-    width: 28, // Use integer instead of Math.round(28)
+    width: 28, // Integer value
     marginLeft: 0,
-    marginRight: 12, // Use integer instead of Math.round(12)
+    marginRight: 12, // Integer value
   },
   commentSection: {
     marginBottom: 24,

@@ -13,7 +13,8 @@ import CitySelectionScreen from '../screen/AppScreen/CitySelectionScreen';
 import AreaSelectionScreen from '../screen/AppScreen/AreaSelectionScreen';
 import LocalitiesScreen from '../screen/AppScreen/LocalitiesScreen';
 import ProfileDetailScreen from '../screen/AppScreen/ProfileDetailScreen';
-import PendingApprovalScreen from '../screen/AppScreen/PendingApprovalScreen';
+// TEMPORARILY DISABLED - PendingApprovalScreen
+// import PendingApprovalScreen from '../screen/AppScreen/PendingApprovalScreen';
 import WorkingLocationsListScreen from '../screen/AppScreen/WorkingLocationsListScreen';
 import AccountSettings from '../screen/AppScreen/AccountSettings';
 import PaymentOptionsScreen from '../screen/AppScreen/PaymentOptionsScreen';
@@ -56,10 +57,11 @@ const HomeScreenStack = () => {
         name="ProfileDetailScreen"
         component={ProfileDetailScreen}
       />
-      <HomeStack.Screen
+      {/* TEMPORARILY DISABLED - PendingApprovalScreen */}
+      {/* <HomeStack.Screen
         name="PendingApprovalScreen"
         component={PendingApprovalScreen}
-      />
+      /> */}
       <HomeStack.Screen
         name="WorkingLocationsListScreen"
         component={WorkingLocationsListScreen}

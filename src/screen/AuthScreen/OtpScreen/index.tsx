@@ -173,7 +173,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
 
           if (!userData?.name) {
             // User needs to complete profile
-            console.log('📝 User needs to complete profile, navigating to signup');
+            console.log('User needs to complete profile, navigating to signup');
             navigation.navigate('UserSignupScreen', {
               mobile_number: mobile,
               token,
@@ -187,14 +187,14 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
           await AsyncStorage.setItem('userData', JSON.stringify(userObj));
           dispatch(setUserData(userObj));
           
-          console.log('✅ User has complete profile, navigating to home');
+          console.log('User has complete profile, navigating to home');
           
           // Navigate to main app
           navigation.navigate('HomeScreenStack', {
             screen: 'HomeScreen',
           });
         } else {
-          console.warn('⚠️ Missing userId or token, navigating to home in guest mode');
+          console.warn('Missing userId or token, navigating to home in guest mode');
           // If no token, still navigate to home (guest mode)
           navigation.navigate('HomeScreenStack', {
             screen: 'HomeScreen',
@@ -202,7 +202,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         }
       })
       .catch(error => {
-        console.log('❌ Error while verifying OTP:', error);
+        console.log(' Error while verifying OTP:', error);
         Toast.show({
           type: 'error',
           text1: error?.message || 'Invalid OTP. Please try again.',
@@ -230,14 +230,14 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
     
     handleUserResendOtp(payload)
       .then((res: any) => {
-        console.log('✅ Resend OTP Success:', res);
+        console.log(' Resend OTP Success:', res);
         Toast.show({
           type: 'success',
           text1: res?.message || 'OTP resent successfully',
         });
       })
       .catch(error => {
-        console.log('❌ Error while re-sending OTP:', error);
+        console.log(' Error while re-sending OTP:', error);
         Toast.show({
           type: 'error',
           text1: error?.message || 'Failed to resend OTP',
@@ -261,7 +261,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
       otp: Number(otp),
     };
     
-    console.log('🔍 Agent OTP Verification:', {
+    console.log(' Agent OTP Verification:', {
       originalMobile: mobile,
       formattedPhone: formattedPhone,
       otp: Number(otp),
@@ -270,13 +270,13 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
     
     VerifyAgentOtp(payload)
       .then(async (res: any) => {
-        console.log('✅ Agent OTP Response:', res);
+        console.log('Agent OTP Response:', res);
         
         const token = res?.tokens?.refresh?.token || res?.tokens || '';
         const agentId = res?.agentId || res?.data?.id || res?.id || '';
         const role = res?.role || 'agent';
         
-        console.log('🔍 Agent verification data:', {
+        console.log('Agent verification data:', {
           token: token ? 'Present' : 'Missing',
           agentId,
           role,
@@ -297,80 +297,43 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         });
 
         if (agentId && token) {
-          console.log('📞 Fetching agent details for ID:', agentId);
+          console.log(' Fetching agent details for ID:', agentId);
           
           try {
-            const response = await getAgentDetails(agentId);
-            console.log('👤 Agent details API response:', {
-              success: response?.success,
-              hasData: !!response?.data,
-              responseKeys: response ? Object.keys(response) : [],
-              fullResponse: JSON.stringify(response, null, 2),
-              agentId: agentId,
+            console.log('Fetching agent data...');
+            
+            // Use the new comprehensive agent data fetcher
+            const { fetchAgentData, validateAgentProfile } = await import('../../../services/agentServices');
+            const agentDataResult = await fetchAgentData(agentId);
+            
+            console.log(' Agent data result:', {
+              success: agentDataResult.success,
+              source: agentDataResult.source,
+              hasData: !!agentDataResult.data,
+              dataKeys: agentDataResult.data ? Object.keys(agentDataResult.data) : [],
             });
             
-            // Handle different possible response structures
-            let agentData = null;
-            let hasValidResponse = false;
-            
-            // Try different response structures
-            if (response?.data?.data) {
-              // Nested data structure: response.data.data
-              agentData = response.data.data;
-              hasValidResponse = true;
-              console.log('📊 Using nested data structure (response.data.data)');
-            } else if (response?.data) {
-              // Standard structure: response.data
-              agentData = response.data;
-              hasValidResponse = true;
-              console.log('📊 Using standard data structure (response.data)');
-            } else if (response?.success && response) {
-              // Direct response with success flag
-              agentData = response;
-              hasValidResponse = true;
-              console.log('📊 Using direct response structure');
-            } else if (response?.id || response?.name || response?.agency_name || response?.phone) {
-              // Direct agent data in response
-              agentData = response;
-              hasValidResponse = true;
-              console.log('📊 Using direct agent data structure');
-            }
-            
-            console.log('🔍 Processed agent data:', {
-              hasValidResponse,
-              agentDataKeys: agentData ? Object.keys(agentData) : [],
-              agentData: JSON.stringify(agentData, null, 2),
-              hasName: !!agentData?.name,
-              hasAgencyName: !!agentData?.agency_name,
-              hasEmail: !!agentData?.email,
-              hasPhone: !!agentData?.phone,
-              verified: agentData?.verified,
-              status: agentData?.status,
-            });
-            
-            if (hasValidResponse && agentData) {
-              // Check if this agent has ANY profile information (indicating they've registered before)
-              const hasAnyProfileData = !!(
-                agentData.name || 
-                agentData.agency_name || 
-                agentData.email || 
-                agentData.phone ||
-                agentData.office_address ||
-                agentData.description
-              );
+            if (agentDataResult.success && agentDataResult.data) {
+              const agentData = agentDataResult.data;
               
-              console.log('🔍 Agent profile analysis:', {
-                hasAnyProfileData,
-                name: agentData.name,
-                agency_name: agentData.agency_name,
-                email: agentData.email,
-                phone: agentData.phone,
-                office_address: agentData.office_address,
-                description: agentData.description,
+              // Validate agent profile completeness
+              const profileValidation = validateAgentProfile(agentData);
+              
+              console.log('Agent profile validation:', {
+                isComplete: profileValidation.isComplete,
+                hasAdditionalInfo: profileValidation.hasAdditionalInfo,
+                missingFields: profileValidation.missingFields,
+                score: profileValidation.score,
               });
               
-              if (!hasAnyProfileData) {
-                console.log('📝 No profile data found - treating as new agent registration');
+              // If profile is incomplete or this is minimal fallback data, send to signup
+              if (!profileValidation.isComplete || agentDataResult.source === 'minimal_fallback') {
+                console.log('📝 Agent profile incomplete - navigating to signup');
+                Toast.show({
+                  type: 'info',
+                  text1: 'Complete your profile',
+                  text2: 'Please provide your details to continue',
+                });
                 navigation.navigate('SignupScreen', {
                   mobile_number: mobile,
                   token,
@@ -380,8 +343,8 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                 return;
               }
 
-              // Existing agent with profile data - log them in
-              console.log('✅ Existing agent found with profile data - logging in directly');
+              // Profile is complete - prepare agent object and login
+              console.log('Agent profile complete - logging in directly');
               const agentObj = {
                 id: agentId,
                 name: agentData.name || agentData.agency_name || 'Agent',
@@ -395,46 +358,37 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                 location: agentData.location || null,
                 office_address: agentData.office_address || '',
                 description: agentData.description || '',
+                working_locations: agentData.working_locations || [],
               };
 
               dispatch(setUserData(agentObj));
               await AsyncStorage.setItem('userData', JSON.stringify(agentObj));
 
-              // Check agent verification status
-              if (agentData.verified === 0 || agentData.status === 0) {
-                console.log('⏳ Agent pending approval - verified:', agentData.verified, 'status:', agentData.status);
-                navigation.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: 'HomeScreenStack',
-                      params: {
-                        screen: 'HomeScreen',
-                      },
+              // Navigate directly to HomeScreen (temporarily bypassing approval check)
+              console.log('Agent profile complete, navigating to home (approval check bypassed)');
+              Toast.show({
+                type: 'success',
+                text1: 'Welcome back!',
+                text2: 'Login successful',
+              });
+              
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'HomeScreenStack',
+                    params: {
+                      screen: 'HomeScreen',
                     },
-                  ],
-                });
-              } else {
-                console.log('✅ Agent verified and approved, navigating to home');
-                navigation.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: 'HomeScreenStack',
-                      params: {
-                        screen: 'HomeScreen',
-                      },
-                    },
-                  ],
-                });
-              }
+                  },
+                ],
+              });
             } else {
-              console.log('⚠️ No valid agent data found in response - treating as new agent');
-              console.log('Response details:', {
-                hasResponse: !!response,
-                responseType: typeof response,
-                responseKeys: response ? Object.keys(response) : [],
-                response: response,
+              console.log('⚠️ No valid agent data found - treating as new agent');
+              Toast.show({
+                type: 'info',
+                text1: 'Complete your registration',
+                text2: 'Please provide your details to get started',
               });
               navigation.navigate('SignupScreen', {
                 mobile_number: mobile,
@@ -443,28 +397,26 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                 role,
               });
             }
-          } catch (detailsError) {
-            console.error('❌ Error fetching agent details:', detailsError);
+          } catch (detailsError: any) {
+            console.error('❌ Error fetching agent data:', {
+              message: detailsError?.message,
+              status: detailsError?.response?.status,
+              url: detailsError?.config?.url,
+            });
             
-            // Check if it's a 404 (agent not found) vs other errors
-            if (detailsError?.response?.status === 404) {
-              console.log('📝 Agent not found (404) - treating as new agent');
-              navigation.navigate('SignupScreen', {
-                mobile_number: mobile,
-                token,
-                agent_id: agentId,
-                role,
-              });
-            } else {
-              // For other errors, still try to navigate to signup but log the error
-              console.log('⚠️ API error fetching agent details - defaulting to signup flow');
-              navigation.navigate('SignupScreen', {
-                mobile_number: mobile,
-                token,
-                agent_id: agentId,
-                role,
-              });
-            }
+            // Always navigate to signup on error, but preserve the token
+            console.log('⚠️ Error fetching agent data - navigating to signup to complete profile');
+            Toast.show({
+              type: 'info',
+              text1: 'Complete your profile',
+              text2: 'Please provide your details to continue',
+            });
+            navigation.navigate('SignupScreen', {
+              mobile_number: mobile,
+              token,
+              agent_id: agentId,
+              role,
+            });
           }
         } else {
           throw new Error('Missing agentId or token after verification');

@@ -35,12 +35,14 @@ import {getBreadcrumText} from '../../../utils';
 import {AgentUserType} from '../../../types';
 import LoginModal from '../../../components/LoginModal';
 import {IMAGE} from '../../../assets/images';
+import { checkAgentAuthState, getAgentNavigationRoute } from '../../../utils/agentAuthUtils';
+import AgentDebugPanel from '../../../components/AgentDebugPanel';
 
 const {width: screenWidth} = Dimensions.get('window');
 
 const HomeScreen = ({navigation}: HomeScreenProps) => {
   const {location} = useAppSelector(state => state.location);
-  const {token} = useAppSelector(state => state.auth);
+  const {token, userData} = useAppSelector(state => state.auth);
   const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const inputRef = useRef<any>(null);
@@ -53,8 +55,50 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   const [searchList, setSearchList] = useState<any>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentAdIndex, setCurrentAdIndex] = useState<number>(0);
+  const [agentAuthChecked, setAgentAuthChecked] = useState<boolean>(false);
 
   const adScrollViewRef = useRef<ScrollView>(null);
+
+  // Check agent authentication state on screen focus
+  useEffect(() => {
+    const checkAgentAuth = async () => {
+      if (userData?.role === 'agent' && !agentAuthChecked) {
+        console.log('🔍 Checking agent authentication state...');
+        try {
+          const authState = await checkAgentAuthState();
+          const route = getAgentNavigationRoute(authState);
+          
+          console.log('🔍 Agent auth check result:', {
+            authState,
+            recommendedRoute: route,
+          });
+          
+          // If agent needs to be redirected, do it
+          if (route.screen !== 'HomeScreen') {
+            console.log(`🔄 Redirecting agent to ${route.screen}: ${route.reason}`);
+            
+            if (route.stack === 'AuthStack') {
+              navigation.navigate('AuthStack', { screen: route.screen });
+            } else {
+              navigation.navigate(route.screen as any);
+            }
+            return;
+          }
+          
+          setAgentAuthChecked(true);
+        } catch (error) {
+          console.error('❌ Error checking agent auth:', error);
+          setAgentAuthChecked(true);
+        }
+      } else {
+        setAgentAuthChecked(true);
+      }
+    };
+
+    if (isFocused) {
+      checkAgentAuth();
+    }
+  }, [isFocused, userData?.role, agentAuthChecked, navigation]);
 
   const getAgentList = useCallback((locationId: number) => {
     setIsLoading(true);
@@ -537,6 +581,11 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           setShowLoginModal(false);
         }}
       />
+      
+      {/* Debug panel for agents in development */}
+      {userData?.role === 'agent' && (
+        <AgentDebugPanel visible={__DEV__} />
+      )}
     </SafeAreaView>
   );
 };

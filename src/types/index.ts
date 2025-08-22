@@ -53,6 +53,7 @@ export interface AgentUserType {
   office_address: string | null;
   phone: string;
   rating: string;
+  total_ratings?: number; // New field for total number of ratings
   sponsorship_status: number;
   status: number;
   whatsapp_number: number;

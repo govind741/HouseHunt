@@ -126,8 +126,65 @@ export const getAgentDetails = async (agentId: number) => {
     const response = await axiosInstance.get(`${ENDPOINT.get_agent_details}/${agentId}`);
     console.log('✅ Get Agent Details Success:', response);
     return response;
-  } catch (error) {
-    console.error('❌ Get Agent Details Error:', error);
+  } catch (error: any) {
+    console.error('❌ Get Agent Details Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      url: error?.config?.url,
+      responseData: error?.response?.data,
+    });
+    
+    // If 403, try the agent profile endpoint instead
+    if (error?.response?.status === 403) {
+      console.log('🔄 Trying agent profile endpoint instead...');
+      try {
+        const profileResponse = await axiosInstance.get(ENDPOINT.agent_profile);
+        console.log('✅ Agent Profile Success:', profileResponse);
+        
+        // Ensure the response has the expected structure
+        if (profileResponse && typeof profileResponse === 'object') {
+          // If the profile response doesn't have an id, add the agentId
+          if (!profileResponse.id && !profileResponse.data?.id) {
+            if (profileResponse.data) {
+              profileResponse.data.id = agentId;
+            } else {
+              profileResponse.id = agentId;
+            }
+          }
+        }
+        
+        return profileResponse;
+      } catch (profileError: any) {
+        console.error('❌ Agent Profile Error:', profileError);
+        
+        // If profile endpoint also fails, try working locations endpoint
+        if (profileError?.response?.status === 403) {
+          console.log('🔄 Trying agent working locations endpoint...');
+          try {
+            const locationsResponse = await axiosInstance.get(ENDPOINT.agent_working_locations);
+            console.log('✅ Agent Working Locations Success:', locationsResponse);
+            
+            // Create a minimal agent object from locations response
+            const agentData = {
+              id: agentId,
+              name: 'Agent',
+              phone: '',
+              email: '',
+              role: 'agent',
+              working_locations: locationsResponse?.data || locationsResponse,
+            };
+            
+            return { data: agentData };
+          } catch (locationsError) {
+            console.error('❌ Agent Working Locations Error:', locationsError);
+            throw locationsError;
+          }
+        }
+        
+        throw profileError;
+      }
+    }
+    
     throw error;
   }
 };
@@ -138,8 +195,64 @@ export const handleAgentDetails = async (agentId: number) => {
     const response = await axiosInstance.get(`${ENDPOINT.get_agent_details}/${agentId}`);
     console.log('✅ Handle Agent Details Success:', response);
     return response;
+  } catch (error: any) {
+    console.error('❌ Handle Agent Details Error:', {
+      message: error?.message,
+      status: error?.response?.status,
+      url: error?.config?.url,
+      responseData: error?.response?.data,
+    });
+    
+    // If 403, try the agent profile endpoint instead
+    if (error?.response?.status === 403) {
+      console.log('🔄 Trying agent profile endpoint instead...');
+      try {
+        const profileResponse = await axiosInstance.get(ENDPOINT.agent_profile);
+        console.log('✅ Agent Profile Success:', profileResponse);
+        return profileResponse;
+      } catch (profileError) {
+        console.error('❌ Agent Profile Error:', profileError);
+        throw profileError;
+      }
+    }
+    
+    throw error;
+  }
+};
+
+// New agent-specific API functions
+export const getAgentProfile = async () => {
+  try {
+    console.log('👤 Get Agent Profile Request');
+    const response = await axiosInstance.get(ENDPOINT.agent_profile);
+    console.log('✅ Get Agent Profile Success:', response);
+    return response;
   } catch (error) {
-    console.error('❌ Handle Agent Details Error:', error);
+    console.error('❌ Get Agent Profile Error:', error);
+    throw error;
+  }
+};
+
+export const getAgentOfficeAddress = async () => {
+  try {
+    console.log('🏢 Get Agent Office Address Request');
+    const response = await axiosInstance.get(ENDPOINT.agent_office_address);
+    console.log('✅ Get Agent Office Address Success:', response);
+    return response;
+  } catch (error) {
+    console.error('❌ Get Agent Office Address Error:', error);
+    throw error;
+  }
+};
+
+export const getAgentWorkingLocations = async () => {
+  try {
+    console.log('📍 Get Agent Working Locations Request');
+    const response = await axiosInstance.get(ENDPOINT.agent_working_locations);
+    console.log('✅ Get Agent Working Locations Success:', response);
+    return response;
+  } catch (error) {
+    console.error('❌ Get Agent Working Locations Error:', error);
     throw error;
   }
 };
