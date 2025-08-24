@@ -8,6 +8,7 @@ import SplashScreen from '../screen/AuthScreen/SplashScreen';
 import {setLocation} from '../store/slice/locationSlice';
 import {defaultLocation} from '../constant';
 import {AppBackHandler} from '../utils/backHandlerUtils';
+import {DeepLinkManager} from '../utils/deepLinkUtils';
 
 const RootNavigator = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,9 +51,14 @@ const RootNavigator = () => {
     const backHandler = AppBackHandler.getInstance();
     backHandler.initialize(navigationRef);
 
+    // Initialize deep link manager
+    const deepLinkManager = DeepLinkManager.getInstance();
+    deepLinkManager.initialize(navigationRef);
+
     return () => {
       // Cleanup on unmount
       backHandler.cleanup();
+      deepLinkManager.cleanup();
     };
   }, []);
 

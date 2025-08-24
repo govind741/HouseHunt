@@ -28,6 +28,7 @@ import {BASE_URL} from '../../../constant/urls';
 import HR from '../../../components/HR';
 import RatingsReviewsSection from '../../../components/RatingsReviewsSection';
 import {openWhatsAppForAgent} from '../../../utils/whatsappUtils';
+import {sharePropertyFromDetail} from '../../../utils/shareUtils';
 import {
   handleAddBookmark,
   handleSliderData,
@@ -39,7 +40,6 @@ import {
 } from '../../../services/HomeService';
 import LoadingAndErrorComponent from '../../../components/LoadingAndErrorComponent';
 
-import Share from 'react-native-share';
 import Toast from 'react-native-toast-message';
 import CustomSlider from '../../../components/CustomSlider';
 import {useAppSelector} from '../../../store';
@@ -178,17 +178,26 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   if (isLoading) {
     return <LoadingAndErrorComponent />;
   }
-  const handleShare = () => {
-    const shareOptions = {
-      title: 'Check this out!',
-      // message: '',
-      url: 'https://example.com',
-      // social: Share.Social., // Optional, for specific platforms
-    };
+  const handleShare = async () => {
+    if (!agentDetails) {
+      Alert.alert('Error', 'Property details not available for sharing');
+      return;
+    }
 
-    Share.open(shareOptions)
-      .then(res => console.log(res))
-      .catch(err => err && console.log(err));
+    console.log('Sharing property details:', agentDetails);
+
+    await sharePropertyFromDetail(
+      agentDetails,
+      () => {
+        // Success callback
+        console.log('Property shared successfully');
+        handleUserInteraction('share');
+      },
+      (error) => {
+        // Error callback
+        console.error('Share error:', error);
+      }
+    );
   };
 
   const handleUserInteraction = (appName: string) => {
@@ -427,7 +436,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
               </MagicText>
             </View>
             <View style={styles.row}>
-              {/* <TouchableOpacity onPress={() => addNewBookmark()}>
+              <TouchableOpacity onPress={() => addNewBookmark()}>
                 <View style={styles.bookmarkIconView}>
                   <BookmarkIcon color={COLORS.WHITE} />
                 </View>
@@ -436,7 +445,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 onPress={() => handleShare()}
                 style={styles.shareIconContainer}>
                 <ShareIcon />
-              </TouchableOpacity> */}
+              </TouchableOpacity>
             </View>
           </View>
           {agentDetails?.office_address ? (

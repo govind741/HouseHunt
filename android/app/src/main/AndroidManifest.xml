@@ -28,6 +28,35 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        
+        <!-- Deep Link Intent Filter for HTTP Property URLs ONLY -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" 
+                  android:host="houseapp.in" 
+                  android:port="81"
+                  android:pathPrefix="/property/" />
+        </intent-filter>
+        
+        <!-- Deep Link Intent Filter for HTTPS Property URLs ONLY -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" 
+                  android:host="houseapp.in"
+                  android:pathPrefix="/property/" />
+        </intent-filter>
+        
+        <!-- Custom URL Scheme for App-to-App Deep Links -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="houseapp" />
+        </intent-filter>
       </activity>
     </application>
 </manifest>

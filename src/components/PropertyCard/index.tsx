@@ -19,6 +19,7 @@ import {AgentUserType} from '../../types';
 import {BASE_URL} from '../../constant/urls';
 import {useAppSelector} from '../../store';
 import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
+import {sharePropertyFromCard} from '../../utils/shareUtils';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -36,15 +37,20 @@ const PropertyCard = ({
   isBookmarked = false,
 }: PropertyCardType) => {
   const {token} = useAppSelector(state => state.auth);
-  const handleShare = () => {
-    const shareOptions = {
-      title: 'Check this out!',
-      url: 'https://example.com',
-    };
+  const handleShare = async () => {
+    console.log('Sharing property from card:', item);
 
-    Share.open(shareOptions)
-      .then(res => console.log(res))
-      .catch(err => err && console.log(err));
+    await sharePropertyFromCard(
+      item,
+      () => {
+        // Success callback
+        console.log('Property shared successfully from card');
+      },
+      (error) => {
+        // Error callback
+        console.error('Share error from card:', error);
+      }
+    );
   };
 
   const handleCall = () => {
