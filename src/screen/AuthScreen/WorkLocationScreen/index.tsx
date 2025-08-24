@@ -14,6 +14,7 @@ import MagicText from '../../../components/MagicText';
 import {COLORS} from '../../../assets/colors';
 import {
   CityType,
+  AreaType,
   LocalityType,
   workLocationType,
 } from '../../../types';
@@ -21,6 +22,7 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import MultiSelectDropdown from '../../../components/MultiSelectDropdown';
 import {
   getAllCityList,
+  getAllAreasList,
   getAllLocalitiesList,
 } from '../../../services/locationSelectionServices';
 import {useFocusEffect} from '@react-navigation/native';
@@ -35,21 +37,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface WorkLocation {
   id: number;
   city: CityType | null;
-  localities: LocalityType[]; // Changed to array for multiple localities
+  areas: AreaType[]; // Changed to array for multiple areas
+  localities: LocalityType[]; // Multiple localities
 }
 
 const tempLocation: WorkLocation = {
   id: 0,
   city: null,
+  areas: [], // Initialize as empty array
   localities: [], // Initialize as empty array
 };
 
 const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   const [cityList, setCityList] = useState<CityType[]>([]);
+  const [areaList, setAreaList] = useState<AreaType[]>([]);
   const [localityList, setLocalityList] = useState<LocalityType[]>([]);
   const [selectedCity, setSelectedCity] = useState<CityType | null>(null); // Single city selection
+  const [selectedAreas, setSelectedAreas] = useState<AreaType[]>([]); // Multiple areas
   const [selectedLocalities, setSelectedLocalities] = useState<LocalityType[]>([]); // Multiple localities
   const [loadingCities, setLoadingCities] = useState(true);
+  const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingLocalities, setLoadingLocalities] = useState(false);
   const [isCityLocked, setIsCityLocked] = useState(false); // Lock city after selection
 
@@ -128,14 +135,68 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }
 
     setSelectedCity(city);
+    setSelectedAreas([]); // Reset areas when city changes
     setSelectedLocalities([]); // Reset localities when city changes
+    setAreaList([]); // Clear area list
+    setLocalityList([]); // Clear locality list
     setIsCityLocked(true); // Lock city selection
-    setLoadingLocalities(true);
+    setLoadingAreas(true);
 
-    // Load localities for the selected city
-    getAllLocalitiesList({cityId: city.id, areaId: undefined})
+    // Load areas for the selected city
+    getAllAreasList(city.id)
       .then(res => {
-        console.log('✅ Localities API Response for city', city.name, ':', res);
+        console.log('✅ Areas API Response for city', city.name, ':', res);
+        
+        // Handle different response structures
+        let areas = [];
+        if (res?.formattedData && Array.isArray(res.formattedData)) {
+          areas = res.formattedData;
+        } else if (res?.data && Array.isArray(res.data)) {
+          areas = res.data;
+        } else if (Array.isArray(res)) {
+          areas = res;
+        } else {
+          console.warn('⚠️ Unexpected areas response structure:', res);
+        }
+        
+        console.log('📍 Processed areas data:', areas);
+        console.log('📊 Areas count:', areas.length);
+        
+        if (areas.length === 0) {
+          Toast.show({
+            type: 'error',
+            text1: 'No Areas Found',
+            text2: `No areas found for ${city.name}. Please try a different city or contact support.`,
+          });
+          // Don't load localities if no areas found since areas are required
+          setIsCityLocked(false); // Allow city change
+          setSelectedCity(null); // Reset city selection
+        } else {
+          setAreaList(areas);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Error loading areas:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error Loading Areas',
+          text2: 'Failed to load areas. Please try again or select a different city.',
+        });
+        setAreaList([]);
+        // Don't fallback to localities since areas are required
+        setIsCityLocked(false); // Allow city change
+        setSelectedCity(null); // Reset city selection
+      })
+      .finally(() => {
+        setLoadingAreas(false);
+      });
+  };
+
+  const loadLocalitiesForCity = (cityId: number, areaId?: number) => {
+    setLoadingLocalities(true);
+    getAllLocalitiesList({cityId, areaId})
+      .then(res => {
+        console.log('✅ Localities API Response:', res);
         
         // Handle different response structures
         let localities = [];
@@ -156,7 +217,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           Toast.show({
             type: 'info',
             text1: 'No Localities Found',
-            text2: `No localities found for ${city.name}. Please try a different city.`,
+            text2: areaId ? 'No localities found for selected areas.' : 'No localities found for selected city.',
           });
         }
         
@@ -174,6 +235,48 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       .finally(() => {
         setLoadingLocalities(false);
       });
+  };
+
+  const handleAreaSelect = (area: AreaType) => {
+    // Check if area is already selected
+    const isAlreadySelected = selectedAreas.some(a => a.id === area.id);
+    
+    if (isAlreadySelected) {
+      // Remove area if already selected
+      const updatedAreas = selectedAreas.filter(a => a.id !== area.id);
+      setSelectedAreas(updatedAreas);
+      Toast.show({
+        type: 'info',
+        text1: 'Area Removed',
+        text2: `${area.name} has been removed from your selection.`,
+      });
+    } else {
+      // Add area to selection
+      const updatedAreas = [...selectedAreas, area];
+      setSelectedAreas(updatedAreas);
+      Toast.show({
+        type: 'success',
+        text1: 'Area Added',
+        text2: `${area.name} has been added to your selection.`,
+      });
+    }
+
+    // Load localities for all selected areas
+    if (selectedCity) {
+      const allSelectedAreas = isAlreadySelected 
+        ? selectedAreas.filter(a => a.id !== area.id)
+        : [...selectedAreas, area];
+      
+      if (allSelectedAreas.length > 0) {
+        // Load localities for selected areas
+        const areaIds = allSelectedAreas.map(a => a.id);
+        // For now, load localities for the first area (you might want to modify the API to accept multiple area IDs)
+        loadLocalitiesForCity(selectedCity.id, areaIds[0]);
+      } else {
+        // Load all localities for the city if no areas selected
+        loadLocalitiesForCity(selectedCity.id);
+      }
+    }
   };
 
   const handleLocalitySelect = (locality: LocalityType) => {
@@ -203,7 +306,9 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
 
   const resetCitySelection = () => {
     setSelectedCity(null);
+    setSelectedAreas([]);
     setSelectedLocalities([]);
+    setAreaList([]);
     setLocalityList([]);
     setIsCityLocked(false);
     Toast.show({
@@ -298,19 +403,28 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       return;
     }
 
-    if (selectedLocalities.length === 0) {
+    if (selectedAreas.length === 0) {
       Toast.show({
         type: 'error',
-        text1: 'Locality Required',
-        text2: 'Please select at least one locality within the selected city.',
+        text1: 'Area Required',
+        text2: 'Please select at least one area within the selected city.',
       });
       return;
     }
 
-    // Create locations array from selected city and localities
+    if (selectedLocalities.length === 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Locality Required',
+        text2: 'Please select at least one locality within the selected areas.',
+      });
+      return;
+    }
+
+    // Create locations array from selected city, areas, and localities
     const locations: workLocationType[] = selectedLocalities.map(locality => ({
       location_id: locality.id,
-      area_id: null,
+      area_id: locality.area_id || (selectedAreas.length > 0 ? selectedAreas[0].id : null),
       city_id: selectedCity.id,
     }));
 
@@ -318,7 +432,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       console.log('Step 1: Updating agent profile...');
       
       // First, test basic connectivity
-      console.log('🔗 Testing basic connectivity...');
+      console.log('Testing basic connectivity...');
       try {
         const testResponse = await fetch(`${BASE_URL}v1/auth/cities`, {
           method: 'GET',
@@ -374,7 +488,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         },
       });
 
-      console.log('✅ Work location update successful');
+      console.log('Work location update successful');
       
       // Step 3: Use profile data to create complete agent data
       console.log('👤 Step 3: Creating complete agent data from profile response...');
@@ -402,7 +516,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         await AsyncStorage.setItem('userData', JSON.stringify(completeAgentData));
         await AsyncStorage.setItem('userId', completeAgentData.id?.toString() || '');
       } else {
-        console.warn('⚠️ No agent data in profile response, attempting to fetch agent details...');
+        console.warn('No agent data in profile response, attempting to fetch agent details...');
         
         // Fallback: Try to fetch agent details if we have an agent ID
         try {
@@ -412,7 +526,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           const agentId = parsedUserData?.id;
           
           if (agentId) {
-            console.log('🔍 Fetching agent details for ID:', agentId);
+            console.log('Fetching agent details for ID:', agentId);
             const agentDetailsResponse = await fetch(`${BASE_URL}${ENDPOINT.get_agent_details}/${agentId}`, {
               method: 'GET',
               headers: {
@@ -553,7 +667,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           Select Your Working Location
         </MagicText>
         <MagicText style={styles.subtitleText}>
-          Choose one city and multiple localities within that city
+          Choose one city, select areas, and multiple localities within those areas
         </MagicText>
 
         <ScrollView style={{flex: 1}} nestedScrollEnabled>
@@ -576,7 +690,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           {(loadingCities || cityList.length > 0) && (
             <View style={styles.selectionContainer}>
               <View style={styles.sectionHeader}>
-                <MagicText style={styles.sectionTitle}>Select City</MagicText>
+                <MagicText style={styles.sectionTitle}>Select City <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
                 {selectedCity && (
                   <TouchableOpacity
                     onPress={resetCitySelection}
@@ -602,32 +716,105 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
             </View>
           )}
 
-          {/* Locality Selection Section */}
+          {/* Area Selection Section */}
           {selectedCity && (
             <View style={styles.selectionContainer}>
               <View style={styles.sectionHeader}>
-                <MagicText style={styles.sectionTitle}>Select Localities</MagicText>
+                <MagicText style={styles.sectionTitle}>Select Areas <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
+                <MagicText style={styles.sectionSubtitle}>
+                  ({selectedAreas.length} selected)
+                </MagicText>
+              </View>
+
+              {loadingAreas ? (
+                <View style={styles.loadingContainer}>
+                  <MagicText style={styles.loadingText}>Loading areas...</MagicText>
+                </View>
+              ) : areaList.length > 0 ? (
+                <>
+                  <MultiSelectDropdown
+                    data={areaList}
+                    placeholder="Select Areas"
+                    selectedValues={selectedAreas}
+                    onSelect={handleAreaSelect}
+                    loading={loadingAreas}
+                    style={styles.dropdownStyle}
+                  />
+
+                  {selectedAreas.length > 0 && (
+                    <View style={styles.selectedAreasInfo}>
+                      <MagicText style={styles.selectedAreasText}>
+                        You selected {selectedAreas.length} areas in {selectedCity.name}
+                      </MagicText>
+                    </View>
+                  )}
+
+                  <MagicText style={styles.areaHelpText}>
+                    Select the areas where you want to work. This will help filter the available localities.
+                  </MagicText>
+                </>
+              ) : (
+                <View style={styles.noDataContainer}>
+                  <MagicText style={styles.noDataText}>
+                    No areas available for {selectedCity.name}. Please select a different city.
+                  </MagicText>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Locality Selection Section */}
+          {selectedCity && selectedAreas.length > 0 && (
+            <View style={styles.selectionContainer}>
+              <View style={styles.sectionHeader}>
+                <MagicText style={styles.sectionTitle}>Select Localities <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
                 <MagicText style={styles.sectionSubtitle}>
                   ({selectedLocalities.length} selected)
                 </MagicText>
               </View>
 
-              <MultiSelectDropdown
-                data={localityList}
-                placeholder="Select Localities"
-                selectedValues={selectedLocalities}
-                onSelect={handleLocalitySelect}
-                loading={loadingLocalities}
-                style={styles.dropdownStyle}
-              />
+              {loadingLocalities ? (
+                <View style={styles.loadingContainer}>
+                  <MagicText style={styles.loadingText}>Loading localities...</MagicText>
+                </View>
+              ) : localityList.length > 0 ? (
+                <>
+                  <MultiSelectDropdown
+                    data={localityList}
+                    placeholder="Select Localities"
+                    selectedValues={selectedLocalities}
+                    onSelect={handleLocalitySelect}
+                    loading={loadingLocalities}
+                    style={styles.dropdownStyle}
+                  />
 
-              {selectedLocalities.length > 0 && (
-                <View style={styles.selectedLocalitiesInfo}>
-                  <MagicText style={styles.selectedLocalitiesText}>
-                    You can work in {selectedLocalities.length} localities within {selectedCity.name}
+                  {selectedLocalities.length > 0 && (
+                    <View style={styles.selectedLocalitiesInfo}>
+                      <MagicText style={styles.selectedLocalitiesText}>
+                        You can work in {selectedLocalities.length} localities within {selectedCity.name}
+                        {selectedAreas.length > 0 && ` (${selectedAreas.length} areas selected)`}
+                      </MagicText>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <View style={styles.noDataContainer}>
+                  <MagicText style={styles.noDataText}>
+                    No localities available for the selected areas. Please try selecting different areas.
                   </MagicText>
                 </View>
               )}
+            </View>
+          )}
+
+          {/* Message when city is selected but no areas selected */}
+          {selectedCity && selectedAreas.length === 0 && !loadingAreas && areaList.length > 0 && (
+            <View style={styles.selectionContainer}>
+              <View style={styles.messageContainer}>
+                <MagicText style={styles.messageText}>
+                  Please select areas first to see available localities.
+                </MagicText>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -637,7 +824,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           style={styles.btnStyle}
           labelStyle={styles.btnLabel}
           onPress={handleSignup}
-          disabled={!selectedCity || selectedLocalities.length === 0}
+          disabled={!selectedCity || selectedAreas.length === 0 || selectedLocalities.length === 0}
         />
       </View>
     </SafeAreaView>
@@ -721,6 +908,68 @@ const styles = StyleSheet.create({
   },
   lockedDropdown: {
     opacity: 0.7,
+  },
+  messageContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: COLORS.LIGHT_BLUE || '#E3F2FD',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.BLUE || '#2196F3',
+  },
+  messageText: {
+    fontSize: 14,
+    color: COLORS.BLUE || '#2196F3',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE_SMOKE,
+    borderRadius: 8,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.GRAY,
+    fontStyle: 'italic',
+  },
+  noDataContainer: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: COLORS.LIGHT_RED || '#FFE6E6',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.RED,
+  },
+  noDataText: {
+    fontSize: 14,
+    color: COLORS.RED,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  requiredAsterisk: {
+    color: COLORS.RED,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  selectedAreasInfo: {
+    backgroundColor: COLORS.WHITE_SMOKE,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  selectedAreasText: {
+    fontSize: 14,
+    color: COLORS.BLUE,
+    fontWeight: '500',
+  },
+  areaHelpText: {
+    fontSize: 12,
+    color: COLORS.GRAY,
+    fontStyle: 'italic',
+    marginTop: 8,
+    lineHeight: 16,
   },
   selectedLocalitiesInfo: {
     backgroundColor: COLORS.WHITE_SMOKE,

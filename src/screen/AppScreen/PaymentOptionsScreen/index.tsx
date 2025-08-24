@@ -18,6 +18,8 @@ import {COLORS} from '../../../assets/colors';
 import {PaymentIcon, RightArrowIcon, EditIcon} from '../../../assets/icons';
 import WhiteCardView from '../../../components/WhiteCardView';
 import Button from '../../../components/Button';
+import {useAuthGuard} from '../../../hooks/useAuthGuard';
+import {useFocusEffect} from '@react-navigation/native';
 import TextField from '../../../components/TextField';
 import Toast from 'react-native-toast-message';
 import {useAppSelector} from '../../../store';
@@ -40,7 +42,17 @@ interface PaymentDetails {
 
 const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
   const {userData} = useAppSelector(state => state.auth);
+  const {requireAuth} = useAuthGuard();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!requireAuth()) {
+        return; // User will be redirected to login
+      }
+    }, [requireAuth])
+  );
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     upi_id: '',

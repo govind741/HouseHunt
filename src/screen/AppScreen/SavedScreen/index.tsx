@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {FlatList, SafeAreaView, StyleSheet, View} from 'react-native';
 import MagicText from '../../../components/MagicText';
 import CustomBack from '../../../components/CustomBack';
@@ -11,6 +11,8 @@ import {
 } from '../../../services/PropertyServices';
 import Toast from 'react-native-toast-message';
 import { BASE_URL } from '../../../constant/urls';
+import {useAuthGuard} from '../../../hooks/useAuthGuard';
+import {useFocusEffect} from '@react-navigation/native';
 
 // normalize relative image paths -> absolute
 const toAbsolute = (img?: string) => {
@@ -24,6 +26,16 @@ const toAbsolute = (img?: string) => {
 
 const SavedScreen = ({navigation}: SavedScreenProps) => {
   const [bookmarkList, setBookmarkList] = useState<any>([]);
+  const {requireAuth} = useAuthGuard();
+
+  // Check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!requireAuth()) {
+        return; // User will be redirected to login
+      }
+    }, [requireAuth])
+  );
 
   const getBookmarkList = () => {
     handleGetAgentBookmark()

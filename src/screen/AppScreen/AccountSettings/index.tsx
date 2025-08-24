@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback} from 'react';
 import {Alert, Linking, SafeAreaView, StyleSheet, View} from 'react-native';
 import {AccountSettingsProps} from '../../../types/appTypes';
 import {COLORS} from '../../../assets/colors';
@@ -13,10 +13,22 @@ import {clearAuthState} from '../../../store/slice/authSlice';
 import Toast from 'react-native-toast-message';
 import {useAppDispatch, useAppSelector} from '../../../store';
 import {BASE_URL} from '../../../constant/urls';
+import {useAuthGuard} from '../../../hooks/useAuthGuard';
+import {useFocusEffect} from '@react-navigation/native';
 
 const AccountSettings = ({navigation}: AccountSettingsProps) => {
   const dispatch = useAppDispatch();
   const {userData} = useAppSelector(state => state.auth);
+  const {requireAuth} = useAuthGuard();
+
+  // Check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!requireAuth()) {
+        return; // User will be redirected to login
+      }
+    }, [requireAuth])
+  );
 
   const handleDeleteUser = () => {
     const payload = {

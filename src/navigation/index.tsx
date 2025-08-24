@@ -3,7 +3,7 @@ import {NavigationContainer, NavigationContainerRef} from '@react-navigation/nat
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
 import AppRoutes from './AppRoutes';
-import {setToken, setUserData} from '../store/slice/authSlice';
+import {setToken, setUserData, setGuestMode} from '../store/slice/authSlice';
 import SplashScreen from '../screen/AuthScreen/SplashScreen';
 import {setLocation} from '../store/slice/locationSlice';
 import {defaultLocation} from '../constant';
@@ -24,6 +24,9 @@ const RootNavigator = () => {
       if (userData) {
         dispatch(setUserData(JSON.parse(userData)));
       }
+
+      // Set guest mode based on whether user has token
+      dispatch(setGuestMode(!accessToken));
 
       //get location data
       const locationData = await AsyncStorage.getItem('location');

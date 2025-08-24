@@ -16,9 +16,7 @@ import {useFormik} from 'formik';
 import * as Yup from 'yup';
 import {CameraIcon, ProfileIcon} from '../../../assets/icons';
 import {launchImageLibrary} from 'react-native-image-picker';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
-import moment from 'moment';
 import Button from '../../../components/Button';
 import {useAppDispatch} from '../../../store';
 import {setUserData} from '../../../store/slice/authSlice';
@@ -34,7 +32,6 @@ import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 
 const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   const {mobile_number, email, user_id} = route.params;
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const dispatch = useAppDispatch();
 
   console.log('🔍 UserSignupScreen params:', {
@@ -46,6 +43,12 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
     try {
       console.log('🚀 Starting user signup process...');
       console.log('📊 Signup type: Mobile Login');
+      
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
       
       // Debug current state
       await debugUserData();
@@ -59,8 +62,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       if (values.email) {
         formData.append('email', values.email);
       }
-      
-      formData.append('dob', moment(values.dob).format('DD/MM/YYYY'));
       
       // Fix: Send location as JSON string properly
       const locationData = JSON.stringify({
@@ -83,7 +84,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       console.log('📝 Updating user profile with data:', {
         name: values.name,
         email: values.email,
-        dob: moment(values.dob).format('DD/MM/YYYY'),
         hasImage: formik.values.profile_image !== null,
         phone: mobile_number,
       });
@@ -138,7 +138,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
           id: updateResponse?.data?.id || existingUser.id || Date.now().toString(),
           name: values.name,
           email: values.email || '',
-          dob: moment(values.dob).format('DD/MM/YYYY'),
           phone: mobile_number,
           profile: updateResponse?.profile || updateResponse?.data?.profile || '',
           role: 'user',
@@ -203,7 +202,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       name: '',
       email: email || '',
       profile_image: null,
-      dob: '',
     },
     validationSchema: userFormValidationSchema,
     onSubmit: handleSignup,
@@ -221,19 +219,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
         formik.setFieldValue('profile_image', selectedImage.uri ?? null);
       }
     });
-  };
-
-  const showDatePicker = () => {
-    setDatePickerVisibility(true);
-  };
-
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
-  };
-
-  const handleConfirm = (date: Date) => {
-    formik.setFieldValue('dob', date);
-    hideDatePicker();
   };
 
   return (
@@ -312,32 +297,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
           blurOnSubmit={false}
         />
 
-        <MagicText style={styles.inputLabel}>
-          Date of Birth <MagicText style={styles.astricStyle}>*</MagicText>
-        </MagicText>
-        <TouchableOpacity
-          style={[
-            styles.textFieldStyle,
-            styles.dobContainer,
-            formik.errors.dob ? {borderWidth: 1, borderColor: COLORS.RED} : {},
-          ]}
-          onPress={() => showDatePicker()}>
-          <MagicText
-            style={[
-              styles.dobText,
-              {color: formik.values.dob ? COLORS.BLACK : COLORS.GRAY},
-            ]}>
-            {formik.values.dob
-              ? moment(formik.values.dob).format('DD/MM/YYYY')
-              : 'Date of Birth'}
-          </MagicText>
-        </TouchableOpacity>
-        {formik.errors.dob ? (
-          <MagicText style={[styles.errorLabel, {marginTop: 8}]}>
-            {formik.errors.dob}
-          </MagicText>
-        ) : null}
-
         <Button
           label="SignUp"
           style={styles.btnStyle}
@@ -345,14 +304,6 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
           onPress={() => formik.handleSubmit()}
         />
       </View>
-      <DateTimePickerModal
-        mode="date"
-        isVisible={isDatePickerVisible}
-        date={new Date(formik.values.dob)}
-        onConfirm={handleConfirm}
-        onCancel={hideDatePicker}
-        maximumDate={new Date()}
-      />
     </SafeAreaView>
   );
 };
@@ -440,16 +391,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     color: COLORS.GRAY,
-  },
-  dobContainer: {
-    height: 50,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  dobText: {
-    fontSize: 16,
-    lineHeight: 24,
   },
 });
 

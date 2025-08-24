@@ -36,23 +36,24 @@ describe('AppBackHandler', () => {
   });
 
   describe('shouldShowExitPrompt', () => {
-    it('should return true for LoginScreen', () => {
-      const result = AppBackHandler.shouldShowExitPrompt('LoginScreen');
+    it('should return true for CitySelectionScreen', () => {
+      const result = AppBackHandler.shouldShowExitPrompt('CitySelectionScreen');
       expect(result).toBe(true);
     });
 
-    it('should return true for AgentLoginScreen', () => {
-      const result = AppBackHandler.shouldShowExitPrompt('AgentLoginScreen');
+    it('should return true for HomeScreen', () => {
+      const result = AppBackHandler.shouldShowExitPrompt('HomeScreen');
       expect(result).toBe(true);
     });
 
     it('should return false for other screens', () => {
       const screens = [
-        'HomeScreen',
+        'LoginScreen',
+        'AgentLoginScreen',
         'ProfileScreen',
         'AccountSettings',
         'PropertyDetailScreen',
-        'CitySelectionScreen',
+        'SavedScreen',
       ];
 
       screens.forEach(screen => {
@@ -71,12 +72,14 @@ describe('AppBackHandler', () => {
       expect(mockNavigation.goBack).toHaveBeenCalled();
     });
 
-    it('should not call goBack when navigation cannot go back', () => {
+    it('should navigate to main root when navigation cannot go back', () => {
       mockNavigation.canGoBack.mockReturnValue(false);
       
       AppBackHandler.navigateBack(mockNavigation);
       
       expect(mockNavigation.goBack).not.toHaveBeenCalled();
+      // Should dispatch reset action to main root
+      expect(mockNavigation.dispatch).toHaveBeenCalled();
     });
   });
 
@@ -97,17 +100,17 @@ describe('Manual Testing Scenarios', () => {
   it('should document expected behavior for manual testing', () => {
     const testScenarios = [
       {
-        screen: 'LoginScreen',
-        hardwareBack: 'Should show exit dialog',
-        uiBack: 'Should show exit dialog',
-      },
-      {
-        screen: 'AgentLoginScreen', 
-        hardwareBack: 'Should show exit dialog',
-        uiBack: 'Should show exit dialog',
+        screen: 'CitySelectionScreen',
+        hardwareBack: 'Should show confirmation dialog with Cancel and Exit buttons',
+        uiBack: 'Should navigate normally',
       },
       {
         screen: 'HomeScreen',
+        hardwareBack: 'Should show confirmation dialog with Cancel and Exit buttons',
+        uiBack: 'Should navigate normally',
+      },
+      {
+        screen: 'LoginScreen (at root)',
         hardwareBack: 'Should navigate to CitySelectionScreen',
         uiBack: 'Should navigate to CitySelectionScreen',
       },
@@ -137,6 +140,22 @@ describe('Manual Testing Scenarios', () => {
       expect(scenario.uiBack).toBeDefined();
     });
   });
+
+  it('should document exit confirmation behavior', () => {
+    const exitBehavior = {
+      mainRootScreens: ['CitySelectionScreen', 'HomeScreen'],
+      backPressAction: 'Shows confirmation dialog with Cancel and Exit buttons',
+      cancelButton: 'Dismisses dialog and stays in app',
+      exitButton: 'Exits the app immediately',
+      tapOutside: 'Dismisses dialog and stays in app (same as Cancel)',
+    };
+
+    expect(exitBehavior.mainRootScreens).toContain('CitySelectionScreen');
+    expect(exitBehavior.mainRootScreens).toContain('HomeScreen');
+    expect(exitBehavior.backPressAction).toContain('confirmation dialog');
+    expect(exitBehavior.cancelButton).toContain('stays in app');
+    expect(exitBehavior.exitButton).toContain('Exits the app');
+  });
 });
 
 /**
@@ -156,6 +175,9 @@ export const createNavigationTestHelper = () => {
     replace: jest.fn((screen: string) => {
       navigationHistory.push(`replace:${screen}`);
     }),
+    reset: jest.fn((config: any) => {
+      navigationHistory.push(`reset:${config.routes[0].name}`);
+    }),
   };
 
   return {
@@ -164,3 +186,29 @@ export const createNavigationTestHelper = () => {
     clearHistory: () => navigationHistory.length = 0,
   };
 };
+
+/**
+ * Test scenarios for different navigation flows
+ */
+describe('Navigation Flow Tests', () => {
+  it('should handle normal navigation flow', () => {
+    const helper = createNavigationTestHelper();
+    
+    // Simulate normal back navigation
+    helper.navigation.canGoBack.mockReturnValue(true);
+    AppBackHandler.navigateBack(helper.navigation);
+    
+    expect(helper.getHistory()).toContain('goBack');
+  });
+
+  it('should handle root screen navigation', () => {
+    const helper = createNavigationTestHelper();
+    
+    // Simulate being at a root screen (not main root)
+    helper.navigation.canGoBack.mockReturnValue(false);
+    AppBackHandler.navigateBack(helper.navigation);
+    
+    // Should dispatch reset to main root
+    expect(helper.navigation.dispatch).toHaveBeenCalled();
+  });
+});

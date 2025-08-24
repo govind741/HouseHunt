@@ -7,7 +7,8 @@ export interface BackHandlerConfig {
 
 /**
  * Centralized back handler that manages navigation flow properly
- * - Shows exit prompt only on login screen
+ * - Follows standard mobile UX patterns
+ * - Shows exit prompt only when at root screens
  * - Allows natural navigation on all other screens
  */
 export class AppBackHandler {
@@ -63,96 +64,115 @@ export class AppBackHandler {
     }
 
     const navigation = this.navigationRef.current;
-    const currentRoute = navigation.getCurrentRoute();
+    const state = navigation.getState();
     
-    if (!currentRoute) {
+    if (!state) {
       return false;
     }
 
-    // Check if we're on a login screen (any auth screen that should show exit prompt)
-    const exitPromptScreens = ['LoginScreen', 'AgentLoginScreen'];
-    
-    if (exitPromptScreens.includes(currentRoute.name)) {
-      this.showExitPrompt();
-      return true; // Prevent default back behavior
-    }
-
-    // For all other screens, check if we can go back
+    // Check if we can go back in the current stack
     if (navigation.canGoBack()) {
       navigation.goBack();
       return true; // Prevent default back behavior
     }
 
-    // If we can't go back and we're not on a login screen,
-    // navigate to the appropriate initial screen
-    this.navigateToInitialScreen();
-    return true;
+    // If we can't go back, we're at a root screen
+    // Check if we're at the main root screen (CitySelectionScreen or HomeScreen)
+    const currentRoute = navigation.getCurrentRoute();
+    const isAtMainRoot = this.isAtMainRootScreen(currentRoute?.name);
+
+    if (isAtMainRoot) {
+      // We're at the main root screen, handle app exit
+      return this.handleAppExit();
+    } else {
+      // We're at a root screen but not the main one, navigate to main root
+      this.navigateToMainRoot();
+      return true;
+    }
   }
 
   /**
-   * Show exit confirmation dialog
+   * Check if current screen is a main root screen
    */
-  private showExitPrompt() {
+  private isAtMainRootScreen(routeName?: string): boolean {
+    const mainRootScreens = ['CitySelectionScreen', 'HomeScreen'];
+    return routeName ? mainRootScreens.includes(routeName) : false;
+  }
+
+  /**
+   * Handle app exit with proper confirmation dialog
+   */
+  private handleAppExit(): boolean {
+    // Show confirmation dialog with Cancel and Exit options
     Alert.alert(
       'Exit App',
-      'Are you sure you want to exit?',
+      'Are you sure you want to exit the app?',
       [
         {
           text: 'Cancel',
           style: 'cancel',
+          onPress: () => {
+            // User cancelled, reset counter
+            this.exitBackPressCount = 0;
+            if (this.exitTimeout) {
+              clearTimeout(this.exitTimeout);
+              this.exitTimeout = null;
+            }
+          }
         },
         {
           text: 'Exit',
           style: 'destructive',
-          onPress: () => BackHandler.exitApp(),
-        },
+          onPress: () => {
+            // User confirmed exit
+            if (this.exitTimeout) {
+              clearTimeout(this.exitTimeout);
+              this.exitTimeout = null;
+            }
+            BackHandler.exitApp();
+          }
+        }
       ],
-      {cancelable: false}
+      {
+        cancelable: true,
+        onDismiss: () => {
+          // Dialog dismissed by tapping outside, reset counter
+          this.exitBackPressCount = 0;
+          if (this.exitTimeout) {
+            clearTimeout(this.exitTimeout);
+            this.exitTimeout = null;
+          }
+        }
+      }
     );
+
+    return true; // Prevent default back behavior
   }
 
   /**
-   * Navigate to the appropriate initial screen based on current stack
+   * Navigate to the main root screen
    */
-  private navigateToInitialScreen() {
+  private navigateToMainRoot() {
     if (!this.navigationRef?.current) {
       return;
     }
 
     const navigation = this.navigationRef.current;
-    const state = navigation.getState();
     
-    // If we're in the auth stack, go to login
-    if (state?.routes?.some(route => route.name === 'AuthStack')) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'AuthStack',
-              state: {
-                routes: [{name: 'LoginScreen'}],
-              },
+    // Reset to the main app flow
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'HomeScreenStack',
+            state: {
+              routes: [{name: 'CitySelectionScreen'}],
             },
-          ],
-        })
-      );
-    } else {
-      // If we're in the app stack, go to city selection (or home)
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'HomeScreenStack',
-              state: {
-                routes: [{name: 'CitySelectionScreen'}],
-              },
-            },
-          ],
-        })
-      );
-    }
+          },
+        ],
+      })
+    );
   }
 
   /**
@@ -162,9 +182,9 @@ export class AppBackHandler {
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
-      // If can't go back, use the same logic as hardware back
+      // If can't go back, navigate to main root
       const instance = AppBackHandler.getInstance();
-      instance.navigateToInitialScreen();
+      instance.navigateToMainRoot();
     }
   }
 
@@ -172,7 +192,7 @@ export class AppBackHandler {
    * Check if current screen should show exit prompt
    */
   static shouldShowExitPrompt(routeName: string): boolean {
-    const exitPromptScreens = ['LoginScreen', 'AgentLoginScreen'];
-    return exitPromptScreens.includes(routeName);
+    const mainRootScreens = ['CitySelectionScreen', 'HomeScreen'];
+    return mainRootScreens.includes(routeName);
   }
 }

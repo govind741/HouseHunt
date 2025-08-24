@@ -35,6 +35,8 @@ import {BASE_URL} from '../../../constant/urls';
 import AuthDebugger from '../../../components/AuthDebugger';
 import {prepareUserObj} from '../../../utils';
 import {debugUserData} from '../../../utils/debugUser';
+import {useAuthGuard} from '../../../hooks/useAuthGuard';
+import {useFocusEffect} from '@react-navigation/native';
 
 // replace old arrays with this final version
 const UserMenuOptions  = ['experthelp', 'bookmarks', 'aboutUs', 'customerCare', 'settings'];
@@ -43,12 +45,22 @@ const AgentMenuOptions = ['paymentOptions', 'locations', 'aboutUs', 'customerCar
 const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   const dispatch = useAppDispatch();
   const {token, userData} = useAppSelector(state => state.auth);
+  const {requireAuth} = useAuthGuard();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [userDetails, setUserDetails] = useState<
     AgentUserType | UserType | null
   >(null);
   const [options, setOptions] = useState<string[]>([]);
   const lastFetchedUserIdRef = useRef<number | null>(null);
+
+  // Check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!requireAuth()) {
+        return; // User will be redirected to login
+      }
+    }, [requireAuth])
+  );
 
   useEffect(() => {
     if (token && userData?.id) {

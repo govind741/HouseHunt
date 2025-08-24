@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {AddReviewScreenProps} from '../../../types/appTypes';
 import MagicText from '../../../components/MagicText';
 import StarRating from 'react-native-star-rating-widget';
@@ -18,12 +18,15 @@ import CustomBack from '../../../components/CustomBack';
 import CircleBgCard from '../../../components/CircleBgCard';
 import Button from '../../../components/Button';
 import TextField from '../../../components/TextField';
+import {useAuthGuard} from '../../../hooks/useAuthGuard';
+import {useFocusEffect} from '@react-navigation/native';
 import {CameraIcon} from '../../../assets/icons';
 import {AddNewReview} from '../../../services/PropertyServices';
 import Toast from 'react-native-toast-message';
 import {IMAGE} from '../../../assets/images';
 
 const AddReviewScreen = ({navigation, route}: AddReviewScreenProps) => {
+  const {requireAuth} = useAuthGuard();
   const data = [
     {label: 'Market Knowledge'},
     {label: 'Communication'},
@@ -35,6 +38,15 @@ const AddReviewScreen = ({navigation, route}: AddReviewScreenProps) => {
   const [reviewCount, setReviewCount] = useState<any>(0);
   const [selectedReview, setSelectedReview] = useState<any>([]);
   const [comment, setComment] = useState<string>('');
+
+  // Check authentication when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (!requireAuth()) {
+        return; // User will be redirected to login
+      }
+    }, [requireAuth])
+  );
 
   useEffect(() => {
     setReviewCount(review);

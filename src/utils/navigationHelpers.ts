@@ -83,6 +83,21 @@ export class NavigationHelpers {
     const currentRoute = NavigationHelpers.getCurrentRouteName(navigation);
     return currentRoute ? AppBackHandler.shouldShowExitPrompt(currentRoute) : false;
   };
+
+  /**
+   * Get navigation stack depth (how many screens can we go back)
+   */
+  static getStackDepth = (navigation: any): number => {
+    const state = navigation.getState();
+    return state?.index || 0;
+  };
+
+  /**
+   * Check if we're at a root screen
+   */
+  static isAtRootScreen = (navigation: any): boolean => {
+    return !navigation.canGoBack();
+  };
 }
 
 /**
@@ -102,5 +117,7 @@ export const useNavigationHelpers = (navigation: any) => {
     canGoBack: () => NavigationHelpers.canGoBack(navigation),
     getCurrentRouteName: () => NavigationHelpers.getCurrentRouteName(navigation),
     shouldShowExitPrompt: () => NavigationHelpers.shouldShowExitPrompt(navigation),
+    getStackDepth: () => NavigationHelpers.getStackDepth(navigation),
+    isAtRootScreen: () => NavigationHelpers.isAtRootScreen(navigation),
   };
 };
