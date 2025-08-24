@@ -159,7 +159,7 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
           {getBreadcrumText(location)}
         </MagicText> */}
         <MagicText style={styles.mainText}>
-          Select area in {location.city_name}
+          Select an area in {location.city_name}
         </MagicText>
 
         <FlatList

@@ -431,7 +431,7 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
         />
 
         <MagicText style={styles.mainText}>
-          Select locality in {location.area_name ?? location?.city_name}
+          Select a locality in {location.area_name ?? location?.city_name}
         </MagicText>
 
         {showSuggestions && getSuggestionsToShow().length > 0 && (
