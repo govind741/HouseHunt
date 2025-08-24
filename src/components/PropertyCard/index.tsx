@@ -18,6 +18,7 @@ import Share from 'react-native-share';
 import {AgentUserType} from '../../types';
 import {BASE_URL} from '../../constant/urls';
 import {useAppSelector} from '../../store';
+import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -67,31 +68,79 @@ const PropertyCard = ({
     }
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     const phoneNumber = item?.whatsapp_number || item?.phone || item?.mobile;
-    if (phoneNumber) {
-      // Clean phone number (remove spaces, dashes, etc.)
-      const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
-      // Add country code if not present
-      const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : `+91${cleanNumber}`;
-      
-      const message = `Hi! I'm interested in your property: ${item.agency_name || item.name}`;
-      const url = `whatsapp://send?phone=${formattedNumber}&text=${encodeURIComponent(message)}`;
-      
-      Linking.canOpenURL(url)
-        .then(supported => {
-          if (supported) {
-            Linking.openURL(url);
-          } else {
-            Alert.alert('WhatsApp Not Found', 'WhatsApp is not installed on this device');
-          }
-        })
-        .catch(err => {
-          console.error('Error opening WhatsApp:', err);
-          Alert.alert('Error', 'Unable to open WhatsApp');
-        });
-    } else {
+    
+    if (!phoneNumber) {
       Alert.alert('No WhatsApp Number', 'WhatsApp number is not available for this property');
+      return;
+    }
+
+    // Get property name for personalized message
+    const propertyName = item.agency_name || item.name;
+    
+    try {
+      // First try using the utility
+      await openWhatsAppForProperty(
+        phoneNumber.toString(),
+        propertyName,
+        () => {
+          // Success callback
+          console.log('WhatsApp opened successfully for property:', propertyName);
+        },
+        (error) => {
+          // Error callback - utility already shows alert, just log
+          console.error('WhatsApp utility error for property:', error);
+        }
+      );
+    } catch (utilityError) {
+      console.error('WhatsApp utility failed, trying fallback:', utilityError);
+      
+      // Fallback method - direct Linking approach without canOpenURL check
+      try {
+        const cleanNumber = phoneNumber.toString().replace(/[^\d+]/g, '');
+        const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : `+91${cleanNumber}`;
+        const message = propertyName 
+          ? `Hi, I'd like to chat with an agent about ${propertyName}. Could you please help me?`
+          : "Hi, I'd like to chat with an agent.";
+        
+        // Try multiple URLs without checking canOpenURL first
+        const fallbackURLs = [
+          `https://wa.me/${formattedNumber.replace('+', '')}?text=${encodeURIComponent(message)}`,
+          `whatsapp://send?phone=${formattedNumber.replace('+', '')}&text=${encodeURIComponent(message)}`,
+          `https://api.whatsapp.com/send?phone=${formattedNumber.replace('+', '')}&text=${encodeURIComponent(message)}`
+        ];
+        
+        let opened = false;
+        for (const url of fallbackURLs) {
+          try {
+            console.log('Trying fallback URL:', url);
+            await Linking.openURL(url);
+            opened = true;
+            console.log('WhatsApp opened with fallback URL:', url);
+            break;
+          } catch (urlError) {
+            console.log('Fallback URL failed:', url, urlError);
+            continue;
+          }
+        }
+        
+        if (!opened) {
+          throw new Error('All fallback URLs failed');
+        }
+      } catch (fallbackError) {
+        console.error('All WhatsApp methods failed:', fallbackError);
+        Alert.alert(
+          'WhatsApp Error', 
+          `Unable to open WhatsApp. You can manually contact: ${phoneNumber}`,
+          [
+            {
+              text: 'OK',
+              style: 'cancel'
+            }
+          ]
+        );
+      }
     }
   };
 

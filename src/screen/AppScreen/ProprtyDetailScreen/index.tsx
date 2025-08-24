@@ -27,6 +27,7 @@ import {IMAGE, PROPERTY_IMAGES} from '../../../assets/images';
 import {BASE_URL} from '../../../constant/urls';
 import HR from '../../../components/HR';
 import RatingsReviewsSection from '../../../components/RatingsReviewsSection';
+import {openWhatsAppForAgent} from '../../../utils/whatsappUtils';
 import {
   handleAddBookmark,
   handleSliderData,
@@ -223,7 +224,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       });
   };
 
-  const whatsappHandler = () => {
+  const whatsappHandler = async () => {
     // Get WhatsApp number from the correct path in agent data
     const whatsappNumber = agentDetails?.data?.whatsapp_number || agentDetails?.whatsapp_number;
     
@@ -238,24 +239,73 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       return;
     }
 
-    // Format the number (remove any non-digit characters and ensure proper format)
-    const formattedNumber = whatsappNumber.toString().replace(/\D/g, '');
+    // Get agent name for personalized message
+    const agentName = agentDetails?.data?.name || agentDetails?.name;
     
-    // Add country code if not present (assuming India +91)
-    const finalNumber = formattedNumber.startsWith('91') ? formattedNumber : `91${formattedNumber}`;
-    
-    // Create WhatsApp URL with the agent's WhatsApp number
-    const whatsappURL = `whatsapp://send?phone=${finalNumber}`;
-    
-    console.log('Opening WhatsApp with number:', finalNumber);
-    
-    Linking.openURL(whatsappURL)
-      .then(() => {
-        handleUserInteraction('whatsapp');
-      })
-      .catch(() => {
-        Alert.alert('Error', 'Make sure WhatsApp is installed on your device');
-      });
+    try {
+      // First try using the utility
+      await openWhatsAppForAgent(
+        whatsappNumber.toString(),
+        agentName,
+        () => {
+          // Success callback
+          handleUserInteraction('whatsapp');
+          console.log('WhatsApp opened successfully');
+        },
+        (error) => {
+          // Error callback
+          console.error('WhatsApp utility error:', error);
+        }
+      );
+    } catch (utilityError) {
+      console.error('WhatsApp utility failed, trying fallback:', utilityError);
+      
+      // Fallback method - direct Linking approach
+      try {
+        const cleanNumber = whatsappNumber.toString().replace(/\D/g, '');
+        const formattedNumber = cleanNumber.startsWith('91') ? cleanNumber : `91${cleanNumber}`;
+        const message = agentName 
+          ? `Hi ${agentName}, I'd like to speak with an agent about this property. Could you please help me?`
+          : "Hi, I'd like to speak with an agent.";
+        // Try multiple URLs without checking canOpenURL first
+        const fallbackURLs = [
+          `https://wa.me/${formattedNumber}?text=${encodeURIComponent(message)}`,
+          `whatsapp://send?phone=${formattedNumber}&text=${encodeURIComponent(message)}`,
+          `https://api.whatsapp.com/send?phone=${formattedNumber}&text=${encodeURIComponent(message)}`
+        ];
+        
+        let opened = false;
+        for (const url of fallbackURLs) {
+          try {
+            console.log('Trying fallback URL:', url);
+            await Linking.openURL(url);
+            handleUserInteraction('whatsapp');
+            opened = true;
+            console.log('WhatsApp opened with fallback URL:', url);
+            break;
+          } catch (urlError) {
+            console.log('Fallback URL failed:', url, urlError);
+            continue;
+          }
+        }
+        
+        if (!opened) {
+          throw new Error('All fallback URLs failed');
+        }
+      } catch (fallbackError) {
+        console.error('All WhatsApp methods failed:', fallbackError);
+        Alert.alert(
+          'WhatsApp Error', 
+          `Unable to open WhatsApp. You can manually contact: ${whatsappNumber}`,
+          [
+            {
+              text: 'OK',
+              style: 'cancel'
+            }
+          ]
+        );
+      }
+    }
   };
 
   const callHandler = () => {
@@ -512,9 +562,10 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     lineHeight: 20,
-    color: COLORS.TEXT_GRAY,
-    fontWeight: '400',
+    color: COLORS.BLACK, // Changed from TEXT_GRAY to BLACK for better visibility
+    fontWeight: '500', // Increased font weight for better visibility
     marginTop: 8,
+    textAlign: 'center', // Center align the text
   },
   label: {
     fontSize: 16,
