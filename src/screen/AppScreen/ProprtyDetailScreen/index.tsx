@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Alert,
   FlatList,
@@ -70,6 +70,11 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       image: 'https://via.placeholder.com/800x600/2196F3/ffffff?text=Property+Image+2',
     },
   ]);
+
+  // Ad banner state
+  const [adsData, setAdsData] = useState<any[]>([]);
+  const [currentAdIndex, setCurrentAdIndex] = useState<number>(0);
+  const adScrollViewRef = useRef<ScrollView>(null);
 
   const getAgentDetails = useCallback((agentId: number) => {
     setIsLoading(true);
@@ -155,17 +160,27 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   const getSliderData = useCallback((cityId: number) => {
     handleSliderData(cityId)
       .then(res => {
-        const data = res ?? [];
-        const list = data.map((item: any) => ({
+        console.log('Slider Data Response:', res);
+        // Handle the response structure: res.data
+        const data = res?.data ?? [];
+        const adsArray = data.map((item: any) => ({
           id: item.id,
+          title: item.title || 'Featured Property',
+          description: item.description || 'Discover amazing properties in your area',
           image: `${BASE_URL}public${item.image_url}`,
+          buttonText: item.button_text || 'View Details',
         }));
 
-        setSliderData(list);
-        console.log('Slider data loaded:', list);
+        setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('error in getSliderData', error?.response);
+        console.log('Error in getSliderData:', error);
+        setAdsData([]); // Set empty array on error
+        // Show error toast
+        Toast.show({
+          type: 'error',
+          text1: error?.message || 'Failed to load ads data',
+        });
       });
   }, []);
 
@@ -174,6 +189,115 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       getSliderData(location.city_id);
     }
   }, [location?.city_id, getSliderData]);
+
+  // Auto-scroll ads every 4 seconds
+  useEffect(() => {
+    if (adsData.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const nextIndex = (currentAdIndex + 1) % adsData.length;
+      setCurrentAdIndex(nextIndex);
+
+      if (adScrollViewRef.current) {
+        adScrollViewRef.current.scrollTo({
+          x: nextIndex * (screenWidth - 32),
+          animated: true,
+        });
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [currentAdIndex, adsData.length, screenWidth]);
+
+  const handleAdPress = (ad: any) => {
+    console.log('Ad pressed:', ad.title);
+    // Add your ad click handling logic here
+    // For example: navigation.navigate('AdDetailScreen', { adId: ad.id });
+  };
+
+  const handleAdScroll = (event: any) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / (screenWidth - 32));
+    setCurrentAdIndex(index);
+  };
+
+  const renderAdsCard = () => {
+    // Hide ads card if no data
+    if (adsData.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.adsContainer}>
+        <ScrollView
+          ref={adScrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleAdScroll}
+          style={styles.adsScrollView}
+          decelerationRate="fast"
+          snapToInterval={screenWidth - 32}
+          snapToAlignment="start">
+          {adsData.map((ad, index) => (
+            <TouchableOpacity
+              key={`ad-${ad.id}-${index}`}
+              style={styles.adCard}
+              onPress={() => handleAdPress(ad)}
+              activeOpacity={0.9}>
+              <Image
+                source={{uri: ad.image}}
+                style={styles.adImage}
+                defaultSource={IMAGE.HouseAppLogo}
+                resizeMode="cover"
+              />
+              <View style={styles.adContent}>
+                <MagicText style={styles.adTitle} numberOfLines={2}>
+                  {ad.title}
+                </MagicText>
+                <MagicText style={styles.adDescription} numberOfLines={3}>
+                  {ad.description}
+                </MagicText>
+                <TouchableOpacity 
+                  style={styles.adButton}
+                  onPress={() => handleAdPress(ad)}
+                  activeOpacity={0.8}>
+                  <MagicText style={styles.adButtonText}>
+                    {ad.buttonText}
+                  </MagicText>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Dot indicators - Only show if more than 1 ad */}
+        {adsData.length > 1 && (
+          <View style={styles.dotsContainer}>
+            {adsData.map((_, index) => (
+              <TouchableOpacity
+                key={`dot-${index}`}
+                style={[
+                  styles.dot,
+                  currentAdIndex === index
+                    ? styles.activeDot
+                    : styles.inactiveDot,
+                ]}
+                onPress={() => {
+                  setCurrentAdIndex(index);
+                  adScrollViewRef.current?.scrollTo({
+                    x: index * (screenWidth - 32),
+                    animated: true,
+                  });
+                }}
+                activeOpacity={0.7}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   if (isLoading) {
     return <LoadingAndErrorComponent />;
@@ -356,10 +480,14 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         onPressProfile={() => navigation.navigate('ProfileScreen')}
         onHomePress={() => navigation.navigate('CitySelectionScreen')}
       />
+      
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled>
+        
+        {/* Ad Banner - Display at the top inside ScrollView */}
+        {renderAdsCard()}
         
         {/* Property Images Slider */}
         <View style={styles.imageSliderContainer}>
@@ -610,6 +738,102 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     marginTop: 15, // Reduced from 20 to 15 for better visual balance
     marginBottom: 10,
+  },
+  // Ad banner styles
+  adsContainer: {
+    marginBottom: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 12,
+    backgroundColor: COLORS.WHITE,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: 'hidden',
+  },
+  adsScrollView: {
+    borderRadius: 12,
+  },
+  adCard: {
+    width: Dimensions.get('window').width - 32,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: COLORS.WHITE,
+  },
+  adImage: {
+    width: '100%',
+    height: 120, // Reduced from 200 to 120
+    resizeMode: 'cover',
+    backgroundColor: COLORS.WHITE_SMOKE,
+  },
+  adContent: {
+    padding: 10, // Reduced from 14 to 10
+    paddingBottom: 8, // Reduced from 12 to 8
+  },
+  adTitle: {
+    fontSize: 14, // Reduced from 16 to 14
+    fontWeight: '600',
+    color: COLORS.BLACK,
+    marginBottom: 4, // Reduced from 6 to 4
+    lineHeight: 18, // Reduced from 20 to 18
+  },
+  adDescription: {
+    fontSize: 12, // Reduced from 13 to 12
+    color: COLORS.TEXT_GRAY,
+    marginBottom: 8, // Reduced from 12 to 8
+    lineHeight: 16, // Reduced from 18 to 16
+    fontWeight: '400',
+  },
+  adButton: {
+    backgroundColor: '#1976D2',
+    paddingHorizontal: 10, // Reduced from 12 to 10
+    paddingVertical: 5, // Reduced from 6 to 5
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    elevation: 1,
+    shadowColor: '#1976D2',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  adButtonText: {
+    color: COLORS.WHITE,
+    fontSize: 11, // Reduced from 12 to 11
+    fontWeight: '600',
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 4, // Reduced from 6 to 4
+    backgroundColor: 'transparent',
+    marginTop: -6, // Reduced from -8 to -6
+    paddingBottom: 6, // Reduced from 8 to 6
+  },
+  dot: {
+    marginHorizontal: 3, // Reduced from 4 to 3
+    borderRadius: 6,
+  },
+  activeDot: {
+    width: 10, // Reduced from 12 to 10
+    height: 5, // Reduced from 6 to 5
+    backgroundColor: '#1976D2',
+    borderRadius: 3,
+  },
+  inactiveDot: {
+    width: 5, // Reduced from 6 to 5
+    height: 5, // Kept same
+    backgroundColor: COLORS.TEXT_GRAY,
+    opacity: 0.4,
+    borderRadius: 3,
   },
 });
 

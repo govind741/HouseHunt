@@ -455,7 +455,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             ListHeaderComponent={() => (
               <View style={styles.parent}>
                 <SearchContainer
-                  placeholder="Search for area, streetname, locality"
+                  placeholder="Search for area, street name, locality"
                   onChangeText={handleTextChange}
                   value={searchText}
                 />

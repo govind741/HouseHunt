@@ -222,7 +222,7 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
 
     searchLocalities(payload)
       .then(res => {
-        console.log('✅ Search Localities Response:', res);
+        console.log('Search Localities Response:', res);
         // Handle the response structure: res.data (not formattedData for search)
         const list = (res?.data ?? []).filter(
           (item: any) => item.city_name === location?.city_name,
@@ -246,7 +246,7 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
         setIsSearching(false);
       })
       .catch(error => {
-        console.log('❌ Error in getSearchLocalitiesList:', error);
+        console.log(' Error in getSearchLocalitiesList:', error);
         setIsSearching(false);
         Toast.show({
           type: 'error',
