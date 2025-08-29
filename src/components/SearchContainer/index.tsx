@@ -48,6 +48,8 @@ const SearchContainer = ({
       onLeftIconPress={onLeftIconPress}
       rightIconDisabled={rightIconDisabled}
       value={searchValue}
+      autoCapitalize="none"
+      autoCorrect={false}
       {...props}
     />
   );

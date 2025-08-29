@@ -264,7 +264,12 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
     }
 
     searchInputRef.current = setTimeout(() => {
-      getSearchLocalitiesList(name);
+      if (name.length > 0) {
+        getSearchLocalitiesList(name);
+      } else {
+        setFilteredList([]);
+        setIsSearching(false);
+      }
     }, 300);
   };
 

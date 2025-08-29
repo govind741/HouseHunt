@@ -86,7 +86,11 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
       clearTimeout(searchInputRef.current);
     }
     searchInputRef.current = setTimeout(() => {
-      getSearchLocalitiesList(name);
+      if (name.length > 0) {
+        getSearchLocalitiesList(name);
+      } else {
+        setFilteredList([]);
+      }
     }, 300);
   };
 

@@ -113,7 +113,11 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
       clearTimeout(searchInputRef.current);
     }
     searchInputRef.current = setTimeout(() => {
-      getGlobalSearchLocalitiesList(name);
+      if (name.length > 0) {
+        getGlobalSearchLocalitiesList(name);
+      } else {
+        setFilteredList([]);
+      }
     }, 300);
   };
 

@@ -8,6 +8,7 @@ import {
   View,
   Image,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import {CurrentLocationIcon} from '../../../assets/icons';
 import {COLORS} from '../../../assets/colors';
@@ -58,6 +59,12 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   const [agentAuthChecked, setAgentAuthChecked] = useState<boolean>(false);
 
   const adScrollViewRef = useRef<ScrollView>(null);
+
+  // Handle back button press to exit app
+  const handleBackPress = useCallback(() => {
+    BackHandler.exitApp();
+    return true;
+  }, []);
 
   // Check agent authentication state on screen focus
   useEffect(() => {
@@ -321,10 +328,10 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     }
 
     inputRef.current = setTimeout(() => {
-      if (text.length >= 0) {
+      if (text.length > 0) {
         getSearchLocalitiesList(text);
       } else {
-        getAgentList(location?.id ?? 0);
+        setSearchList([]);
       }
     }, 300);
   };
@@ -483,7 +490,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         showBackBtn
-        onBackPress={() => navigation.navigate('CitySelectionScreen')}
+        onBackPress={handleBackPress}
         onPressProfile={() => {
           navigation.navigate('ProfileScreen');
         }}
@@ -506,7 +513,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
                 <SearchContainer
                   placeholder="Search for area, street name, locality"
                   onChangeText={handleTextChange}
-                  value={searchText}
+                  searchValue={searchText}
                 />
                 <MagicText style={styles.locationCrumb}>
                   {getBreadcrumText(location)}
@@ -581,7 +588,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
               <SearchContainer
                 placeholder="Search for area, streetname, locality"
                 onChangeText={handleTextChange}
-                value={searchText}
+                searchValue={searchText}
               />
               <MagicText style={styles.locationCrumb}>
                 {getBreadcrumText(location)}
