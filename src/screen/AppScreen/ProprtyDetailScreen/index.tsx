@@ -20,6 +20,7 @@ import {
   GoogleLocationIcon,
   LocationIcon,
   ShareIcon,
+  StarIcon,
 } from '../../../assets/icons';
 import MagicText from '../../../components/MagicText';
 import RatingCard from '../../../components/RatingCard';
@@ -586,21 +587,20 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
               </MagicText>
             </View>
             <View style={styles.ratingContainer}>
-              <RatingCard 
-                rating={(() => {
-                  const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
-                  console.log('Rating extraction debug:', {
-                    'agentDetails?.data?.rating': agentDetails?.data?.rating,
-                    'agentDetails?.data?.avg_rating': agentDetails?.data?.avg_rating,
-                    'final rating': rating,
-                    'rating type': typeof rating,
-                    'totalRatings': totalRatings
-                  });
-                  return String(rating);
-                })()} 
-                totalRatings={totalRatings}
-                showTotalRatings={true}
-              />
+              <View style={styles.ratingCard}>
+                <MagicText style={styles.ratingText}>
+                  {(() => {
+                    const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
+                    return Number(rating).toFixed(1);
+                  })()}
+                </MagicText>
+                <StarIcon />
+              </View>
+              {totalRatings > 0 && (
+                <MagicText style={styles.totalRatingsText}>
+                  ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
+                </MagicText>
+              )}
             </View>
           </View>
         </View>
@@ -720,6 +720,27 @@ const styles = StyleSheet.create({
   ratingContainer: {
     alignItems: 'flex-end',
   },
+  ratingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.LIGHT_GREEN,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minHeight: 28,
+  },
+  ratingText: {
+    fontSize: 14,
+    color: COLORS.WHITE,
+    marginRight: 4,
+    fontWeight: '500',
+  },
+  totalRatingsText: {
+    fontSize: 12,
+    color: COLORS.TEXT_GRAY,
+    marginTop: 4,
+    textAlign: 'right',
+  },
   titleText: {
     fontSize: 18,
     lineHeight: 28,
@@ -748,10 +769,10 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     lineHeight: 20,
-    color: COLORS.BLACK, // Changed from TEXT_GRAY to BLACK for better visibility
-    fontWeight: '500', // Increased font weight for better visibility
+    color: COLORS.TEXT_GRAY,
+    fontWeight: '400',
     marginTop: 8,
-    textAlign: 'center', // Center align the text
+    textAlign: 'center',
   },
   label: {
     fontSize: 16,
@@ -764,22 +785,24 @@ const styles = StyleSheet.create({
   actionButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
-  },
-  icon3D: {
-    width: 60,
-    height: 60,
-    resizeMode: 'cover',
-    // 3D effect applied directly to icons
+    padding: 12,
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 1,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-    borderRadius: 30, // Make icons circular for better 3D effect
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    marginHorizontal: 4,
+  },
+  icon3D: {
+    width: 70,
+    height: 70,
+    resizeMode: 'contain',
+    borderRadius: 35,
   },
   actionRows: {
     flexDirection: 'row',

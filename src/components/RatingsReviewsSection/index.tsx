@@ -373,6 +373,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       });
 
       setEditingReview(null);
+      setShowAddReview(false);
       setNewRating(0);
       setNewComment('');
       
@@ -410,7 +411,10 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
           onPress: async () => {
             try {
               setIsLoading(true);
-              await deleteReview({review_id: reviewId});
+              await deleteReview({
+                review_id: reviewId,
+                userId: user?.id || userData?.id
+              });
               
               Toast.show({
                 type: 'success',

@@ -22,6 +22,11 @@ export interface NotificationPermissionResult {
 export const getNotificationPreference = async (): Promise<boolean> => {
   try {
     const preference = await AsyncStorage.getItem(NOTIFICATION_PREFERENCE_KEY);
+    if (preference === null) {
+      // First time user - set default to enabled
+      await setNotificationPreference(true);
+      return true;
+    }
     return preference === 'true';
   } catch (error) {
     console.error('Error getting notification preference:', error);
