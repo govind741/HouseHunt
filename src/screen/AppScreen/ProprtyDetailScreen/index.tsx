@@ -158,7 +158,36 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   }, [getAgentDetails, agent_id]);
 
   const getSliderData = useCallback((cityId: number) => {
-    handleSliderData(cityId)
+    console.log('=== PropertyDetailScreen getSliderData DEBUG ===');
+    console.log('cityId parameter:', cityId);
+    console.log('location object:', JSON.stringify(location, null, 2));
+    console.log('location.city_id:', location?.city_id);
+    
+    let finalCityId = cityId;
+    
+    if (!finalCityId || finalCityId === 0) {
+      console.log('⚠️ Invalid cityId, trying fallbacks...');
+      
+      // Try location.city_id as fallback
+      finalCityId = location?.city_id;
+      if (finalCityId && finalCityId > 0) {
+        console.log('✅ Using location.city_id as fallback:', finalCityId);
+      } else {
+        // Try location.id as fallback (sometimes locality id can work)
+        finalCityId = location?.id;
+        if (finalCityId && finalCityId > 0) {
+          console.log('✅ Using location.id as fallback:', finalCityId);
+        } else {
+          // Last resort: use Delhi (city_id = 1) as default
+          finalCityId = 1;
+          console.log('✅ Using default city_id (Delhi) as last resort:', finalCityId);
+        }
+      }
+    }
+    
+    console.log('🎯 Making ads API call with final city_id:', finalCityId);
+    
+    handleSliderData(finalCityId)
       .then(res => {
         console.log('Slider Data Response:', res);
         // Handle the response structure: res.data
@@ -171,24 +200,44 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
           buttonText: item.button_text || 'View Details',
         }));
 
+        console.log('✅ Ads loaded for PropertyDetailScreen:', adsArray.length, 'ads');
+        console.log('Ads data:', JSON.stringify(adsArray, null, 2));
         setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('Error in getSliderData:', error);
+        console.log('❌ Error in getSliderData:', error);
+        console.log('❌ Error details:', JSON.stringify(error, null, 2));
         setAdsData([]); // Set empty array on error
-        // Show error toast
-        Toast.show({
-          type: 'error',
-          text1: error?.message || 'Failed to load ads data',
-        });
+        // Show error toast only if it's not a network issue
+        if (error?.message && !error?.message.includes('Network')) {
+          Toast.show({
+            type: 'error',
+            text1: error?.message || 'Failed to load ads data',
+          });
+        }
       });
-  }, []);
+  }, [location]);
 
   useEffect(() => {
-    if (location?.city_id) {
-      getSliderData(location.city_id);
+    console.log('=== PropertyDetailScreen useEffect DEBUG ===');
+    console.log('location:', JSON.stringify(location, null, 2));
+    console.log('location.city_id:', location?.city_id);
+    
+    // Try multiple sources for city_id
+    const cityId = location?.city_id ?? location?.id ?? 0;
+    console.log('Resolved cityId for ads:', cityId);
+    
+    if (cityId && cityId > 0) {
+      // Force ads reload even if cityId is the same
+      setAdsData([]); // Clear existing ads first
+      setTimeout(() => {
+        getSliderData(cityId);
+      }, 100); // Small delay to ensure state is cleared
+    } else {
+      console.log('⚠️ No city_id available, ads will not load');
+      setAdsData([]);
     }
-  }, [location?.city_id, getSliderData]);
+  }, [location?.city_id, location?.id, getSliderData]);
 
   // Auto-scroll ads every 4 seconds
   useEffect(() => {

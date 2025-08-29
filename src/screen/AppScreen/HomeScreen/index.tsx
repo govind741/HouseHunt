@@ -140,7 +140,36 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   }, [token]);
 
   const getSliderData = useCallback((cityId: number) => {
-    handleSliderData(cityId)
+    console.log('=== HomeScreen getSliderData DEBUG ===');
+    console.log('cityId parameter:', cityId);
+    console.log('location object:', JSON.stringify(location, null, 2));
+    console.log('location.city_id:', location?.city_id);
+    
+    let finalCityId = cityId;
+    
+    if (!finalCityId || finalCityId === 0) {
+      console.log('⚠️ Invalid cityId, trying fallbacks...');
+      
+      // Try location.city_id as fallback
+      finalCityId = location?.city_id;
+      if (finalCityId && finalCityId > 0) {
+        console.log('✅ Using location.city_id as fallback:', finalCityId);
+      } else {
+        // Try location.id as fallback (sometimes locality id can work)
+        finalCityId = location?.id;
+        if (finalCityId && finalCityId > 0) {
+          console.log('✅ Using location.id as fallback:', finalCityId);
+        } else {
+          // Last resort: use Delhi (city_id = 1) as default
+          finalCityId = 1;
+          console.log('✅ Using default city_id (Delhi) as last resort:', finalCityId);
+        }
+      }
+    }
+    
+    console.log('🎯 Making ads API call with final city_id:', finalCityId);
+    
+    handleSliderData(finalCityId)
       .then(res => {
         console.log('Slider Data Response:', res);
         // Handle the response structure: res.data
@@ -153,26 +182,46 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           buttonText: item.button_text || 'View Details',
         }));
 
+        console.log('✅ Ads loaded for HomeScreen:', adsArray.length, 'ads');
+        console.log('Ads data:', JSON.stringify(adsArray, null, 2));
         setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('Error in getSliderData:', error);
+        console.log('❌ Error in getSliderData:', error);
+        console.log('❌ Error details:', JSON.stringify(error, null, 2));
         setAdsData([]); // Set empty array on error
-        // Show error toast
-        Toast.show({
-          type: 'error',
-          text1: error?.message || 'Failed to load ads data',
-        });
+        // Show error toast only if it's not a network issue
+        if (error?.message && !error?.message.includes('Network')) {
+          Toast.show({
+            type: 'error',
+            text1: error?.message || 'Failed to load ads data',
+          });
+        }
       });
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     if (isFocused) {
+      console.log('=== HomeScreen useEffect DEBUG ===');
+      console.log('location:', JSON.stringify(location, null, 2));
+      console.log('location.id:', location?.id);
+      console.log('location.city_id:', location?.city_id);
+      
       getAgentList(location?.id ?? 0);
-      getSliderData(location?.city_id ?? 0);
+      
+      // Ensure we have a valid city_id for ads - try multiple sources
+      const cityId = location?.city_id ?? location?.id ?? 0;
+      console.log('Using cityId for ads:', cityId);
+      
+      // Force ads reload even if cityId is the same
+      setAdsData([]); // Clear existing ads first
+      setTimeout(() => {
+        getSliderData(cityId);
+      }, 100); // Small delay to ensure state is cleared
+      
       getBookmarkedAgents();
     }
-  }, [getAgentList, getSliderData, getBookmarkedAgents, location?.id, isFocused, location?.city_id]);
+  }, [getAgentList, getSliderData, getBookmarkedAgents, location?.id, location?.city_id, isFocused]);
 
   // Auto-scroll ads every 4 seconds
   useEffect(() => {
@@ -480,13 +529,28 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
                             ]}>
                             <TouchableOpacity
                               onPress={async () => {
+                                // Ensure proper location data structure
+                                const updatedLocation = {
+                                  ...location,
+                                  id: item?.id,
+                                  city_id: item?.city_id || location?.city_id, // Preserve city_id
+                                  city_name: item?.city_name || location?.city_name,
+                                  area_id: item?.area_id || null,
+                                  area_name: item?.area_name || '',
+                                  locality_name: item?.locality_name || item?.name || '',
+                                  name: item?.locality_name || item?.name || '',
+                                  ranking: item?.ranking || null,
+                                };
+                                
+                                console.log('HomeScreen: Updating location from search:', updatedLocation);
+                                
                                 getAgentList(item?.id);
                                 setSearchList([]);
                                 setSearchText('');
-                                dispatch(setLocation(item));
+                                dispatch(setLocation(updatedLocation));
                                 await AsyncStorage.setItem(
                                   'location',
-                                  JSON.stringify(item),
+                                  JSON.stringify(updatedLocation),
                                 );
                               }}
                               style={styles.searchRow}
@@ -540,13 +604,28 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
                           ]}>
                           <TouchableOpacity
                             onPress={async () => {
+                              // Ensure proper location data structure
+                              const updatedLocation = {
+                                ...location,
+                                id: item?.id,
+                                city_id: item?.city_id || location?.city_id, // Preserve city_id
+                                city_name: item?.city_name || location?.city_name,
+                                area_id: item?.area_id || null,
+                                area_name: item?.area_name || '',
+                                locality_name: item?.locality_name || item?.name || '',
+                                name: item?.locality_name || item?.name || '',
+                                ranking: item?.ranking || null,
+                              };
+                              
+                              console.log('HomeScreen: Updating location from search (second occurrence):', updatedLocation);
+                              
                               getAgentList(item?.id);
                               setSearchList([]);
                               setSearchText('');
-                              dispatch(setLocation(item));
+                              dispatch(setLocation(updatedLocation));
                               await AsyncStorage.setItem(
                                 'location',
-                                JSON.stringify(item),
+                                JSON.stringify(updatedLocation),
                               );
                             }}
                             style={styles.searchRow}
