@@ -251,9 +251,7 @@ const renderOption = (option: string) => {
     case 'customerCare':
     case 'contactUs':
       return (
-        <TouchableOpacity onPress={() => {
-          // support screen / call / chat link
-        }}>
+        <TouchableOpacity onPress={() => navigation.navigate('CustomerCareScreen')}>
           <View style={[styles.row, {justifyContent: 'space-between'}]}>
             <View style={styles.row}>
               <ContactUsIcon />

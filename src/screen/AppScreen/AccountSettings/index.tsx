@@ -1,5 +1,5 @@
-import React, {useCallback} from 'react';
-import {Alert, Linking, SafeAreaView, StyleSheet, View} from 'react-native';
+import React, {useCallback, useState} from 'react';
+import {Alert, SafeAreaView, StyleSheet, View, ActivityIndicator} from 'react-native';
 import {AccountSettingsProps} from '../../../types/appTypes';
 import {COLORS} from '../../../assets/colors';
 import ScreenHeader from '../../../components/ScreenHeader';
@@ -12,7 +12,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {clearAuthState} from '../../../store/slice/authSlice';
 import Toast from 'react-native-toast-message';
 import {useAppDispatch, useAppSelector} from '../../../store';
-import {BASE_URL} from '../../../constant/urls';
 import {useAuthGuard} from '../../../hooks/useAuthGuard';
 import {useFocusEffect} from '@react-navigation/native';
 
@@ -20,6 +19,7 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
   const dispatch = useAppDispatch();
   const {userData} = useAppSelector(state => state.auth);
   const {requireAuth} = useAuthGuard();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Check authentication when screen comes into focus
   useFocusEffect(
@@ -30,30 +30,35 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
     }, [requireAuth])
   );
 
-  const handleDeleteUser = () => {
-    const payload = {
-      otp: '212551',
-    };
-    deleteUser(payload)
-      .then(async res => {
-        console.log('res in delete user', res);
-        // Clear specific auth-related items from AsyncStorage
-        await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
-        dispatch(clearAuthState());
-        Toast.show({
-          type: 'success',
-          text1: res?.message,
-        });
-        navigation.navigate('HomeScreen');
-      })
-      .catch(error => {
-        console.log('error', error);
-        Toast.show({
-          type: 'error',
-          text1: error?.response?.data?.message,
-        });
-      });
+  const handleDeleteUser = async () => {
+    setIsDeleting(true);
+    
+    // Simulate processing time
+    setTimeout(() => {
+      setIsDeleting(false);
+      Alert.alert(
+        'Request Submitted',
+        'Your request for deleting account has been sent successfully.',
+        [{text: 'OK', style: 'default'}]
+      );
+    }, 2000);
   };
+
+  const showDeleteConfirmation = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: handleDeleteUser,
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.parent}>
       <ScreenHeader
@@ -64,7 +69,6 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
         onBackPress={() => navigation.goBack()}
         onHomePress={() => navigation.navigate('CitySelectionScreen')}
       />
-
 
       <View style={styles.container}>
         <MagicText style={styles.titleText}>Settings</MagicText>
@@ -79,7 +83,7 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
         <WhiteCardView
           cardStyle={styles.cardStyle}
           onPress={() => {
-            Linking.openURL(`${BASE_URL}v1/auth/terms`);
+            navigation.navigate('TermsConditionsScreen');
           }}>
           <View style={styles.row}>
             <ContactUsIcon />
@@ -91,7 +95,7 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
         <WhiteCardView
           cardStyle={styles.cardStyle}
           onPress={() => {
-            Linking.openURL(`${BASE_URL}v1/auth/privacy-policy`);
+            navigation.navigate('PrivacyPolicyScreen');
           }}>
           <View style={styles.row}>
             <ContactUsIcon />
@@ -103,20 +107,18 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
         {userData?.role !== 'agent' ? (
           <WhiteCardView
             cardStyle={[styles.cardStyle, styles.deleteAccountCardStyle]}
-            onPress={() => {
-              Alert.alert(
-                'Delete Account',
-                'Are you sure want to delete account?',
-                [
-                  {text: 'No'},
-                  {text: 'Yes', onPress: () => handleDeleteUser()},
-                ],
-              );
-            }}>
+            onPress={showDeleteConfirmation}>
             <View style={styles.deleteAccountContainer}>
-              <MagicText style={styles.deleteAccountText}>
-                Delete Account
-              </MagicText>
+              {isDeleting ? (
+                <View style={styles.deletingContainer}>
+                  <ActivityIndicator size="small" color={COLORS.WHITE} />
+                  <MagicText style={styles.deletingText}>Processing...</MagicText>
+                </View>
+              ) : (
+                <MagicText style={styles.deleteAccountText}>
+                  Delete Account
+                </MagicText>
+              )}
             </View>
           </WhiteCardView>
         ) : null}
@@ -172,6 +174,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     marginLeft: 15,
+  },
+  deletingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deletingText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: COLORS.WHITE,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

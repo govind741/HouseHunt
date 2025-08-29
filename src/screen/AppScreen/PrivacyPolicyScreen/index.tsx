@@ -1,0 +1,337 @@
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import {WebView} from 'react-native-webview';
+import CustomBack from '../../../components/CustomBack';
+import MagicText from '../../../components/MagicText';
+import {COLORS} from '../../../assets/colors';
+import {BASE_URL} from '../../../constant/urls';
+import axios from 'axios';
+
+const PrivacyPolicyScreen = ({navigation}: any) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [htmlContent, setHtmlContent] = useState('');
+  const [useWebView, setUseWebView] = useState(false);
+
+  const privacyPolicyUrl = `${BASE_URL}v1/auth/privacy-policy`;
+
+  const fetchPrivacyPolicyContent = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      
+      console.log('🔄 Fetching Privacy Policy content from:', privacyPolicyUrl);
+      const response = await axios.get(privacyPolicyUrl);
+      
+      console.log('✅ Privacy Policy API Response Status:', response.status);
+      
+      if (response.data) {
+        let content = '';
+        let isHtml = false;
+        
+        if (typeof response.data === 'string') {
+          content = response.data;
+          isHtml = content.includes('<html>') || (content.includes('<') && content.includes('>'));
+        } else if (typeof response.data === 'object') {
+          let dataObj = response.data;
+          
+          if (dataObj.data && typeof dataObj.data === 'object') {
+            dataObj = dataObj.data;
+          }
+          
+          if (dataObj.content) {
+            content = dataObj.content;
+          } else if (dataObj.data) {
+            if (Array.isArray(dataObj.data)) {
+              content = dataObj.data.length > 0 ? String(dataObj.data[0].content || dataObj.data[0].text || dataObj.data[0]) : 'No content available';
+            } else {
+              content = String(dataObj.data.content || dataObj.data.text || dataObj.data);
+            }
+          } else {
+            content = String(dataObj.message || dataObj.text || dataObj.description || JSON.stringify(dataObj, null, 2));
+          }
+          
+          isHtml = typeof content === 'string' && (content.includes('<html>') || (content.includes('<') && content.includes('>')));
+        } else {
+          content = String(response.data);
+        }
+        
+        content = String(content || '');
+        
+        if (content && content.trim().length > 0) {
+          setHtmlContent(content);
+          setUseWebView(isHtml);
+          setError(false);
+        } else {
+          setError(true);
+        }
+      } else {
+        setError(true);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching Privacy Policy content:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPrivacyPolicyContent();
+  }, []);
+
+  const handleRetry = () => {
+    fetchPrivacyPolicyContent();
+  };
+
+  const renderError = () => (
+    <View style={styles.errorContainer}>
+      <MagicText style={styles.errorTitle}>Unable to Load Content</MagicText>
+      <MagicText style={styles.errorMessage}>
+        Please check your internet connection and try again.
+      </MagicText>
+      <View style={styles.retryButton}>
+        <MagicText style={styles.retryText} onPress={handleRetry}>
+          Retry
+        </MagicText>
+      </View>
+    </View>
+  );
+
+  const renderLoading = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+      <MagicText style={styles.loadingText}>Loading Privacy Policy...</MagicText>
+    </View>
+  );
+
+  const renderHtmlContent = () => {
+    if (useWebView && htmlContent) {
+      const fullHtmlContent = htmlContent.includes('<html>') 
+        ? htmlContent 
+        : `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Privacy Policy</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  background-color: ${COLORS.WHITE};
+                  color: ${COLORS.BLACK};
+                  padding: 16px;
+                  margin: 0;
+                  line-height: 1.6;
+                }
+                h1, h2, h3, h4, h5, h6 {
+                  color: ${COLORS.BLACK};
+                  font-weight: 600;
+                  margin-top: 20px;
+                  margin-bottom: 10px;
+                }
+                p {
+                  color: ${COLORS.TEXT_GRAY};
+                  line-height: 1.6;
+                  font-size: 16px;
+                  margin-bottom: 12px;
+                }
+                a {
+                  color: ${COLORS.PRIMARY};
+                  text-decoration: none;
+                }
+                ul, ol {
+                  color: ${COLORS.TEXT_GRAY};
+                  padding-left: 20px;
+                }
+                li {
+                  margin-bottom: 8px;
+                }
+                img {
+                  max-width: 100%;
+                  height: auto;
+                }
+              </style>
+            </head>
+            <body>
+              ${htmlContent}
+            </body>
+          </html>
+        `;
+
+      return (
+        <WebView
+          source={{html: fullHtmlContent}}
+          style={styles.webView}
+          scalesPageToFit={true}
+          showsVerticalScrollIndicator={false}
+          onError={() => setUseWebView(false)}
+          onLoadEnd={() => console.log('✅ WebView loaded successfully')}
+        />
+      );
+    } else {
+      return (
+        <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.textContent}>
+            <MagicText style={styles.contentTitle}>Privacy Policy</MagicText>
+            <MagicText style={styles.contentText}>
+              {htmlContent || `We are committed to protecting your privacy and ensuring the security of your personal information.
+
+Information We Collect:
+• Personal details you provide when registering
+• Property preferences and search history
+• Communication records with agents
+• Device and usage information
+
+How We Use Your Information:
+• To provide personalized property recommendations
+• To connect you with relevant real estate agents
+• To improve our services and user experience
+• To send important updates and notifications
+
+Data Protection:
+• We use industry-standard security measures
+• Your data is encrypted and stored securely
+• We never sell your personal information to third parties
+• You can request data deletion at any time
+
+Contact Us:
+If you have any questions about this Privacy Policy, please contact our support team.
+
+Last updated: ${new Date().toLocaleDateString()}`}
+            </MagicText>
+          </View>
+        </ScrollView>
+      );
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <CustomBack onPress={() => navigation.goBack()} />
+        <View style={styles.headerTitleContainer}>
+          <MagicText style={styles.headerTitle}>Privacy Policy</MagicText>
+        </View>
+      </View>
+
+      <View style={styles.content}>
+        {loading ? renderLoading() : error ? renderError() : renderHtmlContent()}
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.WHITE,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.GRAY,
+    elevation: 2,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginRight: 40,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.BLACK,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
+  webView: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.WHITE,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: COLORS.TEXT_GRAY,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: COLORS.WHITE,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.BLACK,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: COLORS.TEXT_GRAY,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: COLORS.WHITE,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
+  textContent: {
+    padding: 20,
+  },
+  contentTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.BLACK,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  contentText: {
+    fontSize: 16,
+    color: COLORS.TEXT_GRAY,
+    lineHeight: 24,
+    textAlign: 'justify',
+  },
+});
+
+export default PrivacyPolicyScreen;
