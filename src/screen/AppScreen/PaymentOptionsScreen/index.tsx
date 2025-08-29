@@ -307,21 +307,12 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         <MagicText style={styles.sectionTitle}>UPI Details</MagicText>
       </View>
       
-      {isEditing ? (
-        <TextField
-          placeholder="Enter UPI ID (e.g., yourname@paytm)"
-          value={paymentDetails.upi_id}
-          onChangeText={(text) => setPaymentDetails(prev => ({...prev, upi_id: text}))}
-          style={styles.inputField}
-        />
-      ) : (
-        <View style={styles.detailRow}>
-          <MagicText style={styles.detailLabel}>UPI ID:</MagicText>
-          <MagicText style={styles.detailValue}>
-            {paymentDetails.upi_id || 'Not provided'}
-          </MagicText>
-        </View>
-      )}
+      <View style={styles.detailRow}>
+        <MagicText style={styles.detailLabel}>UPI ID:</MagicText>
+        <MagicText style={styles.detailValue}>
+          {paymentDetails.upi_id || 'Not provided'}
+        </MagicText>
+      </View>
     </WhiteCardView>
   );
 
@@ -332,61 +323,32 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         <MagicText style={styles.sectionTitle}>Bank Details</MagicText>
       </View>
       
-      {isEditing ? (
-        <View>
-          <TextField
-            placeholder="Account Holder Name"
-            value={paymentDetails.bank_account_holder_name}
-            onChangeText={(text) => setPaymentDetails(prev => ({...prev, bank_account_holder_name: text}))}
-            style={styles.inputField}
-          />
-          <TextField
-            placeholder="Bank Name"
-            value={paymentDetails.bank_name}
-            onChangeText={(text) => setPaymentDetails(prev => ({...prev, bank_name: text}))}
-            style={styles.inputField}
-          />
-          <TextField
-            placeholder="Account Number"
-            value={paymentDetails.bank_account_number}
-            onChangeText={(text) => setPaymentDetails(prev => ({...prev, bank_account_number: text}))}
-            style={styles.inputField}
-            keyboardType="numeric"
-          />
-          <TextField
-            placeholder="IFSC Code"
-            value={paymentDetails.bank_ifsc_code}
-            onChangeText={(text) => setPaymentDetails(prev => ({...prev, bank_ifsc_code: text.toUpperCase()}))}
-            style={styles.inputField}
-          />
+      <View>
+        <View style={styles.detailRow}>
+          <MagicText style={styles.detailLabel}>Account Holder:</MagicText>
+          <MagicText style={styles.detailValue}>
+            {paymentDetails.bank_account_holder_name || 'Not provided'}
+          </MagicText>
         </View>
-      ) : (
-        <View>
-          <View style={styles.detailRow}>
-            <MagicText style={styles.detailLabel}>Account Holder:</MagicText>
-            <MagicText style={styles.detailValue}>
-              {paymentDetails.bank_account_holder_name || 'Not provided'}
-            </MagicText>
-          </View>
-          <View style={styles.detailRow}>
-            <MagicText style={styles.detailLabel}>Bank Name:</MagicText>
-            <MagicText style={styles.detailValue}>
-              {paymentDetails.bank_name || 'Not provided'}
-            </MagicText>
-          </View>
-          <View style={styles.detailRow}>
-            <MagicText style={styles.detailLabel}>Account Number:</MagicText>
-            <MagicText style={styles.detailValue}>
-              {paymentDetails.bank_account_number ? 
-                `****${paymentDetails.bank_account_number.slice(-4)}` : 
-                'Not provided'
-              }
-            </MagicText>
-          </View>
-          <View style={styles.detailRow}>
-            <MagicText style={styles.detailLabel}>IFSC Code:</MagicText>
-            <MagicText style={styles.detailValue}>
-              {paymentDetails.bank_ifsc_code || 'Not provided'}
+        <View style={styles.detailRow}>
+          <MagicText style={styles.detailLabel}>Bank Name:</MagicText>
+          <MagicText style={styles.detailValue}>
+            {paymentDetails.bank_name || 'Not provided'}
+          </MagicText>
+        </View>
+        <View style={styles.detailRow}>
+          <MagicText style={styles.detailLabel}>Account Number:</MagicText>
+          <MagicText style={styles.detailValue}>
+            {paymentDetails.bank_account_number ? 
+              `****${paymentDetails.bank_account_number.slice(-4)}` : 
+              'Not provided'
+            }
+          </MagicText>
+        </View>
+        <View style={styles.detailRow}>
+          <MagicText style={styles.detailLabel}>IFSC Code:</MagicText>
+          <MagicText style={styles.detailValue}>
+            {paymentDetails.bank_ifsc_code || 'Not provided'}
             </MagicText>
           </View>
         </View>
@@ -401,11 +363,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         <MagicText style={styles.sectionTitle}>QR Code</MagicText>
       </View>
       
-      <TouchableOpacity 
-        style={styles.qrUploadContainer}
-        onPress={handleImagePicker}
-        disabled={!isEditing}
-      >
+      <View style={styles.qrUploadContainer}>
         {paymentDetails.qr_code_image ? (
           <View style={styles.qrImageContainer}>
             <Image 
@@ -420,20 +378,12 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
                 // Fallback to placeholder if image fails to load
               }}
             />
-            {isEditing && (
-              <TouchableOpacity 
-                style={styles.changeImageButton}
-                onPress={handleImagePicker}
-              >
-                <MagicText style={styles.changeImageText}>Change Image</MagicText>
-              </TouchableOpacity>
-            )}
           </View>
         ) : (
           <View style={styles.qrPlaceholder}>
             <PaymentIcon color={COLORS.GRAY} width={40} height={40} />
             <MagicText style={styles.qrPlaceholderText}>
-              {isEditing ? 'Tap to upload QR Code' : 'No QR Code uploaded'}
+              No QR Code uploaded
             </MagicText>
           </View>
         )}
@@ -448,18 +398,6 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         <View style={styles.header}>
           <MagicText style={styles.headerText}>Payment Options</MagicText>
         </View>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => {
-            if (isEditing) {
-              handleSavePaymentDetails();
-            } else {
-              setIsEditing(true);
-            }
-          }}
-        >
-          <EditIcon color={COLORS.APP_RED} width={20} height={20} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.parent}>
@@ -472,26 +410,6 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         {renderUPISection()}
         {renderBankSection()}
         {renderQRSection()}
-
-        {isEditing && (
-          <View style={styles.buttonContainer}>
-            <Button
-              label="Save Payment Details"
-              style={styles.saveButton}
-              labelStyle={styles.saveButtonText}
-              onPress={handleSavePaymentDetails}
-            />
-            <Button
-              label="Cancel"
-              style={styles.cancelButton}
-              labelStyle={styles.cancelButtonText}
-              onPress={() => {
-                setIsEditing(false);
-                // Reset to original values - in real app, refetch from server
-              }}
-            />
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );

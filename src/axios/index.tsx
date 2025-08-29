@@ -69,37 +69,44 @@ axiosInstance.interceptors.response.use(
     return response.data;
   },
   async (error: AxiosError) => {
-    console.error('[API Response Error]', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.message,
-      responseData: error.response?.data,
-    });
-
     // Handle specific error cases
     if (error.response?.status === 401) {
       console.log('🔐 Unauthorized - clearing stored auth data');
       await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
     }
     
-    // Enhanced 403 error handling for agent endpoints
-    if (error.response?.status === 403 && error.config?.url?.includes('agent')) {
-      console.log('🚫 Agent endpoint forbidden - checking auth state');
-      const token = await AsyncStorage.getItem('token');
-      const role = await AsyncStorage.getItem('role');
-      const userId = await AsyncStorage.getItem('userId');
+    // Enhanced 403 error handling for agent property access
+    if (error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || error.message;
       
-      console.log('🔍 Auth state check:', {
-        hasToken: !!token,
-        role,
-        userId,
-        endpoint: error.config.url,
-      });
-      
-      // If we have a token but still get 403, it might be a role/permission issue
-      if (token && role !== 'agent') {
-        console.log('⚠️ Token exists but role is not agent - possible role mismatch');
+      if (errorMessage?.includes('Agent is not allowed to view this property')) {
+        // Provide user-friendly error message without redundant logging
+        const enhancedError = {
+          ...error,
+          response: {
+            ...error.response,
+            data: {
+              ...error.response.data,
+              message: 'You do not have permission to view this property. Please contact support if you believe this is an error.',
+              userFriendly: true
+            }
+          }
+        };
+        return Promise.reject(enhancedError);
       }
+      
+      // Log other 403 errors normally
+      console.log('🚫 Access forbidden:', errorMessage);
+    }
+
+    // Only log errors that aren't the specific agent property permission error
+    if (!(error.response?.status === 403 && error.response?.data?.message?.includes('Agent is not allowed to view this property'))) {
+      console.error('[API Response Error]', {
+        url: error.config?.url,
+        status: error.response?.status,
+        message: error.message,
+        responseData: error.response?.data,
+      });
     }
 
     return Promise.reject(error);

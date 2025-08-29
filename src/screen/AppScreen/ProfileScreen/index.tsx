@@ -104,6 +104,14 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   const getDetails = useCallback(
     (userId: number, role: string) => {
       console.log('🔍 Getting user details for:', {userId, role});
+      
+      // For agents viewing their own profile, use existing userData instead of API call
+      if (role === 'agent' && userData?.id === userId) {
+        console.log('🏢 Agent viewing own profile - using existing userData');
+        setUserDetails(userData);
+        return;
+      }
+      
       setIsLoading(true);
       
       const API =
@@ -143,8 +151,11 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         setIsLoading(false);
         console.log('❌ Error in getDetails:', error);
         
-        // Don't use userData here to avoid dependency loop
-        console.error('❌ Failed to fetch user details');
+        // Provide specific error message based on role
+        const errorMessage = role === 'agent' 
+          ? '❌ Failed to fetch agent details' 
+          : '❌ Failed to fetch user details';
+        console.error(errorMessage);
       });
     },
     [dispatch],

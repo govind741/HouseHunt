@@ -196,6 +196,15 @@ export const handleAgentDetails = async (agentId: number) => {
     console.log('✅ Handle Agent Details Success:', response);
     return response;
   } catch (error: any) {
+    // Check if this is the specific agent property permission error (including user-friendly version)
+    if (error?.response?.status === 403 && 
+        (error?.response?.data?.message?.includes('Agent is not allowed to view this property') ||
+         error?.response?.data?.userFriendly === true)) {
+      // Don't log redundantly - axios interceptor already handles this
+      throw error;
+    }
+    
+    // Log other errors normally
     console.error('❌ Handle Agent Details Error:', {
       message: error?.message,
       status: error?.response?.status,

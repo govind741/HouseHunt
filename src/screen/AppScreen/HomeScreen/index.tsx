@@ -37,7 +37,6 @@ import {AgentUserType} from '../../../types';
 import LoginModal from '../../../components/LoginModal';
 import {IMAGE} from '../../../assets/images';
 import { checkAgentAuthState, getAgentNavigationRoute } from '../../../utils/agentAuthUtils';
-import AgentDebugPanel from '../../../components/AgentDebugPanel';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -667,11 +666,6 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           setShowLoginModal(false);
         }}
       />
-      
-      {/* Debug panel for agents in development */}
-      {userData?.role === 'agent' && (
-        <AgentDebugPanel visible={__DEV__} />
-      )}
     </SafeAreaView>
   );
 };

@@ -57,15 +57,8 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
       phone: formattedPhone,
     };
 
-    if (__DEV__) console.log('🏢 Agent login request:', {
-      originalMobile: mobile,
-      formattedPhone: formattedPhone,
-      payload
-    });
-
     handleAgentLogin(payload)
       .then(res => {
-        if (__DEV__) console.log('✅ Agent login success:', res);
         Toast.show({
           type: 'success',
           text1: res?.user?.message || 'OTP sent to your mobile',
@@ -74,7 +67,6 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
         navigation.navigate('OtpScreen', {mobile: formattedPhone, screen: 'agent'});
       })
       .catch(error => {
-        if (__DEV__) console.log('❌ Agent login error:', error);
         Toast.show({
           type: 'error',
           text1: error?.response?.data?.message || 'Agent login failed. Please try again.',
@@ -104,6 +96,8 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
             <MagicText style={styles.continueText}>Log in or sign up</MagicText>
             <View style={styles.hr} />
           </View>
+          
+          <MagicText style={styles.welcomeText}>Welcome To Our Team</MagicText>
         </View>
 
         <TextField
@@ -278,6 +272,14 @@ const styles = StyleSheet.create({
     height: 200,
     resizeMode: 'contain',
     marginTop: 20,
+  },
+  welcomeText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: COLORS.BLACK,
+    marginTop: 15,
+    marginBottom: 0,
+    textAlign: 'center',
   },
   title: {
     fontSize: 30,
