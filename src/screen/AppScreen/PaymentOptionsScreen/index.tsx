@@ -387,7 +387,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
             </MagicText>
           </View>
         )}
-      </TouchableOpacity>
+      </View>
     </WhiteCardView>
   );
 
