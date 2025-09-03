@@ -607,20 +607,13 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         text2: 'Welcome to HouseApp! You can now start using the app.',
       });
       
-      // Navigate directly to HomeScreen instead of PendingApprovalScreen
-      console.log('Navigating to HomeScreen...');
+      // Navigate to PendingApprovalScreen instead of HomeScreen
+      console.log('Navigating to PendingApprovalScreen...');
       navigation.reset({
         index: 0,
         routes: [
           {
-            name: 'HomeScreenStack',
-            state: {
-              routes: [
-                {
-                  name: 'HomeScreen',
-                },
-              ],
-            },
+            name: 'PendingApprovalScreen',
           },
         ],
       });

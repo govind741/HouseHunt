@@ -63,14 +63,31 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   );
 
   useEffect(() => {
-    if (token && userData?.id) {
-      if (userData.role === 'agent') {
+    if (token) {
+      // Check userData first, then fallback to AsyncStorage role
+      if (userData?.role === 'agent') {
         setOptions(AgentMenuOptions);
-      } else {
+      } else if (userData?.role === 'user') {
         setOptions(UserMenuOptions);
+      } else {
+        // Fallback: check AsyncStorage for role if userData is incomplete
+        AsyncStorage.getItem('role').then(role => {
+          if (role === 'agent') {
+            setOptions(AgentMenuOptions);
+          } else if (role === 'user') {
+            setOptions(UserMenuOptions);
+          } else {
+            // Default to user options if no role found
+            setOptions(UserMenuOptions);
+          }
+        }).catch(() => {
+          // Default to user options on error
+          setOptions(UserMenuOptions);
+        });
       }
     } else {
-      setOptions([]);
+      // Guest mode - show basic user options
+      setOptions(UserMenuOptions);
     }
   }, [token, userData]);
 

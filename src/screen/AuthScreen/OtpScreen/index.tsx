@@ -364,25 +364,45 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
               dispatch(setUserData(agentObj));
               await AsyncStorage.setItem('userData', JSON.stringify(agentObj));
 
-              // Navigate directly to HomeScreen (temporarily bypassing approval check)
-              console.log('Agent profile complete, navigating to home (approval check bypassed)');
-              Toast.show({
-                type: 'success',
-                text1: 'Welcome back!',
-                text2: 'Login successful',
-              });
+              // Check if agent needs approval (newly registered or not approved)
+              const needsApproval = !agentData.verified || agentData.status === 0 || agentDataResult.source === 'minimal_fallback';
               
-              navigation.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: 'HomeScreenStack',
-                    params: {
-                      screen: 'HomeScreen',
+              if (needsApproval) {
+                console.log('Agent needs approval, navigating to PendingApprovalScreen');
+                Toast.show({
+                  type: 'info',
+                  text1: 'Account Under Review',
+                  text2: 'Please wait for approval',
+                });
+                
+                navigation.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'PendingApprovalScreen',
                     },
-                  },
-                ],
-              });
+                  ],
+                });
+              } else {
+                console.log('Agent approved, navigating to HomeScreen');
+                Toast.show({
+                  type: 'success',
+                  text1: 'Welcome back!',
+                  text2: 'Login successful',
+                });
+                
+                navigation.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'HomeScreenStack',
+                      params: {
+                        screen: 'HomeScreen',
+                      },
+                    },
+                  ],
+                });
+              }
             } else {
               console.log('⚠️ No valid agent data found - treating as new agent');
               Toast.show({

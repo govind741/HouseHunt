@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,15 +11,55 @@ import {PendingApprovalScreenProps} from '../../../types/appTypes';
 import {COLORS} from '../../../assets/colors';
 import MagicText from '../../../components/MagicText';
 import {HouseAppIcon} from '../../../assets/icons';
-import {useAppDispatch} from '../../../store';
+import {useAppDispatch, useAppSelector} from '../../../store';
 import {clearAuthState} from '../../../store/slice/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {handleAgentDetails} from '../../../services/authServices';
 
 const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
   const dispatch = useAppDispatch();
+  const {token, userData} = useAppSelector(state => state.auth);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
-  // Remove the individual BackHandler - now handled centrally
-  // This screen will now allow natural back navigation
+  // Check approval status periodically
+  useEffect(() => {
+    const checkApprovalStatus = async () => {
+      if (!token || !userData?.id || checkingStatus) return;
+      
+      setCheckingStatus(true);
+      try {
+        const agentDetails = await handleAgentDetails(userData.id);
+        
+        // Check if agent is now approved
+        if (agentDetails && (agentDetails.verified === 1 || agentDetails.status === 1)) {
+          console.log('Agent approved, redirecting to city selection');
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'HomeScreenStack',
+                params: {
+                  screen: 'CitySelectionScreen',
+                },
+              },
+            ],
+          });
+        }
+      } catch (error) {
+        console.log('Error checking approval status:', error);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    // Check immediately
+    checkApprovalStatus();
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkApprovalStatus, 30000);
+    
+    return () => clearInterval(interval);
+  }, [token, userData?.id, navigation, checkingStatus]);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [

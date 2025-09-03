@@ -6,6 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import MagicText from '../../../components/MagicText';
 import {COLORS} from '../../../assets/colors';
@@ -26,6 +30,21 @@ const GOOGLE_BUTTON_VARIANT: 'white' | 'blue' = 'white'; // Change to 'blue' for
 const LoginScreen = ({navigation}: LoginScreenProps) => {
   const [mobile, setMobile] = useState('');
   const [selectedTab, setSelectedTab] = useState<'phone' | 'gmail'>('phone');
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
 
   // Remove the individual BackHandler - now handled centrally
   // The centralized back handler will show exit prompt on LoginScreen
@@ -76,8 +95,16 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
   };
 
   return (
-    <View style={styles.parent}>
-      <View>
+    <KeyboardAvoidingView 
+      style={styles.parent} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={isKeyboardVisible}
+      >
         <Image source={IMAGE.COMPANY_LOGO} style={styles.logoStyle} />
         <View style={styles.row}>
           <View style={styles.hr} />
@@ -187,17 +214,17 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
             </TouchableOpacity>
           </>
         )}
-      </View>
-      <View style={styles.bottomView}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('AgentLoginScreen')}
-          style={styles.agentBtn}>
-          <MagicText style={styles.agentText}>Agent</MagicText>
-        </TouchableOpacity>
-        <MagicText style={styles.termsHeaderText}>
-          By continuing, you agree to our
-        </MagicText>
-        <View style={styles.textRow}>
+
+        <View style={styles.bottomView}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AgentLoginScreen')}
+            style={styles.agentBtn}>
+            <MagicText style={styles.agentText}>Agent</MagicText>
+          </TouchableOpacity>
+          <MagicText style={styles.termsHeaderText}>
+            By continuing, you agree to our
+          </MagicText>
+          <View style={styles.textRow}>
           <TouchableOpacity
             onPress={() => {
               Linking.openURL(`${BASE_URL}/v1/auth/terms`);
@@ -215,8 +242,9 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
             <MagicText style={styles.termsText}>Content Policy</MagicText>
           </TouchableOpacity>
         </View>
-      </View>
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -226,6 +254,10 @@ const styles = StyleSheet.create({
   parent: {
     flex: 1,
     backgroundColor: COLORS.WHITE,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
   logoStyle: {
     width: '100%',
@@ -258,10 +290,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   bottomView: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginBottom: 30,
+    marginTop: 30,
+    paddingBottom: 20,
   },
   btnLabel: {
     fontSize: 20,
@@ -418,7 +449,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto', // Google's preferred font
     letterSpacing: 0.25,
   },
 });
