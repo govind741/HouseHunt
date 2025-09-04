@@ -180,7 +180,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       
       Toast.show({
         type: 'success',
-        text1: 'Profile updated successfully!',
+        text1: 'Profile created successfully!',
         text2: `Welcome ${finalUserData.name}!`,
       });
       

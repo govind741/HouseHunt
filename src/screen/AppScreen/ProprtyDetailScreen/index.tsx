@@ -396,7 +396,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       .then(res => {
         Toast.show({
           type: 'success',
-          text1: res?.message,
+          text1: 'Bookmark Saved',
         });
       })
       .catch(error => {

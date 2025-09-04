@@ -278,7 +278,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         .then(res => {
           Toast.show({
             type: 'success',
-            text1: res?.message || 'Bookmark added',
+            text1: 'Bookmark Saved',
           });
           // Update local state
           setBookmarkedAgents(prev => [...prev, agent_id]);

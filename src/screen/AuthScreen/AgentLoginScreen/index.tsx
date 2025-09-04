@@ -97,7 +97,7 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
             <View style={styles.hr} />
           </View>
           
-          <MagicText style={styles.welcomeText}>Welcome To Our Team</MagicText>
+          <MagicText style={styles.welcomeText}>Let's Go</MagicText>
         </View>
 
         <TextField

@@ -53,7 +53,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   const [areaList, setAreaList] = useState<AreaType[]>([]);
   const [localityList, setLocalityList] = useState<LocalityType[]>([]);
   const [selectedCity, setSelectedCity] = useState<CityType | null>(null); // Single city selection
-  const [selectedAreas, setSelectedAreas] = useState<AreaType[]>([]); // Multiple areas
+  const [selectedAreas, setSelectedAreas] = useState<AreaType | null>(null); // Single area
   const [selectedLocalities, setSelectedLocalities] = useState<LocalityType[]>([]); // Multiple localities
   const [loadingCities, setLoadingCities] = useState(true);
   const [loadingAreas, setLoadingAreas] = useState(false);
@@ -135,7 +135,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     }
 
     setSelectedCity(city);
-    setSelectedAreas([]); // Reset areas when city changes
+    setSelectedAreas(null); // Reset area when city changes
     setSelectedLocalities([]); // Reset localities when city changes
     setAreaList([]); // Clear area list
     setLocalityList([]); // Clear locality list
@@ -238,44 +238,17 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   };
 
   const handleAreaSelect = (area: AreaType) => {
-    // Check if area is already selected
-    const isAlreadySelected = selectedAreas.some(a => a.id === area.id);
-    
-    if (isAlreadySelected) {
-      // Remove area if already selected
-      const updatedAreas = selectedAreas.filter(a => a.id !== area.id);
-      setSelectedAreas(updatedAreas);
-      Toast.show({
-        type: 'info',
-        text1: 'Area Removed',
-        text2: `${area.name} has been removed from your selection.`,
-      });
-    } else {
-      // Add area to selection
-      const updatedAreas = [...selectedAreas, area];
-      setSelectedAreas(updatedAreas);
-      Toast.show({
-        type: 'success',
-        text1: 'Area Added',
-        text2: `${area.name} has been added to your selection.`,
-      });
-    }
+    // Set single area selection
+    setSelectedAreas(area);
+    Toast.show({
+      type: 'success',
+      text1: 'Area Selected',
+      text2: `${area.name} selected successfully`,
+    });
 
-    // Load localities for all selected areas
+    // Load localities for selected area
     if (selectedCity) {
-      const allSelectedAreas = isAlreadySelected 
-        ? selectedAreas.filter(a => a.id !== area.id)
-        : [...selectedAreas, area];
-      
-      if (allSelectedAreas.length > 0) {
-        // Load localities for selected areas
-        const areaIds = allSelectedAreas.map(a => a.id);
-        // For now, load localities for the first area (you might want to modify the API to accept multiple area IDs)
-        loadLocalitiesForCity(selectedCity.id, areaIds[0]);
-      } else {
-        // Load all localities for the city if no areas selected
-        loadLocalitiesForCity(selectedCity.id);
-      }
+      loadLocalitiesForCity(selectedCity.id, area.id);
     }
   };
 
@@ -306,7 +279,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
 
   const resetCitySelection = () => {
     setSelectedCity(null);
-    setSelectedAreas([]);
+    setSelectedAreas(null);
     setSelectedLocalities([]);
     setAreaList([]);
     setLocalityList([]);
@@ -403,7 +376,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       return;
     }
 
-    if (selectedAreas.length === 0) {
+    if (!selectedAreas) {
       Toast.show({
         type: 'error',
         text1: 'Area Required',
@@ -424,7 +397,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     // Create locations array from selected city, areas, and localities
     const locations: workLocationType[] = selectedLocalities.map(locality => ({
       location_id: locality.id,
-      area_id: locality.area_id || (selectedAreas.length > 0 ? selectedAreas[0].id : null),
+      area_id: locality.area_id || (selectedAreas ? selectedAreas.id : null),
       city_id: selectedCity.id,
     }));
 
@@ -713,9 +686,9 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           {selectedCity && (
             <View style={styles.selectionContainer}>
               <View style={styles.sectionHeader}>
-                <MagicText style={styles.sectionTitle}>Select Areas <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
+                <MagicText style={styles.sectionTitle}>Select Area <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
                 <MagicText style={styles.sectionSubtitle}>
-                  ({selectedAreas.length} selected)
+                  ({selectedAreas ? '1 selected' : '0 selected'})
                 </MagicText>
               </View>
 
@@ -727,17 +700,17 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
                 <>
                   <MultiSelectDropdown
                     data={areaList}
-                    placeholder="Select Areas"
-                    selectedValues={selectedAreas}
+                    placeholder="Select Area"
+                    selectedValues={selectedAreas ? [selectedAreas] : []}
                     onSelect={handleAreaSelect}
                     loading={loadingAreas}
                     style={styles.dropdownStyle}
                   />
 
-                  {selectedAreas.length > 0 && (
+                  {selectedAreas && (
                     <View style={styles.selectedAreasInfo}>
                       <MagicText style={styles.selectedAreasText}>
-                        You selected {selectedAreas.length} areas in {selectedCity.name}
+                        You selected {selectedAreas.name} in {selectedCity.name}
                       </MagicText>
                     </View>
                   )}
@@ -757,7 +730,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           )}
 
           {/* Locality Selection Section */}
-          {selectedCity && selectedAreas.length > 0 && (
+          {selectedCity && selectedAreas && (
             <View style={styles.selectionContainer}>
               <View style={styles.sectionHeader}>
                 <MagicText style={styles.sectionTitle}>Select Localities <MagicText style={styles.requiredAsterisk}>*</MagicText></MagicText>
@@ -785,7 +758,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
                     <View style={styles.selectedLocalitiesInfo}>
                       <MagicText style={styles.selectedLocalitiesText}>
                         You can work in {selectedLocalities.length} localities within {selectedCity.name}
-                        {selectedAreas.length > 0 && ` (${selectedAreas.length} areas selected)`}
+                        {selectedAreas && ` (${selectedAreas.name} selected)`}
                       </MagicText>
                     </View>
                   )}
@@ -801,7 +774,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           )}
 
           {/* Message when city is selected but no areas selected */}
-          {selectedCity && selectedAreas.length === 0 && !loadingAreas && areaList.length > 0 && (
+          {selectedCity && !selectedAreas && !loadingAreas && areaList.length > 0 && (
             <View style={styles.selectionContainer}>
               <View style={styles.messageContainer}>
                 <MagicText style={styles.messageText}>
@@ -813,11 +786,11 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         </ScrollView>
 
         <Button
-          label="Complete Signup"
+          label="Signup"
           style={styles.btnStyle}
           labelStyle={styles.btnLabel}
           onPress={handleSignup}
-          disabled={!selectedCity || selectedAreas.length === 0 || selectedLocalities.length === 0}
+          disabled={!selectedCity || !selectedAreas || selectedLocalities.length === 0}
         />
       </View>
     </SafeAreaView>

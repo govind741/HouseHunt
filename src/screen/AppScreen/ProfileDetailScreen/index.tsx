@@ -30,22 +30,16 @@ import {
   userFormValidationSchema,
   UserFormValues,
 } from '../../AuthScreen/SignupScreen/constants';
-import moment from 'moment';
 import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 import {prepareUserObj} from '../../../utils';
 import {debugUserData} from '../../../utils/debugUser';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {useFocusEffect} from '@react-navigation/native';
 
 
 const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
   const {userDetails} = route.params;
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const dispatch = useAppDispatch();
-
-  // Check if current user is an agent
-  const isAgent = userDetails?.role === 'agent';
 
   const updateUserProfile = async (values: UserFormValues) => {
     try {
@@ -57,11 +51,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
       
       if (values.email) {
         formData.append('email', values.email);
-      }
-      
-      // Only add DOB for non-agent users
-      if (!isAgent && values.dob) {
-        formData.append('dob', moment(values.dob).format('DD/MM/YYYY'));
       }
       
       // Fix: Properly JSON stringify location
@@ -94,7 +83,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
       console.log('Updating profile with data:', {
         name: values.name,
         email: values.email,
-        dob: !isAgent && values.dob ? moment(values.dob).format('DD/MM/YYYY') : 'N/A (Agent)',
         hasNewImage: formik.values.profile_image?.startsWith('file://'),
       });
 
@@ -152,7 +140,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
           ...existingUser,
           name: values.name,
           email: values.email || existingUser.email,
-          dob: !isAgent && values.dob ? moment(values.dob).format('DD/MM/YYYY') : existingUser.dob,
           profile: updateResponse?.profile || updateResponse?.data?.profile || existingUser.profile,
         });
       }
@@ -190,7 +177,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
       name: '',
       email: '',
       profile_image: null,
-      dob: isAgent ? null : '',
     },
     validationSchema: userFormValidationSchema,
     onSubmit: updateUserProfile,
@@ -209,33 +195,15 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
             ? `${BASE_URL}public${userDetails.profile}`
             : null;
 
-        // Handle date of birth - only for non-agents
-        let dobDate = isAgent ? null : '';
-        if (!isAgent && userDetails.dob) {
-          try {
-            // If it's in DD/MM/YYYY format, convert to Date
-            if (typeof userDetails.dob === 'string' && userDetails.dob.includes('/')) {
-              dobDate = moment(userDetails.dob, 'DD/MM/YYYY').toDate();
-            } else {
-              dobDate = new Date(userDetails.dob);
-            }
-          } catch (error) {
-            console.warn('Error parsing DOB:', userDetails.dob);
-            dobDate = '';
-          }
-        }
-
         formik.setValues({
           name: userDetails.name || '',
           email: userDetails.email || '',
-          dob: dobDate,
           profile_image: image,
         });
         
         console.log('Form initialized with values:', {
           name: userDetails.name,
           email: userDetails.email,
-          dob: dobDate,
           hasImage: !!image,
         });
       }
@@ -340,36 +308,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
           keyboardType="email-address"
         />
 
-        {!isAgent && (
-          <>
-            <MagicText style={styles.inputLabel}>
-              Date of Birth <MagicText style={styles.astricStyle}>*</MagicText>
-            </MagicText>
-            <TouchableOpacity
-              style={[
-                styles.textFieldStyle,
-                styles.dobContainer,
-                formik.errors.dob ? {borderWidth: 1, borderColor: COLORS.RED} : {},
-              ]}
-              onPress={() => setDatePickerVisibility(true)}>
-              <MagicText
-                style={[
-                  styles.dobText,
-                  {color: formik.values.dob ? COLORS.BLACK : COLORS.GRAY},
-                ]}>
-                {formik.values.dob
-                  ? moment(formik.values.dob).format('DD/MM/YYYY')
-                  : 'Date of Birth'}
-              </MagicText>
-            </TouchableOpacity>
-            {formik.errors.dob ? (
-              <MagicText style={[styles.errorLabel, {marginTop: 8}]}>
-                {formik.errors.dob}
-              </MagicText>
-            ) : null}
-          </>
-        )}
-
         <Button
           label="Update"
           style={styles.btnStyle}
@@ -381,21 +319,6 @@ const ProfileDetailScreen = ({navigation, route}: ProfileDetailScreenProps) => {
       </View>
     </ScrollView>
   </KeyboardAvoidingView>
-  
-  {!isAgent && (
-    <DateTimePickerModal
-      mode="date"
-      isVisible={isDatePickerVisible}
-      date={formik.values.dob ? new Date(formik.values.dob) : new Date()}
-      onConfirm={(date: Date) => {
-        console.log('Date selected:', date);
-        formik.setFieldValue('dob', date);
-        setDatePickerVisibility(false);
-      }}
-      onCancel={() => setDatePickerVisibility(false)}
-      maximumDate={new Date()}
-    />
-  )}
 </SafeAreaView>
   );
 };
@@ -493,16 +416,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     color: COLORS.GRAY,
-  },
-  dobContainer: {
-    height: 50,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    borderRadius: 8,
-  },
-  dobText: {
-    fontSize: 16,
-    lineHeight: 24,
   },
 });
 

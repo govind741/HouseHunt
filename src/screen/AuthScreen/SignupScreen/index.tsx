@@ -334,8 +334,8 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
         /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
         'Please enter valid email address.',
       )
-      .notRequired(),
-    overview: yup.string().max(200).notRequired(),
+      .required('Email is required.'),
+    overview: yup.string().max(200).required('Overview is required.'),
     agent_address: yup.string().required('Agent address is required.'),
     images: yup
       .array()

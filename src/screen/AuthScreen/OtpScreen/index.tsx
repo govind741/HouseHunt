@@ -38,7 +38,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
     let cleanPhone = phone.replace(/^\+91-?/, '').replace(/^\+?91-?/, '').replace(/^91-?/, '');
     
     // Return formatted phone with single +91 prefix
-    return `+91-${cleanPhone}`;
+    return `+91- ${cleanPhone}`;
   };
 
   // Check if the mobile parameter is actually an email
