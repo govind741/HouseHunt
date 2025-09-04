@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Pressable,
   StyleProp,
@@ -20,6 +20,7 @@ import {BASE_URL} from '../../constant/urls';
 import {useAppSelector} from '../../store';
 import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
 import {sharePropertyFromCard} from '../../utils/shareUtils';
+import {getAgentRatingCount} from '../../services/PropertyServices';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -37,6 +38,23 @@ const PropertyCard = ({
   isBookmarked = false,
 }: PropertyCardType) => {
   const {token} = useAppSelector(state => state.auth);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchRatingCount = async () => {
+      if (item?.agent_id) {
+        try {
+          const count = await getAgentRatingCount(item.agent_id);
+          setTotalRatings(count);
+        } catch (error) {
+          console.log('Error fetching rating count:', error);
+          setTotalRatings(0);
+        }
+      }
+    };
+
+    fetchRatingCount();
+  }, [item?.agent_id]);
   const handleShare = async () => {
     console.log('Sharing property from card:', item);
 
@@ -250,8 +268,11 @@ const PropertyCard = ({
             <RatingCard 
               rating={String(item?.rating ?? 0)} 
               totalRatings={item?.total_ratings}
-              showTotalRatings={item?.total_ratings !== undefined}
+              showTotalRatings={false}
             />
+            <MagicText style={styles.totalRatingsText}>
+              ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
+            </MagicText>
           </View>
         </View>
         
@@ -333,9 +354,9 @@ const styles = StyleSheet.create({
   },
   bookmarkIconView: {
     backgroundColor: COLORS.SHADOW_COLOR,
-    borderRadius: 20,
-    width: 30,
-    height: 30,
+    borderRadius: 25,
+    width: 50,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -345,8 +366,11 @@ const styles = StyleSheet.create({
   },
   shareIconContainer: {
     backgroundColor: COLORS.SHADOW_COLOR,
-    borderRadius: 20,
-    padding: 4,
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginLeft: 8,
   },
   bottomContainer: {
@@ -359,6 +383,11 @@ const styles = StyleSheet.create({
   },
   ratingContainer: {
     alignItems: 'flex-end',
+  },
+  totalRatingsText: {
+    fontSize: 12,
+    color: COLORS.TEXT_GRAY,
+    marginTop: 2,
   },
   allIconsRow: {
     flexDirection: 'row',

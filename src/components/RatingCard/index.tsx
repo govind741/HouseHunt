@@ -40,10 +40,10 @@ const RatingCard = ({
         )}
       </View>
       {/* Display total ratings count below the rating if enabled */}
-      {showTotalRatings && totalRatings !== undefined && (
+      {showTotalRatings && (
         <View style={styles.totalRatingsContainer}>
           <MagicText style={styles.totalRatingsText}>
-            ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
+            ({totalRatings || 0} rating{(totalRatings || 0) !== 1 ? 's' : ''})
           </MagicText>
         </View>
       )}
