@@ -586,33 +586,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 })()}
               </MagicText>
             </View>
-            <View style={styles.ratingContainer}>
-              <View style={styles.ratingCard}>
-                <MagicText style={styles.ratingText}>
-                  {(() => {
-                    const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
-                    return Number(rating).toFixed(1);
-                  })()}
-                </MagicText>
-                <StarIcon />
-              </View>
-              {totalRatings > 0 && (
-                <MagicText style={styles.totalRatingsText}>
-                  ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
-                </MagicText>
-              )}
-            </View>
-          </View>
-        </View>
-        
-        <View style={styles.innerContainer}>
-          <View style={[styles.row, {justifyContent: 'space-between'}]}>
-            <View style={{flex: 1}}>
-              <MagicText style={styles.titleText}>
-                {agentDetails?.agency_name}
-              </MagicText>
-            </View>
-            <View style={styles.row}>
+            <View style={styles.bookmarkShareContainer}>
               <TouchableOpacity onPress={() => addNewBookmark()}>
                 <View style={styles.bookmarkIconView}>
                   <BookmarkIcon color={COLORS.WHITE} />
@@ -623,6 +597,34 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 style={styles.shareIconContainer}>
                 <ShareIcon />
               </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Rating Section Below Property Name */}
+          <View style={styles.ratingSection}>
+            <View style={styles.ratingCard}>
+              <MagicText style={styles.ratingText}>
+                {(() => {
+                  const rating = agentDetails?.data?.rating || agentDetails?.data?.avg_rating || '0';
+                  return Number(rating).toFixed(1);
+                })()}
+              </MagicText>
+              <StarIcon />
+            </View>
+            {totalRatings > 0 && (
+              <MagicText style={styles.totalRatingsText}>
+                ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
+              </MagicText>
+            )}
+          </View>
+        </View>
+        
+        <View style={styles.innerContainer}>
+          <View style={[styles.row, {justifyContent: 'space-between'}]}>
+            <View style={{flex: 1}}>
+              <MagicText style={styles.titleText}>
+                {agentDetails?.agency_name}
+              </MagicText>
             </View>
           </View>
           {agentDetails?.office_address ? (
@@ -720,6 +722,16 @@ const styles = StyleSheet.create({
   ratingContainer: {
     alignItems: 'flex-end',
   },
+  bookmarkShareContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
   ratingCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -749,17 +761,20 @@ const styles = StyleSheet.create({
   },
   bookmarkIconView: {
     backgroundColor: COLORS.SHADOW_COLOR,
-    borderRadius: 20,
-    width: 30,
-    height: 30,
+    borderRadius: 25,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   shareIconContainer: {
     backgroundColor: COLORS.SHADOW_COLOR,
-    borderRadius: 20,
-    padding: 4,
+    borderRadius: 25,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   subText: {
     fontSize: 16,

@@ -105,13 +105,13 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
             // Clear Redux auth state
             dispatch(clearAuthState());
             
-            // Navigate to home screen
-            navigation.navigate('HomeScreen');
+            // Navigate to city selection screen
+            navigation.navigate('CitySelectionScreen');
           } catch (error) {
             console.error('Error during logout:', error);
             // Fallback: still clear Redux state and navigate
             dispatch(clearAuthState());
-            navigation.navigate('HomeScreen');
+            navigation.navigate('CitySelectionScreen');
           }
         },
       },

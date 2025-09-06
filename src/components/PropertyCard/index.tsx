@@ -42,7 +42,7 @@ const PropertyCard = ({
 
   useEffect(() => {
     const fetchRatingCount = async () => {
-      if (item?.agent_id) {
+      if (item?.agent_id && token) {
         try {
           const count = await getAgentRatingCount(item.agent_id);
           setTotalRatings(count);
@@ -50,11 +50,13 @@ const PropertyCard = ({
           console.log('Error fetching rating count:', error);
           setTotalRatings(0);
         }
+      } else {
+        setTotalRatings(0);
       }
     };
 
     fetchRatingCount();
-  }, [item?.agent_id]);
+  }, [item?.agent_id, token]);
   const handleShare = async () => {
     console.log('Sharing property from card:', item);
 

@@ -5,9 +5,9 @@ import {COLORS} from '../../assets/colors';
 type CustomBackType = {
   onPress: () => void;
 };
-const CustomBack = ({onPress = () => {}}: CustomBackType) => {
+const CustomBack = ({onPress}: CustomBackType) => {
   return (
-    <TouchableOpacity style={styles.roundView} onPress={() => onPress()}>
+    <TouchableOpacity style={styles.roundView} onPress={onPress}>
       <BackArrowIcon />
     </TouchableOpacity>
   );

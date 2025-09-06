@@ -106,7 +106,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
             });
           } else {
             navigation.navigate('HomeScreenStack', {
-              screen: 'HomeScreen',
+              screen: 'CitySelectionScreen',
             });
           }
         };
@@ -191,13 +191,13 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
           
           // Navigate to main app
           navigation.navigate('HomeScreenStack', {
-            screen: 'HomeScreen',
+            screen: 'CitySelectionScreen',
           });
         } else {
           console.warn('Missing userId or token, navigating to home in guest mode');
           // If no token, still navigate to home (guest mode)
           navigation.navigate('HomeScreenStack', {
-            screen: 'HomeScreen',
+            screen: 'CitySelectionScreen',
           });
         }
       })

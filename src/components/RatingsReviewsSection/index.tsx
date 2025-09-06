@@ -7,6 +7,9 @@ import {
   Alert,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import MagicText from '../MagicText';
 import {COLORS} from '../../assets/colors';
@@ -41,7 +44,7 @@ interface Review {
 }
 
 const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
-  const {user, userData} = useAppSelector(state => state.auth);
+  const {user, userData, token} = useAppSelector(state => state.auth);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -169,6 +172,17 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
   }, []);
 
   const fetchReviews = useCallback(async () => {
+    // Only fetch reviews if user is authenticated
+    if (!token) {
+      console.log('📊 No token available, skipping reviews fetch');
+      setReviews([]);
+      setAverageRating(0);
+      setTotalReviews(0);
+      setRatingBreakdown({5: 0, 4: 0, 3: 0, 2: 0, 1: 0});
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       const params = {agent_id: agentId};
@@ -249,7 +263,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [agentId, calculateRatingsFromReviews]);
+  }, [agentId, calculateRatingsFromReviews, token]);
 
   useEffect(() => {
     fetchReviews();
@@ -597,60 +611,66 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
         animationType="slide"
         transparent={true}
         onRequestClose={closeModal}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <MagicText style={styles.modalTitle}>
-                {editingReview ? 'Edit Review' : 'Write Review'}
-              </MagicText>
-              <TouchableOpacity onPress={closeModal}>
-                <MagicText style={styles.closeButton}>✕</MagicText>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.ratingSection}>
-              <MagicText style={styles.ratingLabel}>Your Rating:</MagicText>
-              <SafeStarRating
-                onChange={setNewRating}
-                enableHalfStar={false}
-                rating={newRating}
-                maxStars={5}
-                starSize={32}
-                emptyColor={COLORS.GRAY}
-                starStyle={styles.modalStarStyle}
-              />
-            </View>
-
-            <View style={styles.commentSection}>
-              <MagicText style={styles.commentLabel}>Your Review:</MagicText>
-              <TextInput
-                style={styles.commentInput}
-                multiline
-                numberOfLines={4}
-                placeholder="Share your experience..."
-                value={newComment}
-                onChangeText={setNewComment}
-                textAlignVertical="top"
-              />
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={closeModal}>
-                <MagicText style={styles.cancelButtonText}>Cancel</MagicText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, isLoading && styles.disabledButton]}
-                onPress={editingReview ? handleEditReview : handleAddReview}
-                disabled={isLoading}>
-                <MagicText style={styles.submitButtonText}>
-                  {isLoading ? 'Saving...' : editingReview ? 'Update' : 'Submit'}
+        <KeyboardAvoidingView 
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled">
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <MagicText style={styles.modalTitle}>
+                  {editingReview ? 'Edit Review' : 'Write Review'}
                 </MagicText>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={closeModal}>
+                  <MagicText style={styles.closeButton}>✕</MagicText>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.ratingSection}>
+                <MagicText style={styles.ratingLabel}>Your Rating:</MagicText>
+                <SafeStarRating
+                  onChange={setNewRating}
+                  enableHalfStar={false}
+                  rating={newRating}
+                  maxStars={5}
+                  starSize={32}
+                  emptyColor={COLORS.GRAY}
+                  starStyle={styles.modalStarStyle}
+                />
+              </View>
+
+              <View style={styles.commentSection}>
+                <MagicText style={styles.commentLabel}>Your Review:</MagicText>
+                <TextInput
+                  style={styles.commentInput}
+                  multiline
+                  numberOfLines={4}
+                  placeholder="Share your experience..."
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={closeModal}>
+                  <MagicText style={styles.cancelButtonText}>Cancel</MagicText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.submitButton, isLoading && styles.disabledButton]}
+                  onPress={editingReview ? handleEditReview : handleAddReview}
+                  disabled={isLoading}>
+                  <MagicText style={styles.submitButtonText}>
+                    {isLoading ? 'Saving...' : editingReview ? 'Update' : 'Submit'}
+                  </MagicText>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -819,6 +839,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -828,7 +851,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     width: '100%',
-    maxHeight: '85%',
+    maxWidth: 400,
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: {

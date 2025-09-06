@@ -185,7 +185,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       });
       
       navigation.navigate('HomeScreenStack', {
-        screen: 'HomeScreen',
+        screen: 'CitySelectionScreen',
       });
       
     } catch (error: any) {

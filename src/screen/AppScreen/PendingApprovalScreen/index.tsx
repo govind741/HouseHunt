@@ -75,18 +75,18 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
             // Clear Redux auth state
             dispatch(clearAuthState());
             
-            // Navigate back to AuthStack instead of CitySelectionScreen
+            // Navigate to CitySelectionScreen
             navigation.reset({
               index: 0,
               routes: [
                 {
-                  name: 'AuthStack',
+                  name: 'HomeScreenStack',
                   params: {
-                  screen: 'LoginScreen',
+                    screen: 'CitySelectionScreen',
+                  },
                 },
-              },
-            ],
-          });
+              ],
+            });
           } catch (error) {
             console.error('Error during logout:', error);
             // Fallback: still clear Redux state and navigate
@@ -95,13 +95,13 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
               index: 0,
               routes: [
                 {
-                  name: 'AuthStack',
+                  name: 'HomeScreenStack',
                   params: {
-                  screen: 'LoginScreen',
+                    screen: 'CitySelectionScreen',
+                  },
                 },
-              },
-            ],
-          });
+              ],
+            });
           }
         },
       },

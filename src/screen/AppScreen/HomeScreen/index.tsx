@@ -106,6 +106,14 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     }
   }, [isFocused, userData?.role, agentAuthChecked, navigation]);
 
+  // Check if user has selected a location, redirect to CitySelectionScreen if not
+  useEffect(() => {
+    if (isFocused && agentAuthChecked && (!location?.city_id || !location?.city_name)) {
+      console.log('🏙️ No location selected, redirecting to CitySelectionScreen');
+      navigation.navigate('CitySelectionScreen');
+    }
+  }, [isFocused, agentAuthChecked, location, navigation]);
+
   const getAgentList = useCallback((locationId: number) => {
     setIsLoading(true);
     getPublicAgentList(locationId)
@@ -293,34 +301,37 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     }
   };
 
-  const getSearchLocalitiesList = (searchString: string) => {
+  const getSearchLocalitiesList = useCallback((searchString: string) => {
     const payload = {
       name: searchString,
     };
     searchLocalities(payload)
       .then(res => {
         console.log('Search Localities Response:', res);
-        if (res) {
-          // Handle the response structure: res.data (not formattedData for search)
-          const data = res?.data?.map((item: any) => {
+        if (res && res.data && Array.isArray(res.data)) {
+          const data = res.data.map((item: any) => {
             return {
               ...item,
               name: item?.locality_name || item?.name,
             };
           });
           setSearchList(data || []);
+        } else {
+          // Handle case where res.data is null or not an array
+          setSearchList([]);
         }
       })
       .catch(error => {
         console.log('Error in getSearchLocalitiesList:', error);
+        setSearchList([]);
         Toast.show({
           type: 'error',
           text1: error?.message || 'Failed to search localities',
         });
       });
-  };
+  }, []);
 
-  const handleTextChange = (text: string) => {
+  const handleTextChange = useCallback((text: string) => {
     setSearchText(text);
     if (inputRef.current) {
       clearTimeout(inputRef.current);
@@ -333,7 +344,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         setSearchList([]);
       }
     }, 300);
-  };
+  }, [getSearchLocalitiesList]);
 
   const handleAdPress = (ad: any) => {
     console.log('Ad pressed:', ad.title);
@@ -425,7 +436,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     );
   };
 
-  const renderPropertyItem = ({
+  const renderPropertyItem = useCallback(({
     item,
     index,
   }: {
@@ -479,7 +490,68 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         />
       </View>
     );
-  };
+  }, [bookmarkedAgents, searchText, adsData, token, navigation]);
+
+  const renderListHeader = useCallback(() => (
+    <View style={styles.parent}>
+      <SearchContainer
+        key="home-search"
+        placeholder="Search for area, street name, locality"
+        onChangeText={handleTextChange}
+        searchValue={searchText}
+      />
+      <MagicText style={styles.locationCrumb}>
+        {getBreadcrumText(location)}
+      </MagicText>
+      {searchList?.length > 0 && (
+        <ScrollView
+          style={styles.searchListContainer}
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          {searchList?.map((item: any, index: number) => {
+            const isLastItem = index === searchList.length - 1;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.searchItem,
+                  !isLastItem && styles.searchItemBorder,
+                ]}
+                onPress={async () => {
+                  const updatedLocation: locationType = {
+                    area_id: location.area_id,
+                    city_id: location?.city_id ?? null,
+                    id: item?.id ?? null,
+                    name: '',
+                    ranking: item.ranking ?? 0,
+                    city_name: location?.city_name ?? '',
+                    area_name: location.area_name ?? '',
+                    locality_name: item.name ?? '',
+                  };
+                  updatedLocation.name = `${updatedLocation.locality_name}, ${updatedLocation.area_name}, ${updatedLocation.city_name}`;
+
+                  getAgentList(item?.id);
+                  setSearchList([]);
+                  setSearchText('');
+                  dispatch(setLocation(updatedLocation));
+                  await AsyncStorage.setItem(
+                    'location',
+                    JSON.stringify({...updatedLocation}),
+                  );
+                }}
+                activeOpacity={0.7}>
+                <CurrentLocationIcon />
+                <MagicText style={styles.searchText} numberOfLines={2}>
+                  {item?.locality_name}
+                </MagicText>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+    </View>
+  ), [searchText, searchList, location, handleTextChange]);
 
   if (isLoading) {
     return <LoadingAndErrorComponent />;
@@ -507,75 +579,11 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             showsVerticalScrollIndicator={false}
             keyExtractor={(item, index) => `agent-${item.agent_id}-${index}`}
             renderItem={renderPropertyItem}
-            ListHeaderComponent={() => (
-              <View style={styles.parent}>
-                <SearchContainer
-                  placeholder="Search for area, street name, locality"
-                  onChangeText={handleTextChange}
-                  searchValue={searchText}
-                />
-                <MagicText style={styles.locationCrumb}>
-                  {getBreadcrumText(location)}
-                </MagicText>
-
-                {searchList?.length > 0 ? (
-                  <View style={styles.searchView}>
-                    <ScrollView 
-                      nestedScrollEnabled={true}
-                      showsVerticalScrollIndicator={false}
-                      keyboardShouldPersistTaps="handled">
-                      {searchList?.map((item: any, index: number) => {
-                        const isLastItem = index === searchList.length - 1;
-                        return (
-                          <View 
-                            key={`search-${item.id}-${index}`} 
-                            style={[
-                              styles.searchItem,
-                              isLastItem && {borderBottomWidth: 0}
-                            ]}>
-                            <TouchableOpacity
-                              onPress={async () => {
-                                // Ensure proper location data structure
-                                const updatedLocation = {
-                                  ...location,
-                                  id: item?.id,
-                                  city_id: item?.city_id || location?.city_id, // Preserve city_id
-                                  city_name: item?.city_name || location?.city_name,
-                                  area_id: item?.area_id || null,
-                                  area_name: item?.area_name || '',
-                                  locality_name: item?.locality_name || item?.name || '',
-                                  name: item?.locality_name || item?.name || '',
-                                  ranking: item?.ranking || null,
-                                };
-                                
-                                console.log('HomeScreen: Updating location from search:', updatedLocation);
-                                
-                                getAgentList(item?.id);
-                                setSearchList([]);
-                                setSearchText('');
-                                dispatch(setLocation(updatedLocation));
-                                await AsyncStorage.setItem(
-                                  'location',
-                                  JSON.stringify(updatedLocation),
-                                );
-                              }}
-                              style={styles.searchRow}
-                              activeOpacity={0.7}>
-                              <CurrentLocationIcon />
-                              <MagicText style={styles.searchText} numberOfLines={2}>
-                                {item?.locality_name}
-                              </MagicText>
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ) : null}
-              </View>
-            )}
+            ListHeaderComponent={renderListHeader}
             contentContainerStyle={styles.flatlistView}
             keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}
+            windowSize={10}
           />
         ) : (
           <ScrollView 
@@ -585,6 +593,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             keyboardShouldPersistTaps="handled">
             <View style={styles.parent}>
               <SearchContainer
+                key="home-search-scroll"
                 placeholder="Search for area, streetname, locality"
                 onChangeText={handleTextChange}
                 searchValue={searchText}
@@ -719,6 +728,22 @@ const styles = StyleSheet.create({
   searchItem: {
     paddingVertical: 14,
     paddingHorizontal: 16,
+  },
+  searchListContainer: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    marginTop: 8,
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  searchItemBorder: {
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.WHITE_SMOKE,
   },

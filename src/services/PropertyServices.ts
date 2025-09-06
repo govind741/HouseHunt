@@ -92,50 +92,16 @@ const updateReview = async (payload: any) => {
 const deleteReview = async (payload: any) => {
   try {
     console.log('🗑️ Delete Review Request:', payload);
-    let response;
     
-    // Try different userId parameter names
-    const userIdVariations = [
-      `userId=${payload.userId}`,
-      `user_id=${payload.userId}`,
-      `id=${payload.userId}`,
-    ];
+    // Use the correct endpoint format: /v1/auth/users/reviews/{reviewId}
+    const deleteUrl = `v1/auth/users/reviews/${payload.review_id}`;
+    console.log('Delete URL:', deleteUrl);
     
-    for (const userIdParam of userIdVariations) {
-      try {
-        // Try DELETE with review_id and userId as query parameters
-        response = await axiosInstance.delete(`${ENDPOINT.delete_review}?review_id=${payload.review_id}&${userIdParam}`);
-        console.log('✅ Delete Review Success (query param):', response);
-        return response;
-      } catch (error: any) {
-        console.log(`❌ Delete with query param (${userIdParam}) failed:`, error.response?.status);
-        continue;
-      }
-    }
-    
-    // If query params failed, try body with different userId field names
-    const bodyVariations = [
-      { review_id: payload.review_id, userId: payload.userId },
-      { review_id: payload.review_id, user_id: payload.userId },
-      { review_id: payload.review_id, id: payload.userId },
-    ];
-    
-    for (const bodyPayload of bodyVariations) {
-      try {
-        response = await axiosInstance.delete(ENDPOINT.delete_review, {
-          data: bodyPayload,
-        });
-        console.log('✅ Delete Review Success (body data):', response);
-        return response;
-      } catch (error: any) {
-        console.log(`❌ Delete with body data failed:`, error.response?.status);
-        continue;
-      }
-    }
-    
-    throw new Error('All delete methods failed');
+    const response = await axiosInstance.delete(deleteUrl);
+    console.log('✅ Delete Review Success:', response);
+    return response;
   } catch (error) {
-    console.error('❌ Delete Review Error (all methods failed):', error);
+    console.error('❌ Delete Review Error:', error);
     throw error;
   }
 };
