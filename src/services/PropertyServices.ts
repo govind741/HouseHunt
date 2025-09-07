@@ -134,11 +134,23 @@ const handleGetAgentBookmark = async () => {
 const handleDeleteAgentBookmark = async (payload: any) => {
   try {
     console.log('🗑️ Delete Agent Bookmark Request:', payload);
-    const response = await axiosInstance.delete(ENDPOINT.bookmark, {
-      data: payload,
-    });
-    console.log('✅ Delete Agent Bookmark Success:', response);
-    return response;
+    
+    // Try POST method with action parameter first
+    try {
+      const response = await axiosInstance.post(ENDPOINT.bookmark, {
+        ...payload,
+        action: 'remove'
+      });
+      console.log('✅ Delete Agent Bookmark Success (POST):', response);
+      return response;
+    } catch (postError) {
+      console.log('POST method failed, trying DELETE with query params');
+      
+      // Fallback to DELETE with query parameters
+      const response = await axiosInstance.delete(`${ENDPOINT.bookmark}?agent_id=${payload.agent_id}`);
+      console.log('✅ Delete Agent Bookmark Success (DELETE):', response);
+      return response;
+    }
   } catch (error) {
     console.error('❌ Delete Agent Bookmark Error:', error);
     throw error;

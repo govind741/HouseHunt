@@ -59,11 +59,11 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
   const adScrollViewRef = useRef<ScrollView>(null);
 
-  // Handle back button press to exit app
+  // Handle back button press to navigate to city selection
   const handleBackPress = useCallback(() => {
-    BackHandler.exitApp();
+    navigation.navigate('CitySelectionScreen');
     return true;
-  }, []);
+  }, [navigation]);
 
   // Check agent authentication state on screen focus
   useEffect(() => {
@@ -105,6 +105,21 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       checkAgentAuth();
     }
   }, [isFocused, userData?.role, agentAuthChecked, navigation]);
+
+  // Handle hardware back button
+  useEffect(() => {
+    const backAction = () => {
+      handleBackPress();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   // Check if user has selected a location, redirect to CitySelectionScreen if not
   useEffect(() => {

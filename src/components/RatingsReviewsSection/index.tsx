@@ -575,35 +575,33 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       </View>
 
       {/* Reviews List */}
-      <FlatList
-        data={sortedReviews}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-        renderItem={({item}) => {
-          // Additional safety check before rendering
-          if (!item || !item.id) {
-            console.warn('⚠️ Invalid review item:', item);
-            return null;
-          }
-          
-          return (
-            <EnhancedReviewCard
-              item={item}
-              currentUserId={user?.id || userData?.id}
-              onEdit={() => openEditModal(item)}
-              onDelete={() => handleDeleteReview(item.id)}
-            />
-          );
-        }}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-        ListEmptyComponent={
+      <View>
+        {sortedReviews.length > 0 ? (
+          sortedReviews.map((item) => {
+            // Additional safety check before rendering
+            if (!item || !item.id) {
+              console.warn('⚠️ Invalid review item:', item);
+              return null;
+            }
+            
+            return (
+              <EnhancedReviewCard
+                key={item.id?.toString() || Math.random().toString()}
+                item={item}
+                currentUserId={user?.id || userData?.id}
+                onEdit={() => openEditModal(item)}
+                onDelete={() => handleDeleteReview(item.id)}
+              />
+            );
+          })
+        ) : (
           <View style={styles.emptyContainer}>
             <MagicText style={styles.emptyText}>
               No reviews yet. Be the first to review!
             </MagicText>
           </View>
-        }
-      />
+        )}
+      </View>
 
       {/* Add/Edit Review Modal */}
       <Modal

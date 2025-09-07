@@ -34,11 +34,15 @@ import {
   handleAddBookmark,
   handleSliderData,
   getAgentRatingCount,
+  getAgentOfficeAddress,
+  handleGetAgentBookmark,
+  handleDeleteAgentBookmark,
 } from '../../../services/PropertyServices';
 import {
   getAgentDetailsById,
   handleInteraction,
 } from '../../../services/HomeService';
+import {getAgentOfficeAddress as getAuthenticatedAgentOfficeAddress} from '../../../services/agentServices';
 import LoadingAndErrorComponent from '../../../components/LoadingAndErrorComponent';
 
 import Toast from 'react-native-toast-message';
@@ -57,6 +61,8 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   const [agentDetails, setAgentDetails] = useState<AgentUserType | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [totalRatings, setTotalRatings] = useState<number>(0);
+  const [officeAddress, setOfficeAddress] = useState<string>('Loading address...');
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [sliderData, setSliderData] = useState<{id: string; image: string}[]>(
     [],
   );
@@ -152,11 +158,96 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     }
   }, []);
 
+  // Function to check if agent is bookmarked
+  const checkBookmarkStatus = useCallback(async () => {
+    if (!token || !agent_id) return;
+    
+    try {
+      const response = await handleGetAgentBookmark();
+      const bookmarkedAgents = response?.data || [];
+      const isCurrentAgentBookmarked = bookmarkedAgents.some(
+        (bookmark: any) => bookmark.agent_id === agent_id
+      );
+      setIsBookmarked(isCurrentAgentBookmarked);
+    } catch (error) {
+      console.log('Error checking bookmark status:', error);
+      setIsBookmarked(false);
+    }
+  }, [token, agent_id]);
+  const fetchOfficeAddress = useCallback(async () => {
+    try {
+      console.log('🏢 Fetching office address...');
+      console.log('🔑 Token available:', !!token);
+      console.log('🆔 Agent ID:', agent_id);
+      
+      let address = '';
+      
+      // Method 1: Try authenticated agent office address API (requires token)
+      if (token) {
+        try {
+          console.log('🔄 Trying authenticated office address API...');
+          const response = await getAuthenticatedAgentOfficeAddress();
+          console.log('🏢 Authenticated office address response:', JSON.stringify(response, null, 2));
+          
+          if (response?.data?.address) {
+            address = response.data.address;
+          } else if (response?.data?.office_address) {
+            address = response.data.office_address;
+          } else if (response?.address) {
+            address = response.address;
+          } else if (response?.office_address) {
+            address = response.office_address;
+          } else if (typeof response?.data === 'string') {
+            address = response.data;
+          } else if (typeof response === 'string') {
+            address = response;
+          }
+          
+          if (address) {
+            console.log('✅ Got address from authenticated API:', address);
+            setOfficeAddress(address);
+            return;
+          }
+        } catch (authError: any) {
+          console.log('⚠️ Authenticated API failed:', authError?.response?.status, authError?.message);
+        }
+      }
+      
+      // Method 2: Try getting address from agent details (fallback)
+      if (agent_id) {
+        try {
+          console.log('🔄 Trying agent details fallback...');
+          const agentAddress = await getAgentOfficeAddress(agent_id);
+          console.log('🏢 Agent details address:', agentAddress);
+          
+          if (agentAddress && agentAddress.trim() !== '') {
+            address = agentAddress;
+            console.log('✅ Got address from agent details:', address);
+            setOfficeAddress(address);
+            return;
+          }
+        } catch (detailsError: any) {
+          console.log('⚠️ Agent details fallback failed:', detailsError?.message);
+        }
+      }
+      
+      // If no address found, set empty
+      console.log('❌ No address found from any method');
+      setOfficeAddress('');
+      
+    } catch (error: any) {
+      console.log('❌ Error in fetchOfficeAddress:', error);
+      setOfficeAddress('');
+    }
+  }, [token, agent_id]);
+
   useEffect(() => {
     if (agent_id) {
       getAgentDetails(agent_id);
+      fetchOfficeAddress();
+      checkBookmarkStatus();
     }
-  }, [getAgentDetails, agent_id]);
+  }, [getAgentDetails, fetchOfficeAddress, checkBookmarkStatus, agent_id]);
 
   const getSliderData = useCallback((cityId: number) => {
     console.log('=== PropertyDetailScreen getSliderData DEBUG ===');
@@ -388,23 +479,51 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   };
 
   const addNewBookmark = () => {
+    if (!token) {
+      Toast.show({
+        type: 'error',
+        text1: 'Please login to bookmark agents',
+      });
+      return;
+    }
+
     const payload = {
       agent_id: agent_id,
     };
 
-    handleAddBookmark(payload)
-      .then(res => {
-        Toast.show({
-          type: 'success',
-          text1: 'Bookmark Saved',
+    if (isBookmarked) {
+      // Remove bookmark
+      handleDeleteAgentBookmark(payload)
+        .then(res => {
+          Toast.show({
+            type: 'success',
+            text1: 'Bookmark removed',
+          });
+          setIsBookmarked(false);
+        })
+        .catch(error => {
+          Toast.show({
+            type: 'error',
+            text1: error?.response?.data?.message || 'Failed to remove bookmark',
+          });
         });
-      })
-      .catch(error => {
-        Toast.show({
-          type: 'error',
-          text1: error?.response?.message,
+    } else {
+      // Add bookmark
+      handleAddBookmark(payload)
+        .then(res => {
+          Toast.show({
+            type: 'success',
+            text1: 'Bookmark Saved',
+          });
+          setIsBookmarked(true);
+        })
+        .catch(error => {
+          Toast.show({
+            type: 'error',
+            text1: error?.response?.data?.message || 'Failed to add bookmark',
+          });
         });
-      });
+    }
   };
 
   const whatsappHandler = async () => {
@@ -541,16 +660,17 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         
         {/* Property Images Slider */}
         <View style={styles.imageSliderContainer}>
-          <FlatList
-            data={propertyImages}
+          <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            renderItem={({item}) => {
+            decelerationRate="fast"
+            snapToInterval={screenWidth}
+            snapToAlignment="start">
+            {propertyImages.map((item) => {
               console.log('Rendering image:', item.id);
               return (
-                <View style={[styles.imageContainer, {width: screenWidth}]}>
+                <View key={item.id} style={[styles.imageContainer, {width: screenWidth}]}>
                   <Image
                     source={typeof item.image === 'string' ? {uri: item.image} : item.image}
                     style={styles.propertyImage}
@@ -559,8 +679,8 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                   />
                 </View>
               );
-            }}
-          />
+            })}
+          </ScrollView>
         </View>
         
         {/* Property/Agent Name with Rating - Right under the image */}
@@ -588,8 +708,11 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
             </View>
             <View style={styles.bookmarkShareContainer}>
               <TouchableOpacity onPress={() => addNewBookmark()}>
-                <View style={styles.bookmarkIconView}>
-                  <BookmarkIcon color={COLORS.WHITE} />
+                <View style={[
+                  styles.bookmarkIconView,
+                  isBookmarked && styles.bookmarkIconViewActive
+                ]}>
+                  <BookmarkIcon color={isBookmarked ? COLORS.WHITE : COLORS.TEXT_GRAY} />
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -616,6 +739,32 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
               </MagicText>
             )}
+          </View>
+
+          {/* Office Address Section */}
+          <View style={styles.addressSection}>
+            <View style={styles.row}>
+              <LocationIcon />
+              <MagicText style={styles.addressText}>
+                {(() => {
+                  // Try multiple sources for address
+                  const apiAddress = officeAddress;
+                  const agentAddress = agentDetails?.office_address || agentDetails?.data?.office_address;
+                  const fallbackAddress = 'Address not available';
+                  
+                  const finalAddress = apiAddress || agentAddress || fallbackAddress;
+                  
+                  console.log('🏢 Address display debug:', {
+                    apiAddress,
+                    agentAddress,
+                    finalAddress,
+                    hasToken: !!token
+                  });
+                  
+                  return finalAddress;
+                })()}
+              </MagicText>
+            </View>
           </View>
         </View>
         
@@ -753,6 +902,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'right',
   },
+  addressSection: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  addressText: {
+    fontSize: 14,
+    color: COLORS.TEXT_GRAY,
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 20,
+  },
   titleText: {
     fontSize: 18,
     lineHeight: 28,
@@ -767,6 +927,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
+  },
+  bookmarkIconViewActive: {
+    backgroundColor: '#1976D2',
   },
   shareIconContainer: {
     backgroundColor: COLORS.SHADOW_COLOR,
