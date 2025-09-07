@@ -35,7 +35,12 @@ const getAgentDetailsById = async (id: any) => {
     const response = await axiosInstance.get(`${ENDPOINT.get_agent_details}/${id}`);
     console.log('✅ Get Agent Details By ID Success:', response);
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    // Handle 403 permission errors gracefully - agents can't view other agents' private details
+    if (error?.response?.status === 403) {
+      console.log('ℹ️ Agent details access restricted for agent ID:', id);
+      return null; // Return null instead of throwing error
+    }
     console.error('❌ Get Agent Details By ID Error:', error);
     throw error;
   }

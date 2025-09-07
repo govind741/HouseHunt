@@ -248,7 +248,6 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
   //service for agent
   const handleAgentVerifyOtp = useCallback(() => {
     // Ensure phone number format is consistent with login
-    // If mobile doesn't start with +91, add it
     let formattedPhone = mobile;
     if (!mobile.startsWith('+91') && !mobile.startsWith('91')) {
       formattedPhone = `+91${mobile}`;
@@ -261,12 +260,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
       otp: Number(otp),
     };
     
-    console.log(' Agent OTP Verification:', {
-      originalMobile: mobile,
-      formattedPhone: formattedPhone,
-      otp: Number(otp),
-      payload
-    });
+    console.log('Agent OTP Verification:', payload);
     
     VerifyAgentOtp(payload)
       .then(async (res: any) => {
@@ -275,12 +269,6 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         const token = res?.tokens?.refresh?.token || res?.tokens || '';
         const agentId = res?.agentId || res?.data?.id || res?.id || '';
         const role = res?.role || 'agent';
-        
-        console.log('Agent verification data:', {
-          token: token ? 'Present' : 'Missing',
-          agentId,
-          role,
-        });
         
         if (!token) {
           throw new Error('No token received from agent verification');
@@ -297,43 +285,20 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         });
 
         if (agentId && token) {
-          console.log(' Fetching agent details for ID:', agentId);
-          
           try {
-            console.log('Fetching agent data...');
-            
-            // Use the new comprehensive agent data fetcher
-            const { fetchAgentData, validateAgentProfile } = await import('../../../services/agentServices');
+            // Check agent status by fetching agent details
+            const { fetchAgentData } = await import('../../../services/agentServices');
             const agentDataResult = await fetchAgentData(agentId);
-            
-            console.log(' Agent data result:', {
-              success: agentDataResult.success,
-              source: agentDataResult.source,
-              hasData: !!agentDataResult.data,
-              dataKeys: agentDataResult.data ? Object.keys(agentDataResult.data) : [],
-            });
             
             if (agentDataResult.success && agentDataResult.data) {
               const agentData = agentDataResult.data;
               
-              // Validate agent profile completeness
-              const profileValidation = validateAgentProfile(agentData);
+              // Check if agent has complete profile (name and email are required)
+              const hasCompleteProfile = agentData.name && agentData.email;
               
-              console.log('Agent profile validation:', {
-                isComplete: profileValidation.isComplete,
-                hasAdditionalInfo: profileValidation.hasAdditionalInfo,
-                missingFields: profileValidation.missingFields,
-                score: profileValidation.score,
-              });
-              
-              // If profile is incomplete or this is minimal fallback data, send to signup
-              if (!profileValidation.isComplete || agentDataResult.source === 'minimal_fallback') {
-                console.log('📝 Agent profile incomplete - navigating to signup');
-                Toast.show({
-                  type: 'info',
-                  text1: 'Complete your profile',
-                  text2: 'Please provide your details to continue',
-                });
+              if (!hasCompleteProfile) {
+                // New agent - navigate to SignupScreen
+                console.log('New agent - navigating to SignupScreen');
                 navigation.navigate('SignupScreen', {
                   mobile_number: mobile,
                   token,
@@ -342,54 +307,28 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                 });
                 return;
               }
-
-              // Profile is complete - prepare agent object and login
-              console.log('Agent profile complete - logging in directly');
-              const agentObj = {
-                id: agentId,
-                name: agentData.name || agentData.agency_name || 'Agent',
-                agency_name: agentData.agency_name || agentData.name || 'Agency',
-                phone: agentData.phone || mobile,
-                email: agentData.email || '',
-                role: 'agent',
-                profile: agentData.profile || '',
-                verified: agentData.verified !== undefined ? agentData.verified : 1,
-                status: agentData.status !== undefined ? agentData.status : 1,
-                location: agentData.location || null,
-                office_address: agentData.office_address || '',
-                description: agentData.description || '',
-                working_locations: agentData.working_locations || [],
-              };
-
-              dispatch(setUserData(agentObj));
-              await AsyncStorage.setItem('userData', JSON.stringify(agentObj));
-
-              // Check if agent needs approval (newly registered or not approved)
-              const needsApproval = !agentData.verified || agentData.status === 0 || agentDataResult.source === 'minimal_fallback';
               
-              if (needsApproval) {
-                console.log('Agent needs approval, navigating to PendingApprovalScreen');
-                Toast.show({
-                  type: 'info',
-                  text1: 'Account Under Review',
-                  text2: 'Please wait for approval',
-                });
+              // Existing agent with complete profile - check if explicitly verified by admin
+              // For now, all existing agents should go to PendingApprovalScreen unless explicitly verified
+              const isExplicitlyVerified = agentData.verified === 'approved' || agentData.status === 'active';
+              
+              if (isExplicitlyVerified) {
+                // Explicitly verified agent - navigate to HomeScreen
+                console.log('Explicitly verified agent - navigating to HomeScreen');
                 
-                navigation.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: 'PendingApprovalScreen',
-                    },
-                  ],
-                });
-              } else {
-                console.log('Agent approved, navigating to HomeScreen');
-                Toast.show({
-                  type: 'success',
-                  text1: 'Welcome back!',
-                  text2: 'Login successful',
-                });
+                const agentObj = {
+                  id: agentId,
+                  name: agentData.name || 'Agent',
+                  phone: agentData.phone || mobile,
+                  email: agentData.email || '',
+                  role: 'agent',
+                  verified: true,
+                  status: 1,
+                  working_locations: agentData.working_locations || [],
+                };
+
+                dispatch(setUserData(agentObj));
+                await AsyncStorage.setItem('userData', JSON.stringify(agentObj));
                 
                 navigation.reset({
                   index: 0,
@@ -402,14 +341,38 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                     },
                   ],
                 });
+              } else {
+                // Existing agent but not explicitly verified - navigate to PendingApprovalScreen
+                console.log('Existing agent pending approval - navigating to PendingApprovalScreen');
+                
+                const agentObj = {
+                  id: agentId,
+                  name: agentData.name || 'Agent',
+                  phone: agentData.phone || mobile,
+                  email: agentData.email || '',
+                  role: 'agent',
+                  verified: false,
+                  status: 0,
+                };
+
+                dispatch(setUserData(agentObj));
+                await AsyncStorage.setItem('userData', JSON.stringify(agentObj));
+                
+                navigation.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'HomeScreenStack',
+                      params: {
+                        screen: 'PendingApprovalScreen',
+                      },
+                    },
+                  ],
+                });
               }
             } else {
-              console.log('⚠️ No valid agent data found - treating as new agent');
-              Toast.show({
-                type: 'info',
-                text1: 'Complete your registration',
-                text2: 'Please provide your details to get started',
-              });
+              // No agent data found - treat as new agent
+              console.log('No agent data found - treating as new agent');
               navigation.navigate('SignupScreen', {
                 mobile_number: mobile,
                 token,
@@ -418,19 +381,8 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
               });
             }
           } catch (detailsError: any) {
-            console.error('❌ Error fetching agent data:', {
-              message: detailsError?.message,
-              status: detailsError?.response?.status,
-              url: detailsError?.config?.url,
-            });
-            
-            // Always navigate to signup on error, but preserve the token
-            console.log('⚠️ Error fetching agent data - navigating to signup to complete profile');
-            Toast.show({
-              type: 'info',
-              text1: 'Complete your profile',
-              text2: 'Please provide your details to continue',
-            });
+            console.error('Error fetching agent data:', detailsError);
+            // On error, treat as new agent
             navigation.navigate('SignupScreen', {
               mobile_number: mobile,
               token,
@@ -443,30 +395,12 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         }
       })
       .catch(error => {
-        console.log('❌ Error in agent OTP verification:', error);
-        console.log('❌ Detailed error information:', {
-          message: error?.message,
-          status: error?.response?.status,
-          statusText: error?.response?.statusText,
-          responseData: error?.response?.data,
-          requestData: error?.config?.data,
-          url: error?.config?.url,
-          method: error?.config?.method,
-        });
+        console.log('Error in agent OTP verification:', error);
         
         let errorMessage = 'Agent OTP verification failed';
-        let errorDetails = '';
         
         if (error?.response?.data?.message) {
           errorMessage = error.response.data.message;
-        } else if (error?.response?.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (error?.response?.status === 400) {
-          errorMessage = 'Invalid OTP or phone number format';
-          errorDetails = 'Please check your OTP and try again';
-        } else if (error?.response?.status === 401) {
-          errorMessage = 'OTP expired or invalid';
-          errorDetails = 'Please request a new OTP';
         } else if (error?.message) {
           errorMessage = error.message;
         }
@@ -474,7 +408,6 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         Toast.show({
           type: 'error',
           text1: errorMessage,
-          text2: errorDetails || `Status: ${error?.response?.status || 'Unknown'}`,
         });
       });
   }, [mobile, otp, dispatch, navigation]);

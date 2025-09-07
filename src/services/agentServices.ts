@@ -179,9 +179,9 @@ export const fetchAgentData = async (agentId?: number) => {
         email: '',
         role: 'agent',
         working_locations: locationsResponse?.data || locationsResponse,
-        // Set basic profile completion flags
-        verified: 1,
-        status: 1,
+        // Use actual verification status - new agents should be unverified by default
+        verified: 0,
+        status: 0,
       };
       
       console.log('✅ Agent data created from working locations endpoint');
@@ -214,9 +214,9 @@ export const fetchAgentData = async (agentId?: number) => {
         email: '',
         role: 'agent',
         office_address: addressResponse?.data || addressResponse,
-        // Set basic profile completion flags
-        verified: 1,
-        status: 1,
+        // Use actual verification status - new agents should be unverified by default
+        verified: 0,
+        status: 0,
       };
       
       console.log('✅ Agent data created from office address endpoint');
@@ -267,8 +267,8 @@ export const fetchAgentData = async (agentId?: number) => {
     phone: '',
     email: '',
     role: 'agent',
-    verified: 1,
-    status: 1,
+    verified: 0,
+    status: 0,
     // Mark as incomplete profile so user can complete it
     profile_incomplete: true,
   };

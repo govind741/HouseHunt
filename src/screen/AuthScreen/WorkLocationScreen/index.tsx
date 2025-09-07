@@ -473,8 +473,8 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         const completeAgentData = {
           ...agentData,
           role: 'agent',
-          status: agentData.status || 1,
-          verified: agentData.verified || 1,
+          status: agentData.status || 0,
+          verified: agentData.verified || 0,
           // Ensure we have all required fields
           name: agentData.name || agentData.agent_name || 'Agent',
           agency_name: agentData.agency_name || 'Agency',
@@ -516,8 +516,8 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
                 const completeAgentData = {
                   ...agentDetails.data,
                   role: 'agent',
-                  status: agentDetails.data.status || 1,
-                  verified: agentDetails.data.verified || 1,
+                  status: agentDetails.data.status || 0,
+                  verified: agentDetails.data.verified || 0,
                 };
                 
                 dispatch(setUserData(completeAgentData));
@@ -545,8 +545,8 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         // Instead of creating fake data, try to extract from signup payload
         let fallbackAgentData = {
           role: 'agent',
-          status: 1,
-          verified: 1,
+          status: 0,
+          verified: 0,
           id: Date.now(),
         };
         
@@ -577,18 +577,18 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       Toast.show({
         type: 'success',
         text1: 'Account created successfully',
-        text2: 'Welcome to HouseApp! You can now start using the app.',
+        text2: 'Your profile has been submitted for approval.',
       });
       
-      // Navigate to CitySelectionScreen for new users to select their location
-      console.log('Navigating to CitySelectionScreen...');
+     
+      console.log('Navigating to PendingApprovalScreen...');
       navigation.reset({
         index: 0,
         routes: [
           {
             name: 'HomeScreenStack',
             params: {
-              screen: 'CitySelectionScreen',
+              screen: 'PendingApprovalScreen',
             },
           },
         ],

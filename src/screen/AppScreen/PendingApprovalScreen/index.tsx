@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  BackHandler,
 } from 'react-native';
 import {PendingApprovalScreenProps} from '../../../types/appTypes';
 import {COLORS} from '../../../assets/colors';
@@ -60,6 +61,16 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
     
     return () => clearInterval(interval);
   }, [token, userData?.id, navigation, checkingStatus]);
+
+  // Allow back button to close the application
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      BackHandler.exitApp();
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
