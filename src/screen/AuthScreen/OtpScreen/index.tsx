@@ -133,7 +133,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
     
     VerifyUserOtp(payload)
       .then(async (res: any) => {
-        console.log('✅ OTP Verification Success:', res);
+        console.log('OTP Verification Success:', res);
         Toast.show({
           type: 'success',
           text1: res?.message || 'OTP verified successfully',
@@ -144,7 +144,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
         const userId = res?.data?.id || res?.id || '';
         const userData = res?.data || res || {};
 
-        console.log('🔍 OTP Verification Response:', {
+        console.log('OTP Verification Response:', {
           token: token ? 'Present' : 'Missing',
           userId,
           userData,
@@ -169,7 +169,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
             status: userData?.status || 0,
           };
 
-          console.log('👤 Prepared user object:', userObj);
+          console.log('Prepared user object:', userObj);
 
           if (!userData?.name) {
             // User needs to complete profile

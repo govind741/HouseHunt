@@ -26,10 +26,10 @@ const TermsConditionsScreen = ({navigation}: any) => {
       setLoading(true);
       setError(false);
       
-      console.log('🔄 Fetching Terms & Conditions content from:', termsUrl);
+      console.log('Fetching Terms & Conditions content from:', termsUrl);
       const response = await axios.get(termsUrl);
       
-      console.log('✅ Terms & Conditions API Response Status:', response.status);
+      console.log('Terms & Conditions API Response Status:', response.status);
       
       if (response.data) {
         let content = '';
@@ -75,7 +75,7 @@ const TermsConditionsScreen = ({navigation}: any) => {
         setError(true);
       }
     } catch (err) {
-      console.error('❌ Error fetching Terms & Conditions content:', err);
+      console.error('Error fetching Terms & Conditions content:', err);
       setError(true);
     } finally {
       setLoading(false);
@@ -173,7 +173,7 @@ const TermsConditionsScreen = ({navigation}: any) => {
           scalesPageToFit={true}
           showsVerticalScrollIndicator={false}
           onError={() => setUseWebView(false)}
-          onLoadEnd={() => console.log('✅ WebView loaded successfully')}
+          onLoadEnd={() => console.log('WebView loaded successfully')}
         />
       );
     } else {

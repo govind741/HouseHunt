@@ -17,9 +17,9 @@ export const testApiEndpoints = async () => {
       success: healthResponse.ok,
       response: healthText,
     });
-    console.log('✅ Server is responding');
+    console.log('Server is responding');
   } catch (error) {
-    console.error('❌ Server health check failed:', error);
+    console.error('Server health check failed:', error);
     testResults.push({
       test: 'Server Health',
       status: 0,
@@ -30,7 +30,7 @@ export const testApiEndpoints = async () => {
 
   // Test 2: User login endpoint with minimal data
   try {
-    console.log('📱 Testing user login endpoint...');
+    console.log('Testing user login endpoint...');
     const loginResponse = await axiosInstance.post(ENDPOINT.user_login, {
       phone: '1234567890', // Test phone number
     });
@@ -40,9 +40,9 @@ export const testApiEndpoints = async () => {
       success: true,
       response: loginResponse,
     });
-    console.log('✅ User login endpoint is working');
+    console.log('User login endpoint is working');
   } catch (error: any) {
-    console.log('⚠️ User login endpoint response:', error);
+    console.log('User login endpoint response:', error);
     testResults.push({
       test: 'User Login',
       status: error.status || 0,
@@ -63,9 +63,9 @@ export const testApiEndpoints = async () => {
       success: true,
       response: agentResponse,
     });
-    console.log('✅ Agent login endpoint is working');
+    console.log('Agent login endpoint is working');
   } catch (error: any) {
-    console.log('⚠️ Agent login endpoint response:', error);
+    console.log('Agent login endpoint response:', error);
     testResults.push({
       test: 'Agent Login',
       status: error.status || 0,
@@ -75,23 +75,23 @@ export const testApiEndpoints = async () => {
   }
 
   // Print summary
-  console.log('📊 API Test Results Summary:');
+  console.log('API Test Results Summary:');
   testResults.forEach((result, index) => {
-    console.log(`${index + 1}. ${result.test}: ${result.success ? '✅ PASS' : '❌ FAIL'} (Status: ${result.status})`);
+    console.log(`${index + 1}. ${result.test}: ${result.success ? 'PASS' : 'FAIL'} (Status: ${result.status})`);
   });
 
   return testResults;
 };
 
 export const testSpecificEndpoint = async (endpoint: string, data: any = {}) => {
-  console.log(`🎯 Testing specific endpoint: ${endpoint}`);
+  console.log(`Testing specific endpoint: ${endpoint}`);
   
   try {
     const response = await axiosInstance.post(endpoint, data);
-    console.log('✅ Endpoint test successful:', response);
+    console.log('Endpoint test successful:', response);
     return { success: true, response };
   } catch (error: any) {
-    console.log('❌ Endpoint test failed:', error);
+    console.log('Endpoint test failed:', error);
     return { success: false, error };
   }
 };

@@ -20,14 +20,27 @@ import PendingApprovalScreen from '../screen/AppScreen/PendingApprovalScreen';
 import WorkingLocationsListScreen from '../screen/AppScreen/WorkingLocationsListScreen';
 import AccountSettings from '../screen/AppScreen/AccountSettings';
 import PaymentOptionsScreen from '../screen/AppScreen/PaymentOptionsScreen';
+import {useAppSelector} from '../store';
 
 const HomeStack = createNativeStackNavigator<HomeScreenStackParamList>();
 
 const HomeScreenStack = () => {
+  const {token, userData} = useAppSelector(state => state.auth);
+  
+  // Check if agent needs approval
+  const isAgent = userData?.role === 'agent';
+  const needsApproval = isAgent && token && (userData?.verified === 0 || userData?.status === 0);
+  
+  // Determine initial route
+  const getInitialRoute = (): keyof HomeScreenStackParamList => {
+    if (needsApproval) return 'PendingApprovalScreen';
+    return 'CitySelectionScreen';
+  };
+
   return (
     <HomeStack.Navigator
       screenOptions={{headerShown: false}}
-      initialRouteName="CitySelectionScreen">
+      initialRouteName={getInitialRoute()}>
       <HomeStack.Screen name="HomeScreen" component={HomeScreen} />
 
       <HomeStack.Screen

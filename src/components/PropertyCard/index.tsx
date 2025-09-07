@@ -59,16 +59,16 @@ const PropertyCard = ({
     const fetchOfficeAddress = async () => {
       if (item?.agent_id && token) {
         try {
-          console.log('🏢 Fetching office address for agent:', item.agent_id);
+          console.log('Fetching office address for agent:', item.agent_id);
           const address = await getAgentOfficeAddress(item.agent_id);
-          console.log('🏢 Fetched office address:', address);
+          console.log('Fetched office address:', address);
           setOfficeAddress(address);
         } catch (error) {
           console.log('Error fetching office address:', error);
           setOfficeAddress('');
         }
       } else {
-        console.log('🏢 Not fetching office address - missing agent_id or token:', {agent_id: item?.agent_id, hasToken: !!token});
+        console.log('Not fetching office address - missing agent_id or token:', {agent_id: item?.agent_id, hasToken: !!token});
         setOfficeAddress('');
       }
     };
@@ -195,7 +195,7 @@ const PropertyCard = ({
     const latitude = item?.latitude;
     const longitude = item?.longitude;
 
-    console.log('🗺️ Map click - Address data:', {
+    console.log('Map click - Address data:', {
       officeAddress,
       itemOfficeAddress: item?.office_address,
       finalAddress: address,
@@ -217,7 +217,7 @@ const PropertyCard = ({
       return;
     }
 
-    console.log('🗺️ Opening map URL:', url);
+    console.log('Opening map URL:', url);
 
     Linking.canOpenURL(url)
       .then(supported => {

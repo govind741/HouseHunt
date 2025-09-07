@@ -74,7 +74,7 @@ const getBreadcrumText = (location: locationType) => {
 };
 
 const prepareUserObj = (userData: any = {}) => {
-  console.log('🔧 Preparing user object from:', userData);
+  console.log('Preparing user object from:', userData);
   
   // Helper function to safely parse JSON or return the value as-is
   const safeJsonParse = (value: any) => {
@@ -120,7 +120,7 @@ const prepareUserObj = (userData: any = {}) => {
     location: safeLocationParse(userData.location),
   };
 
-  console.log('✅ Prepared user object:', userObj);
+  console.log('Prepared user object:', userObj);
   return userObj;
 };
 

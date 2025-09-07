@@ -20,7 +20,7 @@ export const testAPIConnection = async () => {
     
     return response.ok;
   } catch (error: any) {
-    console.error('❌ API Connection Test Failed:', {
+    console.error('API Connection Test Failed:', {
       name: error.name,
       message: error.message,
       stack: error.stack,
@@ -30,7 +30,7 @@ export const testAPIConnection = async () => {
 };
 
 export const debugNetworkError = (error: any) => {
-  console.log('🔍 Network Error Debug Info:', {
+  console.log('Network Error Debug Info:', {
     errorType: error.constructor.name,
     message: error.message,
     code: error.code,

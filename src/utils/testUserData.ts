@@ -9,7 +9,7 @@ export const testUserDataFlow = async () => {
     const storedToken = await AsyncStorage.getItem('token');
     const storedRole = await AsyncStorage.getItem('role');
     
-    console.log('📱 AsyncStorage Test:');
+    console.log('AsyncStorage Test:');
     console.log('  Token:', storedToken ? 'Present' : 'Missing');
     console.log('  Role:', storedRole);
     
@@ -47,7 +47,7 @@ export const testUserDataFlow = async () => {
     const savedMockData = await AsyncStorage.getItem('userData');
     if (savedMockData) {
       const parsedMockData = JSON.parse(savedMockData);
-      console.log('✅ Mock data saved and retrieved:', parsedMockData);
+      console.log('Mock data saved and retrieved:', parsedMockData);
     }
     
     return {
@@ -57,7 +57,7 @@ export const testUserDataFlow = async () => {
     };
     
   } catch (error) {
-    console.error('❌ Error in user data flow test:', error);
+    console.error('Error in user data flow test:', error);
     return null;
   }
 };
@@ -67,6 +67,6 @@ export const clearAllUserData = async () => {
     await AsyncStorage.multiRemove(['userData', 'token', 'role', 'userId']);
     console.log('🧹 Cleared all user data');
   } catch (error) {
-    console.error('❌ Error clearing user data:', error);
+    console.error('Error clearing user data:', error);
   }
 };

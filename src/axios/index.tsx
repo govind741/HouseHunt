@@ -32,7 +32,7 @@ axiosInstance.interceptors.request.use(
     
     // Add debug logging for agent requests
     if (config.url?.includes('agent')) {
-      console.log('🔍 Agent API Request:', {
+      if (__DEV__) console.log('Agent API Request:', {
         url: config.url,
         method: config.method,
         hasToken: !!token,
@@ -59,7 +59,7 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     // Add debug logging for agent responses
     if (response.config.url?.includes('agent')) {
-      console.log('✅ Agent API Response:', {
+      if (__DEV__) console.log('Agent API Response:', {
         url: response.config.url,
         status: response.status,
         hasData: !!response.data,
@@ -71,7 +71,7 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     // Handle specific error cases
     if (error.response?.status === 401) {
-      console.log('🔐 Unauthorized - clearing stored auth data');
+      if (__DEV__) console.log('Unauthorized - clearing stored auth data');
       await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
     }
     

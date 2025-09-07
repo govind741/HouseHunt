@@ -81,12 +81,12 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
       setLoading(true);
       setError(false);
       
-      console.log('🔄 Fetching About Us content from:', aboutUsUrl);
+      console.log('Fetching About Us content from:', aboutUsUrl);
       const response = await axios.get(aboutUsUrl);
       
-      console.log('✅ About Us API Response Status:', response.status);
-      console.log('✅ About Us API Response Data Type:', typeof response.data);
-      console.log('✅ About Us API Response Data:', response.data);
+      console.log('About Us API Response Status:', response.status);
+      console.log('About Us API Response Data Type:', typeof response.data);
+      console.log('About Us API Response Data:', response.data);
       
       if (response.data) {
         let content = '';
@@ -169,7 +169,7 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
         // Ensure content is a string before calling substring
         content = String(content || '');
         
-        console.log('📝 Processed content:', content.substring(0, 200) + '...');
+        console.log('Processed content:', content.substring(0, 200) + '...');
         console.log('🏷️ Is HTML:', isHtml);
         
         if (content && content.trim().length > 0) {
@@ -177,18 +177,18 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
           setUseWebView(isHtml);
           setError(false);
         } else {
-          console.warn('⚠️ Empty content received');
+          console.warn('Empty content received');
           setError(true);
         }
       } else {
-        console.warn('⚠️ No data in response');
+        console.warn('No data in response');
         setError(true);
       }
     } catch (err) {
-      console.error('❌ Error fetching About Us content:', err);
+      console.error('Error fetching About Us content:', err);
       if (err.response) {
-        console.error('❌ Response status:', err.response.status);
-        console.error('❌ Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+        console.error('Response data:', err.response.data);
       }
       setError(true);
     } finally {
@@ -304,7 +304,7 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
             setUseWebView(false);
           }}
           onLoadEnd={() => {
-            console.log('✅ WebView loaded successfully');
+            console.log('WebView loaded successfully');
           }}
         />
       );

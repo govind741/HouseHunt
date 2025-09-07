@@ -59,7 +59,7 @@ export const formatPropertyDescription = (data: PropertyShareData): string => {
   
   // Add location
   if (data.location) {
-    parts.push(`📍 ${data.location}`);
+    parts.push(`${data.location}`);
   }
   
   // Add price if available
@@ -69,7 +69,7 @@ export const formatPropertyDescription = (data: PropertyShareData): string => {
   
   // Add agent name if different from agency
   if (data.agentName && data.agencyName && data.agentName !== data.agencyName) {
-    parts.push(`👤 Agent: ${data.agentName}`);
+    parts.push(`Agent: ${data.agentName}`);
   }
   
   // Add contact info

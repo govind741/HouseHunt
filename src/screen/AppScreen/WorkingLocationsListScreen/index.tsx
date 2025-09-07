@@ -26,13 +26,13 @@ const WorkingLocationsListScreen = ({
       setLoading(true);
       handleGetWorkingLocations()
         .then(res => {
-          console.log('📍 Working locations response:', res);
+          console.log('Working locations response:', res);
           setWorkingLocations(res?.data ?? []);
           setLoading(false);
         })
         .catch(error => {
           setLoading(false);
-          console.log('❌ Working locations error:', error);
+          console.log('Working locations error:', error);
         });
     }, []),
   );

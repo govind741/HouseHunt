@@ -69,19 +69,19 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   useEffect(() => {
     const checkAgentAuth = async () => {
       if (userData?.role === 'agent' && !agentAuthChecked) {
-        console.log('🔍 Checking agent authentication state...');
+        console.log('Checking agent authentication state...');
         try {
           const authState = await checkAgentAuthState();
           const route = getAgentNavigationRoute(authState);
           
-          console.log('🔍 Agent auth check result:', {
+          console.log('Agent auth check result:', {
             authState,
             recommendedRoute: route,
           });
           
           // If agent needs to be redirected, do it
           if (route.screen !== 'HomeScreen') {
-            console.log(`🔄 Redirecting agent to ${route.screen}: ${route.reason}`);
+            console.log(`Redirecting agent to ${route.screen}: ${route.reason}`);
             
             if (route.stack === 'AuthStack') {
               navigation.navigate('AuthStack', { screen: route.screen });
@@ -93,7 +93,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           
           setAgentAuthChecked(true);
         } catch (error) {
-          console.error('❌ Error checking agent auth:', error);
+          console.error('Error checking agent auth:', error);
           setAgentAuthChecked(true);
         }
       } else {
@@ -124,7 +124,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   // Check if user has selected a location, redirect to CitySelectionScreen if not
   useEffect(() => {
     if (isFocused && agentAuthChecked && (!location?.city_id || !location?.city_name)) {
-      console.log('🏙️ No location selected, redirecting to CitySelectionScreen');
+      console.log('No location selected, redirecting to CitySelectionScreen');
       navigation.navigate('CitySelectionScreen');
     }
   }, [isFocused, agentAuthChecked, location, navigation]);
@@ -177,26 +177,26 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     let finalCityId = cityId;
     
     if (!finalCityId || finalCityId === 0) {
-      console.log('⚠️ Invalid cityId, trying fallbacks...');
+      console.log('Invalid cityId, trying fallbacks...');
       
       // Try location.city_id as fallback
       finalCityId = location?.city_id;
       if (finalCityId && finalCityId > 0) {
-        console.log('✅ Using location.city_id as fallback:', finalCityId);
+        console.log('Using location.city_id as fallback:', finalCityId);
       } else {
         // Try location.id as fallback (sometimes locality id can work)
         finalCityId = location?.id;
         if (finalCityId && finalCityId > 0) {
-          console.log('✅ Using location.id as fallback:', finalCityId);
+          console.log('Using location.id as fallback:', finalCityId);
         } else {
           // Last resort: use Delhi (city_id = 1) as default
           finalCityId = 1;
-          console.log('✅ Using default city_id (Delhi) as last resort:', finalCityId);
+          console.log('Using default city_id (Delhi) as last resort:', finalCityId);
         }
       }
     }
     
-    console.log('🎯 Making ads API call with final city_id:', finalCityId);
+    console.log('Making ads API call with final city_id:', finalCityId);
     
     handleSliderData(finalCityId)
       .then(res => {
@@ -211,13 +211,13 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           buttonText: item.button_text || 'View Details',
         }));
 
-        console.log('✅ Ads loaded for HomeScreen:', adsArray.length, 'ads');
+        console.log('Ads loaded for HomeScreen:', adsArray.length, 'ads');
         console.log('Ads data:', JSON.stringify(adsArray, null, 2));
         setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('❌ Error in getSliderData:', error);
-        console.log('❌ Error details:', JSON.stringify(error, null, 2));
+        console.log('Error in getSliderData:', error);
+        console.log('Error details:', JSON.stringify(error, null, 2));
         setAdsData([]); // Set empty array on error
         // Show error toast only if it's not a network issue
         if (error?.message && !error?.message.includes('Network')) {

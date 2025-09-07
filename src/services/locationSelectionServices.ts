@@ -3,10 +3,10 @@ import {BASE_URL, ENDPOINT} from '../constant/urls';
 
 const getAllCityList = async () => {
   try {
-    console.log('🏙️ Get All Cities Request to:', ENDPOINT.get_city);
+    console.log('Get All Cities Request to:', ENDPOINT.get_city);
     
     const response = await axiosInstance.get(ENDPOINT.get_city);
-    console.log('✅ Get All Cities Success:', {
+    console.log('Get All Cities Success:', {
       hasResponse: !!response,
       responseType: typeof response,
       hasData: !!response?.data,
@@ -32,11 +32,11 @@ const getAllCityList = async () => {
         formattedData: response 
       };
     } else {
-      console.warn('⚠️ Unexpected response structure:', response);
+      console.warn('Unexpected response structure:', response);
       return { data: [], formattedData: [] };
     }
   } catch (error: any) {
-    console.error('❌ Get All Cities Error:', {
+    console.error('Get All Cities Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -44,7 +44,7 @@ const getAllCityList = async () => {
     
     // Try alternative approach - direct fetch without authentication
     try {
-      console.log('🔄 Trying alternative cities API call...');
+      console.log('Trying alternative cities API call...');
       const alternativeResponse = await fetch(`${BASE_URL}${ENDPOINT.get_city}`, {
         method: 'GET',
         headers: {
@@ -55,7 +55,7 @@ const getAllCityList = async () => {
       
       if (alternativeResponse.ok) {
         const data = await alternativeResponse.json();
-        console.log('✅ Alternative cities API success:', {
+        console.log('Alternative cities API success:', {
           hasData: !!data,
           dataType: typeof data,
           hasFormattedData: !!data?.formattedData,
@@ -79,18 +79,18 @@ const getAllCityList = async () => {
             formattedData: data 
           };
         } else {
-          console.warn('⚠️ Alternative API returned unexpected structure:', data);
+          console.warn('Alternative API returned unexpected structure:', data);
           return { data: [], formattedData: [] };
         }
       } else {
-        console.error('❌ Alternative API failed with status:', alternativeResponse.status);
+        console.error('Alternative API failed with status:', alternativeResponse.status);
         throw new Error(`Alternative API failed: ${alternativeResponse.status}`);
       }
     } catch (alternativeError) {
-      console.error('❌ Alternative cities API also failed:', alternativeError);
+      console.error('Alternative cities API also failed:', alternativeError);
       
       // Return mock data as last resort to prevent app crash
-      console.log('🔄 Returning mock city data as fallback');
+      console.log('Returning mock city data as fallback');
       const mockCities = [
         { id: 1, name: 'Delhi' },
         { id: 2, name: 'Mumbai' },
@@ -113,11 +113,11 @@ const getAllCityList = async () => {
 
 const getAllAreasList = async (cityId?: number) => {
   try {
-    console.log('🗺️ Get All Areas Request:', {cityId});
+    console.log('Get All Areas Request:', {cityId});
     
     // Only make the API call if we have a valid cityId
     if (!cityId || cityId <= 0) {
-      console.warn('⚠️ Invalid cityId provided to getAllAreasList:', cityId);
+      console.warn('Invalid cityId provided to getAllAreasList:', cityId);
       return {data: [], formattedData: []};
     }
     
@@ -125,7 +125,7 @@ const getAllAreasList = async (cityId?: number) => {
     url += `?cityId=${cityId}`;
     
     const response = await axiosInstance.get(url);
-    console.log('✅ Get All Areas Success:', {
+    console.log('Get All Areas Success:', {
       hasResponse: !!response,
       responseType: typeof response,
       hasData: !!response?.data,
@@ -151,11 +151,11 @@ const getAllAreasList = async (cityId?: number) => {
         formattedData: response 
       };
     } else {
-      console.warn('⚠️ Unexpected areas response structure:', response);
+      console.warn('Unexpected areas response structure:', response);
       return { data: [], formattedData: [] };
     }
   } catch (error: any) {
-    console.error('❌ Get All Areas Error:', {
+    console.error('Get All Areas Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -172,14 +172,14 @@ const getAllLocalitiesList = async (payload: {
   areaId: number | undefined;
 }) => {
   try {
-    console.log('📍 Get All Localities Request:', payload);
+    console.log('Get All Localities Request:', payload);
     let url = `${ENDPOINT.get_localities}?cityId=${payload?.cityId}`;
     if (payload?.areaId) {
       url = url + `&areaId=${payload?.areaId}`;
     }
     
     const response = await axiosInstance.get(url);
-    console.log('✅ Get All Localities Success:', {
+    console.log('Get All Localities Success:', {
       hasResponse: !!response,
       responseType: typeof response,
       hasData: !!response?.data,
@@ -205,11 +205,11 @@ const getAllLocalitiesList = async (payload: {
         formattedData: response 
       };
     } else {
-      console.warn('⚠️ Unexpected localities response structure:', response);
+      console.warn('Unexpected localities response structure:', response);
       return { data: [], formattedData: [] };
     }
   } catch (error: any) {
-    console.error('❌ Get All Localities Error:', {
+    console.error('Get All Localities Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -232,7 +232,7 @@ const retryRequest = async (fn: () => Promise<any>, maxRetries = 2): Promise<any
     } catch (error: any) {
       lastError = error;
       if (attempt < maxRetries) {
-        console.log(`🔄 Retry attempt ${attempt + 1}/${maxRetries} in 1 second...`);
+        console.log(`Retry attempt ${attempt + 1}/${maxRetries} in 1 second...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -243,7 +243,7 @@ const retryRequest = async (fn: () => Promise<any>, maxRetries = 2): Promise<any
 
 const searchLocalities = async (payload: {name: string; cityId?: number}) => {
   try {
-    console.log('🔍 Search Localities Request:', payload);
+    console.log('Search Localities Request:', payload);
     let url = `${ENDPOINT.search_localities}?name=${payload?.name}`;
     if (payload?.cityId) {
       url += `&cityId=${payload?.cityId}`;
@@ -255,10 +255,10 @@ const searchLocalities = async (payload: {name: string; cityId?: number}) => {
       return await axiosInstance.get(url);
     });
     
-    console.log('✅ Search Localities Success:', response);
+    console.log('Search Localities Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Search Localities Error:', error);
+    console.error('Search Localities Error:', error);
     throw error;
   }
 };

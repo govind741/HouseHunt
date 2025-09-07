@@ -26,7 +26,7 @@ export const clearAuthData = async (): Promise<void> => {
     await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
     console.log('🧹 Cleared all authentication data');
   } catch (error) {
-    console.error('❌ Error clearing auth data:', error);
+    console.error('Error clearing auth data:', error);
   }
 };
 
@@ -44,14 +44,14 @@ export const validateAuthState = async (): Promise<{
     
     // Check if token is valid
     if (!isValidToken(token)) {
-      console.log('❌ Invalid token found, clearing auth data');
+      console.log('Invalid token found, clearing auth data');
       await clearAuthData();
       return { isValid: false, token: null, userData: null };
     }
     
     // Check if userData exists with valid token
     if (!userData) {
-      console.log('❌ Token exists but no user data, clearing auth data');
+      console.log('Token exists but no user data, clearing auth data');
       await clearAuthData();
       return { isValid: false, token: null, userData: null };
     }
@@ -61,22 +61,22 @@ export const validateAuthState = async (): Promise<{
       
       // Basic validation of user data
       if (!parsedUserData.id && !parsedUserData.userId) {
-        console.log('❌ Invalid user data structure, clearing auth data');
+        console.log('Invalid user data structure, clearing auth data');
         await clearAuthData();
         return { isValid: false, token: null, userData: null };
       }
       
-      console.log('✅ Valid authentication state found');
+      console.log('Valid authentication state found');
       return { isValid: true, token, userData: parsedUserData };
       
     } catch (parseError) {
-      console.log('❌ Error parsing user data, clearing auth data');
+      console.log('Error parsing user data, clearing auth data');
       await clearAuthData();
       return { isValid: false, token: null, userData: null };
     }
     
   } catch (error) {
-    console.error('❌ Error validating auth state:', error);
+    console.error('Error validating auth state:', error);
     await clearAuthData();
     return { isValid: false, token: null, userData: null };
   }

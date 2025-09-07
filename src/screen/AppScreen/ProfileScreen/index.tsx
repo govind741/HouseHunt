@@ -120,11 +120,11 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
 
   const getDetails = useCallback(
     (userId: number, role: string) => {
-      console.log('🔍 Getting user details for:', {userId, role});
+      console.log('Getting user details for:', {userId, role});
       
       // For agents viewing their own profile, use existing userData instead of API call
       if (role === 'agent' && userData?.id === userId) {
-        console.log('🏢 Agent viewing own profile - using existing userData');
+        console.log('Agent viewing own profile - using existing userData');
         setUserDetails(userData);
         return;
       }
@@ -135,43 +135,43 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
         role === 'agent' ? handleAgentDetails(userId) : handleUserDetails(userId);
 
       API.then(async res => {
-        console.log('✅ API response received:', res);
+        console.log('API response received:', res);
         setIsLoading(false);
         
         // Fix: Check for 'user' instead of 'users'
         if (role === 'user' || role === 'users') {
-          console.log('👤 Processing user data...');
+          console.log('Processing user data...');
           const userObj = prepareUserObj(res);
-          console.log('👤 Prepared user object:', userObj);
+          console.log('Prepared user object:', userObj);
           
           // Only update if we got valid data
           if (userObj && userObj.id) {
             await AsyncStorage.setItem('userData', JSON.stringify(userObj));
             // Only update Redux if the data has meaningfully changed
             setUserDetails(userObj);
-            console.log('✅ User details updated successfully');
+            console.log('User details updated successfully');
           } else {
-            console.warn('⚠️ Invalid user object, keeping existing data');
+            console.warn('Invalid user object, keeping existing data');
           }
         } else {
           // For agents
-          console.log('🏢 Processing agent data...');
+          console.log('Processing agent data...');
           if (res && res.id) {
             setUserDetails(res);
             await AsyncStorage.setItem('userData', JSON.stringify(res));
-            console.log('✅ Agent details updated successfully');
+            console.log('Agent details updated successfully');
           } else {
-            console.warn('⚠️ Invalid agent data, keeping existing data');
+            console.warn('Invalid agent data, keeping existing data');
           }
         }
       }).catch(error => {
         setIsLoading(false);
-        console.log('❌ Error in getDetails:', error);
+        console.log('Error in getDetails:', error);
         
         // Provide specific error message based on role
         const errorMessage = role === 'agent' 
-          ? '❌ Failed to fetch agent details' 
-          : '❌ Failed to fetch user details';
+          ? 'Failed to fetch agent details' 
+          : 'Failed to fetch user details';
         console.error(errorMessage);
       });
     },
@@ -180,7 +180,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
 
   useEffect(() => {
     if (token && userData?.id && lastFetchedUserIdRef.current !== userData.id && !isLoading) {
-      console.log('🔄 Fetching user details for new user:', userData.id);
+      console.log('Fetching user details for new user:', userData.id);
       lastFetchedUserIdRef.current = userData.id;
       getDetails(userData.id, userData.role);
     } else if (!token) {
@@ -192,7 +192,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   // Initialize userDetails from Redux userData if not already set
   useEffect(() => {
     if (userData && !userDetails) {
-      console.log('🔧 Initializing userDetails from Redux userData:', userData);
+      console.log('Initializing userDetails from Redux userData:', userData);
       setUserDetails(userData);
     }
   }, [userData, userDetails]);
@@ -201,7 +201,7 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
   useEffect(() => {
     if (__DEV__) {
       const debugData = async () => {
-        console.log('🔍 === PROFILE SCREEN DEBUG ===');
+        console.log('=== PROFILE SCREEN DEBUG ===');
         const debugResult = await debugUserData();
         
         console.log('Redux userData:', userData);
@@ -418,7 +418,7 @@ const renderOption = (option: string) => {
     
     // Only log in development
     if (__DEV__) {
-      console.log('🖼️ Rendering user info with:', {
+      console.log('Rendering user info with:', {
         userDetails: userDetails ? 'Present' : 'Missing',
         userData: userData ? 'Present' : 'Missing',
         hasCurrentUser: !!currentUser,

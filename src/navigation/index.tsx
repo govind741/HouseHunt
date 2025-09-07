@@ -22,8 +22,43 @@ const RootNavigator = () => {
       dispatch(setToken(accessToken));
 
       const userData = await AsyncStorage.getItem('userData');
+      const role = await AsyncStorage.getItem('role');
+      
       if (userData) {
-        dispatch(setUserData(JSON.parse(userData)));
+        const parsedUserData = JSON.parse(userData);
+        dispatch(setUserData(parsedUserData));
+        
+        // Check if agent needs approval verification on app restart
+        if (role === 'agent' && accessToken && parsedUserData?.id) {
+          try {
+            const { fetchAgentData } = await import('../services/agentServices');
+            const agentDataResult = await fetchAgentData(parsedUserData.id);
+            
+            if (agentDataResult.success && agentDataResult.data) {
+              const agentData = agentDataResult.data;
+              const isApproved = agentData.verified === 1 || agentData.status === 1;
+              
+              // Update stored user data with current approval status
+              const updatedUserData = {
+                ...parsedUserData,
+                verified: agentData.verified || 0,
+                status: agentData.status || 0,
+              };
+              
+              dispatch(setUserData(updatedUserData));
+              await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
+              
+              if (__DEV__) console.log('Agent approval check on restart:', {
+                agentId: parsedUserData.id,
+                isApproved,
+                verified: agentData.verified,
+                status: agentData.status
+              });
+            }
+          } catch (error) {
+            if (__DEV__) console.log('Error checking agent approval on restart:', error);
+          }
+        }
       }
 
       // Set guest mode based on whether user has token

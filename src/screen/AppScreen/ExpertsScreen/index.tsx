@@ -96,9 +96,9 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const fetchCities = async () => {
     setIsLoadingCities(true);
     try {
-      console.log('🏙️ Fetching cities for ExpertsScreen...');
+      console.log('Fetching cities for ExpertsScreen...');
       const response = await getAllCityList();
-      console.log('📊 Cities API response:', {
+      console.log('Cities API response:', {
         hasResponse: !!response,
         hasData: !!response?.data,
         hasFormattedData: !!response?.formattedData,
@@ -117,7 +117,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
         cities = response;
       }
       
-      console.log('✅ Processed cities:', {
+      console.log('Processed cities:', {
         count: cities.length,
         firstCity: cities[0] ? cities[0].name : 'None',
         sampleCities: cities.slice(0, 3).map(c => c.name),
@@ -126,7 +126,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
       setCitiesList(cities);
       setFilteredCities(cities);
     } catch (error) {
-      console.error('❌ Error fetching cities:', error);
+      console.error('Error fetching cities:', error);
       // Set empty array on error to prevent crashes
       setCitiesList([]);
       setFilteredCities([]);
@@ -138,9 +138,9 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const fetchAreas = async (cityId: number) => {
     setIsLoadingAreas(true);
     try {
-      console.log('🗺️ Fetching areas for city:', cityId);
+      console.log('Fetching areas for city:', cityId);
       const response = await getAllAreasList(cityId);
-      console.log('📊 Areas API response:', {
+      console.log('Areas API response:', {
         hasResponse: !!response,
         hasData: !!response?.data,
         hasFormattedData: !!response?.formattedData,
@@ -159,7 +159,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
         areas = response;
       }
       
-      console.log('✅ Processed areas:', {
+      console.log('Processed areas:', {
         count: areas.length,
         firstArea: areas[0] ? areas[0].name : 'None',
         sampleAreas: areas.slice(0, 3).map(a => a.name),
@@ -168,7 +168,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
       setAreasList(areas);
       setFilteredAreas(areas);
     } catch (error) {
-      console.error('❌ Error fetching areas:', error);
+      console.error('Error fetching areas:', error);
       // Set empty array on error to prevent crashes
       setAreasList([]);
       setFilteredAreas([]);
@@ -180,13 +180,13 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const fetchLocalities = async (cityId: number, areaId?: number) => {
     setIsLoadingLocalities(true);
     try {
-      console.log('📍 Fetching localities for:', {cityId, areaId});
+      console.log('Fetching localities for:', {cityId, areaId});
       const payload = {
         cityId: cityId,
         areaId: areaId,
       };
       const response = await getAllLocalitiesList(payload);
-      console.log('📊 Localities API response:', {
+      console.log('Localities API response:', {
         hasResponse: !!response,
         hasData: !!response?.data,
         hasFormattedData: !!response?.formattedData,
@@ -205,7 +205,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
         localities = response;
       }
       
-      console.log('✅ Processed localities:', {
+      console.log('Processed localities:', {
         count: localities.length,
         firstLocality: localities[0] ? localities[0].name : 'None',
         sampleLocalities: localities.slice(0, 3).map(l => l.name),
@@ -214,7 +214,7 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
       setLocalitiesList(localities);
       setFilteredLocalities(localities);
     } catch (error) {
-      console.error('❌ Error fetching localities:', error);
+      console.error('Error fetching localities:', error);
       // Set empty array on error to prevent crashes
       setLocalitiesList([]);
       setFilteredLocalities([]);

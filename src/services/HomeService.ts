@@ -6,10 +6,10 @@ const getAllAgentList = async (id: number) => {
     console.log('👥 Get All Agent List Request:', {locationId: id});
     const url = `${ENDPOINT.get_agent_by_location}?locationId=${id}`;
     const response = await axiosInstance.get(url);
-    console.log('✅ Get All Agent List Success:', response);
+    console.log('Get All Agent List Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Get All Agent List Error:', error);
+    console.error('Get All Agent List Error:', error);
     throw error;
   }
 };
@@ -21,27 +21,27 @@ const getPublicAgentList = async (id: number) => {
     console.log('Public Agent URL:', url);
     
     const response = await axiosInstance.get(url);
-    console.log('✅ Get Public Agent List Success:', response);
+    console.log('Get Public Agent List Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Get Public Agent List Error:', error);
+    console.error('Get Public Agent List Error:', error);
     throw error;
   }
 };
 
 const getAgentDetailsById = async (id: any) => {
   try {
-    console.log('👤 Get Agent Details By ID Request:', {agentId: id});
+    console.log('Get Agent Details By ID Request:', {agentId: id});
     const response = await axiosInstance.get(`${ENDPOINT.get_agent_details}/${id}`);
-    console.log('✅ Get Agent Details By ID Success:', response);
+    console.log('Get Agent Details By ID Success:', response);
     return response;
   } catch (error: any) {
     // Handle 403 permission errors gracefully - agents can't view other agents' private details
     if (error?.response?.status === 403) {
-      console.log('ℹ️ Agent details access restricted for agent ID:', id);
+      console.log('Agent details access restricted for agent ID:', id);
       return null; // Return null instead of throwing error
     }
-    console.error('❌ Get Agent Details By ID Error:', error);
+    console.error('Get Agent Details By ID Error:', error);
     throw error;
   }
 };
@@ -50,10 +50,10 @@ const handleInteraction = async (payload: any) => {
   try {
     console.log('👆 Handle User Interaction Request:', payload);
     const response = await axiosInstance.post(ENDPOINT.user_interaction, payload);
-    console.log('✅ Handle User Interaction Success:', response);
+    console.log('Handle User Interaction Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Handle User Interaction Error:', error);
+    console.error('Handle User Interaction Error:', error);
     throw error;
   }
 };
@@ -62,10 +62,10 @@ const deleteUser = async (payload: any) => {
   try {
     console.log('🗑️ Delete User Request:', payload);
     const response = await axiosInstance.post(ENDPOINT.verify_delete_user, payload);
-    console.log('✅ Delete User Success:', response);
+    console.log('Delete User Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Delete User Error:', error);
+    console.error('Delete User Error:', error);
     throw error;
   }
 };

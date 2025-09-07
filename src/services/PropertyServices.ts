@@ -11,7 +11,7 @@ const getReviewsList = async (params: any) => {
     console.log('Get Reviews List Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Get Reviews List Error:', error);
+    console.error('Get Reviews List Error:', error);
     throw error;
   }
 };
@@ -20,10 +20,10 @@ const AddNewReview = async (payload: any) => {
   try {
     console.log('➕ Add New Review Request:', payload);
     const response = await axiosInstance.post(ENDPOINT.add_reviews, payload);
-    console.log('✅ Add New Review Success:', response);
+    console.log('Add New Review Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Add New Review Error:', error);
+    console.error('Add New Review Error:', error);
     throw error;
   }
 };
@@ -39,10 +39,10 @@ const updateReview = async (payload: any) => {
         rating: payload.rating,
         comment: payload.comment,
       });
-      console.log('✅ Update Review Success (PATCH with ID in URL):', response);
+      console.log('Update Review Success (PATCH with ID in URL):', response);
       return response;
     } catch (error: any) {
-      console.log('❌ PATCH with ID in URL failed:', error.response?.status);
+      console.log('PATCH with ID in URL failed:', error.response?.status);
       
       try {
         // Second try: PUT with review_id in URL
@@ -50,34 +50,34 @@ const updateReview = async (payload: any) => {
           rating: payload.rating,
           comment: payload.comment,
         });
-        console.log('✅ Update Review Success (PUT with ID in URL):', response);
+        console.log('Update Review Success (PUT with ID in URL):', response);
         return response;
       } catch (secondError: any) {
-        console.log('❌ PUT with ID in URL failed:', secondError.response?.status);
+        console.log('PUT with ID in URL failed:', secondError.response?.status);
         
         try {
           // Third try: PATCH with review_id in body
           response = await axiosInstance.patch(ENDPOINT.get_reviews, payload);
-          console.log('✅ Update Review Success (PATCH with ID in body):', response);
+          console.log('Update Review Success (PATCH with ID in body):', response);
           return response;
         } catch (thirdError: any) {
-          console.log('❌ PATCH with ID in body failed:', thirdError.response?.status);
+          console.log('PATCH with ID in body failed:', thirdError.response?.status);
           
           try {
             // Fourth try: PUT with review_id in body
             response = await axiosInstance.put(ENDPOINT.get_reviews, payload);
-            console.log('✅ Update Review Success (PUT with ID in body):', response);
+            console.log('Update Review Success (PUT with ID in body):', response);
             return response;
           } catch (fourthError: any) {
-            console.log('❌ PUT with ID in body failed:', fourthError.response?.status);
+            console.log('PUT with ID in body failed:', fourthError.response?.status);
             
             try {
               // Fifth try: POST to add_reviews endpoint (some APIs use POST for updates)
               response = await axiosInstance.post(ENDPOINT.add_reviews, payload);
-              console.log('✅ Update Review Success (POST to add endpoint):', response);
+              console.log('Update Review Success (POST to add endpoint):', response);
               return response;
             } catch (fifthError: any) {
-              console.log('❌ All update methods failed');
+              console.log('All update methods failed');
               throw fifthError;
             }
           }
@@ -85,7 +85,7 @@ const updateReview = async (payload: any) => {
       }
     }
   } catch (error) {
-    console.error('❌ Update Review Error:', error);
+    console.error('Update Review Error:', error);
     throw error;
   }
 };
@@ -99,10 +99,10 @@ const deleteReview = async (payload: any) => {
     console.log('Delete URL:', deleteUrl);
     
     const response = await axiosInstance.delete(deleteUrl);
-    console.log('✅ Delete Review Success:', response);
+    console.log('Delete Review Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Delete Review Error:', error);
+    console.error('Delete Review Error:', error);
     throw error;
   }
 };
@@ -111,10 +111,10 @@ const handleAddBookmark = async (payload: any) => {
   try {
     console.log('🔖 Add Bookmark Request:', payload);
     const response = await axiosInstance.post(ENDPOINT.bookmark, payload);
-    console.log('✅ Add Bookmark Success:', response);
+    console.log('Add Bookmark Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Add Bookmark Error:', error);
+    console.error('Add Bookmark Error:', error);
     throw error;
   }
 };
@@ -123,10 +123,10 @@ const handleGetAgentBookmark = async () => {
   try {
     console.log('🔖 Get Agent Bookmark Request');
     const response = await axiosInstance.get(ENDPOINT.bookmark);
-    console.log('✅ Get Agent Bookmark Success:', response);
+    console.log('Get Agent Bookmark Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Get Agent Bookmark Error:', error);
+    console.error('Get Agent Bookmark Error:', error);
     throw error;
   }
 };
@@ -141,34 +141,34 @@ const handleDeleteAgentBookmark = async (payload: any) => {
         ...payload,
         action: 'remove'
       });
-      console.log('✅ Delete Agent Bookmark Success (POST):', response);
+      console.log('Delete Agent Bookmark Success (POST):', response);
       return response;
     } catch (postError) {
       console.log('POST method failed, trying DELETE with query params');
       
       // Fallback to DELETE with query parameters
       const response = await axiosInstance.delete(`${ENDPOINT.bookmark}?agent_id=${payload.agent_id}`);
-      console.log('✅ Delete Agent Bookmark Success (DELETE):', response);
+      console.log('Delete Agent Bookmark Success (DELETE):', response);
       return response;
     }
   } catch (error) {
-    console.error('❌ Delete Agent Bookmark Error:', error);
+    console.error('Delete Agent Bookmark Error:', error);
     throw error;
   }
 };
 
 const handleSliderData = async (cityId: number) => {
   try {
-    console.log('🎠 Get Slider Data Request:', {cityId});
+    console.log('Get Slider Data Request:', {cityId});
     let url = ENDPOINT.slider_info;
     if (cityId) {
       url += `?city_id=${cityId}`;
     }
     const response = await axiosInstance.get(url);
-    console.log('✅ Get Slider Data Success:', response);
+    console.log('Get Slider Data Success:', response);
     return response;
   } catch (error) {
-    console.error('❌ Get Slider Data Error:', error);
+    console.error('Get Slider Data Error:', error);
     throw error;
   }
 };
@@ -178,20 +178,20 @@ const handleSliderData = async (cityId: number) => {
  */
 const getAgentRatingCount = async (agentId: number): Promise<number> => {
   try {
-    console.log('📊 Get Agent Rating Count Request:', {agentId});
+    console.log('Get Agent Rating Count Request:', {agentId});
     const params = {agent_id: agentId};
     const response = await getReviewsList(params);
     
     if (response?.data && Array.isArray(response.data)) {
       const totalCount = response.data.length;
-      console.log('✅ Agent Rating Count Success:', {agentId, totalCount});
+      console.log('Agent Rating Count Success:', {agentId, totalCount});
       return totalCount;
     }
     
-    console.log('⚠️ No reviews data found for agent:', agentId);
+    console.log('No reviews data found for agent:', agentId);
     return 0;
   } catch (error) {
-    console.error('❌ Get Agent Rating Count Error:', error);
+    console.error('Get Agent Rating Count Error:', error);
     return 0; // Return 0 instead of throwing to prevent crashes
   }
 };
@@ -201,12 +201,12 @@ const getAgentRatingCount = async (agentId: number): Promise<number> => {
  */
 const getAgentOfficeAddress = async (agentId: number): Promise<string> => {
   try {
-    console.log('🏢 Get Agent Office Address Request:', {agentId});
+    console.log('Get Agent Office Address Request:', {agentId});
     const response = await getAgentDetailsById(agentId);
-    console.log('✅ Get Agent Office Address Success:', response);
+    console.log('Get Agent Office Address Success:', response);
     return response?.data?.office_address || '';
   } catch (error) {
-    console.error('❌ Get Agent Office Address Error:', error);
+    console.error('Get Agent Office Address Error:', error);
     return '';
   }
 };

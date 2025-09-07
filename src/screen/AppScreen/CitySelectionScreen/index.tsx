@@ -53,14 +53,14 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
       setIsLoading(true);
       getAllCityList()
         .then(res => {
-          console.log('✅ Cities List Response:', res);
+          console.log('Cities List Response:', res);
           // Handle the response structure: res.data (not res.formattedData)
           setLocationsList(res?.data ?? []);
           setIsLoading(false);
         })
         .catch(error => {
           setIsLoading(false);
-          console.log('❌ Error in getting all cities:', error);
+          console.log('Error in getting all cities:', error);
           Toast.show({
             type: 'error',
             text1: error?.message || 'Failed to load cities',
@@ -92,8 +92,8 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
     };
     searchLocalities(payload)
       .then(res => {
-        console.log('✅ Search Localities Response:', res);
-        console.log('✅ Search Localities Raw Data:', JSON.stringify(res?.data, null, 2));
+        console.log('Search Localities Response:', res);
+        console.log('Search Localities Raw Data:', JSON.stringify(res?.data, null, 2));
         
         // Handle the response structure: res.data (not formattedData for search)
         const data = res?.data ?? [];
@@ -194,12 +194,12 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
     let cityId = item.city_id || item.cityId || location?.city_id;
     
     if (!cityId || cityId === 0) {
-      console.warn('⚠️ No valid city_id found, trying to extract from city name');
+      console.warn('No valid city_id found, trying to extract from city name');
       // If no city_id, try to find it from the existing location or set a default
       if (item.city_name === 'Delhi' || location?.city_name === 'Delhi') {
         cityId = 1; // Assuming Delhi has ID 1
       } else {
-        console.error('❌ Cannot determine city_id for ads - ads may not load');
+        console.error('Cannot determine city_id for ads - ads may not load');
       }
     }
     

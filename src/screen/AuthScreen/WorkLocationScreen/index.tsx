@@ -66,12 +66,12 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   useFocusEffect(
     useCallback(() => {
       // Load cities on screen focus
-      console.log('🏙️ Loading cities for WorkLocationScreen...');
+      console.log('Loading cities for WorkLocationScreen...');
       setLoadingCities(true);
       
       getAllCityList()
         .then(res => {
-          console.log('✅ Cities API Response:', res);
+          console.log('Cities API Response:', res);
           
           // Handle different response structures
           let cities = [];
@@ -84,11 +84,11 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           } else if (res?.cities && Array.isArray(res.cities)) {
             cities = res.cities;
           } else {
-            console.warn('⚠️ Unexpected cities response structure:', res);
+            console.warn('Unexpected cities response structure:', res);
           }
           
-          console.log('📍 Processed cities data:', cities);
-          console.log('📊 Cities count:', cities.length);
+          console.log('Processed cities data:', cities);
+          console.log('Cities count:', cities.length);
           
           if (cities.length === 0) {
             Toast.show({
@@ -101,8 +101,8 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           setCityList(cities);
         })
         .catch(error => {
-          console.error('❌ Error loading cities:', error);
-          console.error('❌ Error details:', {
+          console.error('Error loading cities:', error);
+          console.error('Error details:', {
             message: error.message,
             status: error.response?.status,
             data: error.response?.data,
@@ -145,7 +145,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     // Load areas for the selected city
     getAllAreasList(city.id)
       .then(res => {
-        console.log('✅ Areas API Response for city', city.name, ':', res);
+        console.log('Areas API Response for city', city.name, ':', res);
         
         // Handle different response structures
         let areas = [];
@@ -156,11 +156,11 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         } else if (Array.isArray(res)) {
           areas = res;
         } else {
-          console.warn('⚠️ Unexpected areas response structure:', res);
+          console.warn('Unexpected areas response structure:', res);
         }
         
-        console.log('📍 Processed areas data:', areas);
-        console.log('📊 Areas count:', areas.length);
+        console.log('Processed areas data:', areas);
+        console.log('Areas count:', areas.length);
         
         if (areas.length === 0) {
           Toast.show({
@@ -176,7 +176,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         }
       })
       .catch(error => {
-        console.error('❌ Error loading areas:', error);
+        console.error('Error loading areas:', error);
         Toast.show({
           type: 'error',
           text1: 'Error Loading Areas',
@@ -196,7 +196,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
     setLoadingLocalities(true);
     getAllLocalitiesList({cityId, areaId})
       .then(res => {
-        console.log('✅ Localities API Response:', res);
+        console.log('Localities API Response:', res);
         
         // Handle different response structures
         let localities = [];
@@ -207,11 +207,11 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         } else if (Array.isArray(res)) {
           localities = res;
         } else {
-          console.warn('⚠️ Unexpected localities response structure:', res);
+          console.warn('Unexpected localities response structure:', res);
         }
         
-        console.log('📍 Processed localities data:', localities);
-        console.log('📊 Localities count:', localities.length);
+        console.log('Processed localities data:', localities);
+        console.log('Localities count:', localities.length);
         
         if (localities.length === 0) {
           Toast.show({
@@ -224,7 +224,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         setLocalityList(localities);
       })
       .catch(error => {
-        console.error('❌ Error loading localities:', error);
+        console.error('Error loading localities:', error);
         Toast.show({
           type: 'error',
           text1: 'Error Loading Localities',
@@ -292,13 +292,13 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   };
 
   const refreshCities = () => {
-    console.log('🔄 Manual refresh cities...');
+    console.log('Manual refresh cities...');
     setLoadingCities(true);
     setCityList([]);
     
     getAllCityList()
       .then(res => {
-        console.log('✅ Manual refresh - Cities API Response:', res);
+        console.log('Manual refresh - Cities API Response:', res);
         
         // Handle different response structures
         let cities = [];
@@ -311,10 +311,10 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         } else if (res?.cities && Array.isArray(res.cities)) {
           cities = res.cities;
         } else {
-          console.warn('⚠️ Unexpected cities response structure:', res);
+          console.warn('Unexpected cities response structure:', res);
         }
         
-        console.log('📍 Manual refresh - Processed cities data:', cities);
+        console.log('Manual refresh - Processed cities data:', cities);
         
         if (cities.length === 0) {
           Toast.show({
@@ -333,7 +333,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
         setCityList(cities);
       })
       .catch(error => {
-        console.error('❌ Manual refresh error:', error);
+        console.error('Manual refresh error:', error);
         Toast.show({
           type: 'error',
           text1: 'Refresh Failed',
@@ -451,7 +451,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       console.log(' Profile update successful:', profileData);
       
       // Step 2: Update work locations
-      console.log('📍 Step 2: Updating work locations...');
+      console.log('Step 2: Updating work locations...');
       const locationPayload = {location: locations};
       
       const locationResponse = await axios.post(`${BASE_URL}${ENDPOINT.work_location}`, locationPayload, {
@@ -464,7 +464,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       console.log('Work location update successful');
       
       // Step 3: Use profile data to create complete agent data
-      console.log('👤 Step 3: Creating complete agent data from profile response...');
+      console.log('Step 3: Creating complete agent data from profile response...');
       
       if (profileData && (profileData.data || profileData.agent)) {
         // Use the profile data returned from the update
@@ -483,7 +483,7 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
           id: agentData.id || agentData.agent_id,
         };
         
-        console.log('🏢 Complete agent data from profile:', completeAgentData);
+        console.log('Complete agent data from profile:', completeAgentData);
         
         dispatch(setUserData(completeAgentData));
         await AsyncStorage.setItem('userData', JSON.stringify(completeAgentData));

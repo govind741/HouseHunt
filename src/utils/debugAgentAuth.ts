@@ -8,17 +8,17 @@ import { ENDPOINT } from '../constant/urls';
  * Call this function to get detailed information about the current auth state
  */
 export const debugAgentAuthentication = async () => {
-  console.log('🔍 === AGENT AUTHENTICATION DEBUG START ===');
+  console.log('=== AGENT AUTHENTICATION DEBUG START ===');
   
   try {
     // 1. Check stored authentication data
-    console.log('📱 1. Checking stored authentication data...');
+    console.log('1. Checking stored authentication data...');
     const token = await AsyncStorage.getItem('token');
     const role = await AsyncStorage.getItem('role');
     const userId = await AsyncStorage.getItem('userId');
     const userData = await AsyncStorage.getItem('userData');
     
-    console.log('📱 Stored Auth Data:', {
+    console.log('Stored Auth Data:', {
       hasToken: !!token,
       tokenLength: token?.length,
       role,
@@ -28,29 +28,29 @@ export const debugAgentAuthentication = async () => {
     });
     
     if (!token) {
-      console.log('❌ No token found - user needs to login');
+      console.log('No token found - user needs to login');
       return { success: false, reason: 'No token' };
     }
     
     if (role !== 'agent') {
-      console.log('❌ Role is not agent:', role);
+      console.log('Role is not agent:', role);
       return { success: false, reason: 'Not an agent role' };
     }
     
     // 2. Test token validity with a simple request
-    console.log('🔐 2. Testing token validity...');
+    console.log('2. Testing token validity...');
     try {
       const testResponse = await axiosInstance.get(ENDPOINT.agent_profile);
-      console.log('✅ Token is valid - agent profile accessible');
+      console.log('Token is valid - agent profile accessible');
     } catch (tokenError: any) {
-      console.log('❌ Token test failed:', {
+      console.log('Token test failed:', {
         status: tokenError?.response?.status,
         message: tokenError?.message,
         responseData: tokenError?.response?.data,
       });
       
       if (tokenError?.response?.status === 401) {
-        console.log('🔐 Token expired or invalid');
+        console.log('Token expired or invalid');
         return { success: false, reason: 'Invalid token' };
       } else if (tokenError?.response?.status === 403) {
         console.log('🚫 Token valid but access forbidden');
@@ -70,9 +70,9 @@ export const debugAgentAuthentication = async () => {
     
     for (const endpoint of endpoints) {
       try {
-        console.log(`🔄 Testing ${endpoint.name}...`);
+        console.log(`Testing ${endpoint.name}...`);
         const response = await axiosInstance.get(endpoint.url);
-        console.log(`✅ ${endpoint.name} - Success:`, {
+        console.log(`${endpoint.name} - Success:`, {
           hasData: !!response,
           dataType: typeof response,
           dataKeys: response && typeof response === 'object' ? Object.keys(response) : [],
@@ -83,7 +83,7 @@ export const debugAgentAuthentication = async () => {
           data: response,
         });
       } catch (error: any) {
-        console.log(`❌ ${endpoint.name} - Failed:`, {
+        console.log(`${endpoint.name} - Failed:`, {
           status: error?.response?.status,
           message: error?.message,
           responseData: error?.response?.data,
@@ -101,28 +101,28 @@ export const debugAgentAuthentication = async () => {
     }
     
     // 4. Use the comprehensive agent data fetcher
-    console.log('🔍 4. Using comprehensive agent data fetcher...');
+    console.log('4. Using comprehensive agent data fetcher...');
     try {
       const agentDataResult = await fetchAgentData(userId ? parseInt(userId) : undefined);
-      console.log('✅ Agent data fetcher result:', {
+      console.log('Agent data fetcher result:', {
         success: agentDataResult.success,
         source: agentDataResult.source,
         hasData: !!agentDataResult.data,
         dataKeys: agentDataResult.data ? Object.keys(agentDataResult.data) : [],
       });
     } catch (fetchError: any) {
-      console.log('❌ Agent data fetcher failed:', {
+      console.log('Agent data fetcher failed:', {
         message: fetchError?.message,
         details: fetchError?.toString(),
       });
     }
     
     // 5. Summary
-    console.log('📊 5. Debug Summary:');
+    console.log('5. Debug Summary:');
     const successfulEndpoints = endpointResults.filter(r => r.success);
     const failedEndpoints = endpointResults.filter(r => !r.success);
     
-    console.log('📊 Endpoint Results:', {
+    console.log('Endpoint Results:', {
       total: endpointResults.length,
       successful: successfulEndpoints.length,
       failed: failedEndpoints.length,
@@ -135,19 +135,19 @@ export const debugAgentAuthentication = async () => {
     });
     
     // 6. Recommendations
-    console.log('💡 6. Recommendations:');
+    console.log('6. Recommendations:');
     if (failedEndpoints.length === endpointResults.length) {
-      console.log('💡 All endpoints failed - likely authentication or server issue');
-      console.log('💡 Recommended action: Re-login or check server status');
+      console.log('All endpoints failed - likely authentication or server issue');
+      console.log('Recommended action: Re-login or check server status');
     } else if (failedEndpoints.some(e => e.error?.status === 403)) {
-      console.log('💡 Some endpoints return 403 - possible permission or profile completion issue');
-      console.log('💡 Recommended action: Complete agent profile or check account status');
+      console.log('Some endpoints return 403 - possible permission or profile completion issue');
+      console.log('Recommended action: Complete agent profile or check account status');
     } else if (successfulEndpoints.length > 0) {
-      console.log('💡 Some endpoints work - authentication is likely valid');
-      console.log('💡 Recommended action: Use working endpoints and handle failed ones gracefully');
+      console.log('Some endpoints work - authentication is likely valid');
+      console.log('Recommended action: Use working endpoints and handle failed ones gracefully');
     }
     
-    console.log('🔍 === AGENT AUTHENTICATION DEBUG END ===');
+    console.log('=== AGENT AUTHENTICATION DEBUG END ===');
     
     return {
       success: true,
@@ -159,8 +159,8 @@ export const debugAgentAuthentication = async () => {
     };
     
   } catch (error: any) {
-    console.error('❌ Debug script error:', error);
-    console.log('🔍 === AGENT AUTHENTICATION DEBUG END (ERROR) ===');
+    console.error('Debug script error:', error);
+    console.log('=== AGENT AUTHENTICATION DEBUG END (ERROR) ===');
     return { success: false, reason: 'Debug script error', error: error?.message };
   }
 };

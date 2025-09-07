@@ -26,10 +26,10 @@ const PrivacyPolicyScreen = ({navigation}: any) => {
       setLoading(true);
       setError(false);
       
-      console.log('🔄 Fetching Privacy Policy content from:', privacyPolicyUrl);
+      console.log('Fetching Privacy Policy content from:', privacyPolicyUrl);
       const response = await axios.get(privacyPolicyUrl);
       
-      console.log('✅ Privacy Policy API Response Status:', response.status);
+      console.log('Privacy Policy API Response Status:', response.status);
       
       if (response.data) {
         let content = '';
@@ -75,7 +75,7 @@ const PrivacyPolicyScreen = ({navigation}: any) => {
         setError(true);
       }
     } catch (err) {
-      console.error('❌ Error fetching Privacy Policy content:', err);
+      console.error('Error fetching Privacy Policy content:', err);
       setError(true);
     } finally {
       setLoading(false);
@@ -173,7 +173,7 @@ const PrivacyPolicyScreen = ({navigation}: any) => {
           scalesPageToFit={true}
           showsVerticalScrollIndicator={false}
           onError={() => setUseWebView(false)}
-          onLoadEnd={() => console.log('✅ WebView loaded successfully')}
+          onLoadEnd={() => console.log('WebView loaded successfully')}
         />
       );
     } else {

@@ -195,7 +195,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     Geolocation.getCurrentPosition(
       async (position) => {
         const {latitude, longitude} = position.coords;
-        console.log('📍 Current Location:', {latitude, longitude});
+        console.log('Current Location:', {latitude, longitude});
         
         // Store coordinates
         formik.setFieldValue('latitude', latitude);
@@ -264,11 +264,11 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     if (address.trim().length > 10) {
       setIsGeocodingAddress(true);
       try {
-        console.log('🔍 Geocoding address:', address);
+        console.log('Geocoding address:', address);
         const coordinates = await geocodeAddress(address.trim());
         
         if (coordinates) {
-          console.log('✅ Coordinates found:', coordinates);
+          console.log('Coordinates found:', coordinates);
           formik.setFieldValue('latitude', coordinates.latitude);
           formik.setFieldValue('longitude', coordinates.longitude);
           setHasLocationData(true);
@@ -279,7 +279,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             text2: 'Coordinates automatically fetched for your address.',
           });
         } else {
-          console.log('❌ No coordinates found for address');
+          console.log('No coordinates found for address');
           formik.setFieldValue('latitude', null);
           formik.setFieldValue('longitude', null);
           setHasLocationData(false);
@@ -678,7 +678,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             {hasLocationData && formik.values.latitude && formik.values.longitude && (
               <View style={styles.coordinatesDisplay}>
                 <MagicText style={styles.coordinatesText}>
-                  📍 Coordinates: {formik.values.latitude.toFixed(6)}, {formik.values.longitude.toFixed(6)}
+                  Coordinates: {formik.values.latitude.toFixed(6)}, {formik.values.longitude.toFixed(6)}
                 </MagicText>
               </View>
             )}

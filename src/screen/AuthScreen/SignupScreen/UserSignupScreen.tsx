@@ -34,7 +34,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   const {mobile_number, email, user_id} = route.params;
   const dispatch = useAppDispatch();
 
-  console.log('🔍 UserSignupScreen params:', {
+  console.log('UserSignupScreen params:', {
     mobile_number,
     email,
   });
@@ -42,7 +42,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   const handleSignup = async (values: UserFormValues) => {
     try {
       console.log('🚀 Starting user signup process...');
-      console.log('📊 Signup type: Mobile Login');
+      console.log('Signup type: Mobile Login');
       
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('token');
@@ -54,7 +54,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       await debugUserData();
       
       // Handle mobile login signup
-      console.log('📱 Processing mobile login signup...');
+      console.log('Processing mobile login signup...');
       
       const formData = new FormData();
       formData.append('name', values.name);
@@ -81,7 +81,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
         } as any);
       }
 
-      console.log('📝 Updating user profile with data:', {
+      console.log('Updating user profile with data:', {
         name: values.name,
         email: values.email,
         hasImage: formik.values.profile_image !== null,
@@ -102,20 +102,20 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ User profile update failed:', errorText);
+        console.error('User profile update failed:', errorText);
         throw new Error(`Profile update failed: ${response.status}`);
       }
 
       const updateResponse = await response.json();
-      console.log('✅ Profile update successful:', updateResponse);
+      console.log('Profile update successful:', updateResponse);
       
       // Step 2: Get updated user details
       let userDetails;
       try {
         userDetails = await handleUserDetails(Number(user_id));
-        console.log('👤 Retrieved user details:', userDetails);
+        console.log('Retrieved user details:', userDetails);
       } catch (detailsError) {
-        console.warn('⚠️ Failed to fetch user details:', detailsError);
+        console.warn('Failed to fetch user details:', detailsError);
         userDetails = null;
       }
       
@@ -128,7 +128,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
         finalUserData = prepareUserObj(userData);
       } else {
         // Fallback: create user object from form data and update response
-        console.warn('⚠️ No user details from API, creating from form data');
+        console.warn('No user details from API, creating from form data');
         
         // Get existing user data from storage
         const existingUserData = await AsyncStorage.getItem('userData');
@@ -156,7 +156,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       
       // Ensure the data has required fields
       if (!finalUserData.name) {
-        console.error('❌ CRITICAL: Final user data missing name!', finalUserData);
+        console.error('CRITICAL: Final user data missing name!', finalUserData);
         finalUserData.name = values.name; // Force set the name
       }
       
@@ -167,7 +167,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       const verifyData = await AsyncStorage.getItem('userData');
       if (verifyData) {
         const parsedData = JSON.parse(verifyData);
-        console.log('✅ Verified saved data:', {
+        console.log('Verified saved data:', {
           id: parsedData.id,
           name: parsedData.name,
           phone: parsedData.phone,
@@ -189,7 +189,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       });
       
     } catch (error: any) {
-      console.log('❌ Error in handleSignup:', error);
+      console.log('Error in handleSignup:', error);
       Toast.show({
         type: 'error',
         text1: error?.message || 'Profile update failed. Please try again.',

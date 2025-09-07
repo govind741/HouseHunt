@@ -162,7 +162,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
     setAverageRating(roundedAvgRating);
     setRatingBreakdown(breakdown);
 
-    console.log('📊 Calculated ratings:', {
+    console.log('Calculated ratings:', {
       total,
       validRatingsCount,
       avgRating: avgRating.toFixed(2),
@@ -174,7 +174,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
   const fetchReviews = useCallback(async () => {
     // Only fetch reviews if user is authenticated
     if (!token) {
-      console.log('📊 No token available, skipping reviews fetch');
+      console.log('No token available, skipping reviews fetch');
       setReviews([]);
       setAverageRating(0);
       setTotalReviews(0);
@@ -188,7 +188,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
       const params = {agent_id: agentId};
       const response = await getReviewsList(params);
       
-      console.log('📊 Raw API response:', JSON.stringify(response, null, 2));
+      console.log('Raw API response:', JSON.stringify(response, null, 2));
       
       if (response?.data) {
         // Validate and clean the reviews data
@@ -234,7 +234,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
           };
         });
         
-        console.log('📊 Validated reviews with ratings:', validatedReviews.map(r => ({
+        console.log('Validated reviews with ratings:', validatedReviews.map(r => ({
           id: r.id,
           rating: r.rating,
           user_name: r.user_name,
@@ -255,7 +255,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
         }
       }
     } catch (error) {
-      console.log('❌ Error fetching reviews:', error);
+      console.log('Error fetching reviews:', error);
       Toast.show({
         type: 'error',
         text1: 'Failed to load reviews',
@@ -526,7 +526,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
               {averageRating.toFixed(1)}
             </MagicText>
             {/* Debug logging */}
-            {console.log('🌟 About to render StarRating with:', {
+            {console.log('About to render StarRating with:', {
               averageRating,
               type: typeof averageRating,
               isFinite: isFinite(averageRating),
@@ -580,7 +580,7 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
           sortedReviews.map((item) => {
             // Additional safety check before rendering
             if (!item || !item.id) {
-              console.warn('⚠️ Invalid review item:', item);
+              console.warn('Invalid review item:', item);
               return null;
             }
             

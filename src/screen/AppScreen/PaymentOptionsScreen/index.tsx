@@ -70,7 +70,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
       try {
         console.log('💳 Loading payment details...');
         const response = await getAgentPaymentDetails();
-        console.log('📊 Payment details response:', response);
+        console.log('Payment details response:', response);
         
         // Handle the API response structure: data is an array
         const data = response?.data?.[0] || {}; // Get first item from array
@@ -83,7 +83,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
           qr_code_image: data.qr_code_url || '', // Note: API uses 'qr_code_url'
         });
       } catch (error) {
-        console.error('❌ Error loading payment details:', error);
+        console.error('Error loading payment details:', error);
         Toast.show({
           type: 'error',
           text1: 'Failed to load payment details',
@@ -118,7 +118,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
       } as any);
 
       const response = await uploadAgentPaymentQR(formData);
-      console.log('✅ QR upload response:', response);
+      console.log('QR upload response:', response);
       
       // Update the QR code image in state with the response URL
       const uploadedImageUrl = response?.data?.qr_code_image || imageUri;
@@ -132,7 +132,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
         text1: 'QR Code uploaded successfully',
       });
     } catch (error: any) {
-      console.error('❌ Error uploading QR code:', error);
+      console.error('Error uploading QR code:', error);
       Toast.show({
         type: 'error',
         text1: 'Failed to upload QR Code',
@@ -183,7 +183,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
       });
       setIsEditing(false);
     } catch (error: any) {
-      console.error('❌ Error saving payment details:', error);
+      console.error('Error saving payment details:', error);
       Toast.show({
         type: 'error',
         text1: 'Failed to save payment details',
@@ -374,7 +374,7 @@ const PaymentOptionsScreen = ({navigation}: PaymentOptionsScreenProps) => {
               }} 
               style={styles.qrImage}
               onError={(error) => {
-                console.log('❌ QR Image load error:', error);
+                console.log('QR Image load error:', error);
                 // Fallback to placeholder if image fails to load
               }}
             />

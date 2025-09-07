@@ -7,12 +7,12 @@ import axiosInstance from '../axios';
 
 export const getAgentProfile = async () => {
   try {
-    console.log('👤 Get Agent Profile Request');
+    console.log('Get Agent Profile Request');
     const response = await axiosInstance.get(ENDPOINT.agent_profile);
-    console.log('✅ Get Agent Profile Success:', response);
+    console.log('Get Agent Profile Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Get Agent Profile Error:', {
+    console.error('Get Agent Profile Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -26,10 +26,10 @@ export const updateAgentProfile = async (profileData: any) => {
   try {
     console.log('✏️ Update Agent Profile Request:', profileData);
     const response = await axiosInstance.put(ENDPOINT.agent_profile, profileData);
-    console.log('✅ Update Agent Profile Success:', response);
+    console.log('Update Agent Profile Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Update Agent Profile Error:', {
+    console.error('Update Agent Profile Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -41,12 +41,12 @@ export const updateAgentProfile = async (profileData: any) => {
 
 export const getAgentOfficeAddress = async () => {
   try {
-    console.log('🏢 Get Agent Office Address Request');
+    console.log('Get Agent Office Address Request');
     const response = await axiosInstance.get(ENDPOINT.agent_office_address);
-    console.log('✅ Get Agent Office Address Success:', response);
+    console.log('Get Agent Office Address Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Get Agent Office Address Error:', {
+    console.error('Get Agent Office Address Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -58,12 +58,12 @@ export const getAgentOfficeAddress = async () => {
 
 export const updateAgentOfficeAddress = async (addressData: any) => {
   try {
-    console.log('🏢 Update Agent Office Address Request:', addressData);
+    console.log('Update Agent Office Address Request:', addressData);
     const response = await axiosInstance.put(ENDPOINT.agent_office_address, addressData);
-    console.log('✅ Update Agent Office Address Success:', response);
+    console.log('Update Agent Office Address Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Update Agent Office Address Error:', {
+    console.error('Update Agent Office Address Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -75,12 +75,12 @@ export const updateAgentOfficeAddress = async (addressData: any) => {
 
 export const getAgentWorkingLocations = async () => {
   try {
-    console.log('📍 Get Agent Working Locations Request');
+    console.log('Get Agent Working Locations Request');
     const response = await axiosInstance.get(ENDPOINT.agent_working_locations);
-    console.log('✅ Get Agent Working Locations Success:', response);
+    console.log('Get Agent Working Locations Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Get Agent Working Locations Error:', {
+    console.error('Get Agent Working Locations Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -92,12 +92,12 @@ export const getAgentWorkingLocations = async () => {
 
 export const updateAgentWorkingLocations = async (locationsData: any) => {
   try {
-    console.log('📍 Update Agent Working Locations Request:', locationsData);
+    console.log('Update Agent Working Locations Request:', locationsData);
     const response = await axiosInstance.put(ENDPOINT.agent_working_locations, locationsData);
-    console.log('✅ Update Agent Working Locations Success:', response);
+    console.log('Update Agent Working Locations Success:', response);
     return response;
   } catch (error: any) {
-    console.error('❌ Update Agent Working Locations Error:', {
+    console.error('Update Agent Working Locations Error:', {
       message: error?.message,
       status: error?.response?.status,
       url: error?.config?.url,
@@ -115,9 +115,9 @@ export const fetchAgentData = async (agentId?: number) => {
   
   // Try agent profile endpoint first (most reliable for authenticated agents)
   try {
-    console.log('🔄 Trying agent profile endpoint...');
+    console.log('Trying agent profile endpoint...');
     const profileResponse = await getAgentProfile();
-    console.log('📊 Processing agent profile data...', {
+    console.log('Processing agent profile data...', {
       hasResponse: !!profileResponse,
       responseType: typeof profileResponse,
       responseKeys: profileResponse && typeof profileResponse === 'object' ? Object.keys(profileResponse) : [],
@@ -141,7 +141,7 @@ export const fetchAgentData = async (agentId?: number) => {
           agentData.id = agentId;
         }
         
-        console.log('✅ Agent data retrieved from profile endpoint:', {
+        console.log('Agent data retrieved from profile endpoint:', {
           hasId: !!agentData.id,
           hasName: !!agentData.name,
           hasPhone: !!agentData.phone,
@@ -157,15 +157,15 @@ export const fetchAgentData = async (agentId?: number) => {
       }
     }
   } catch (error: any) {
-    console.log('⚠️ Agent profile endpoint failed:', error?.response?.status);
+    console.log('Agent profile endpoint failed:', error?.response?.status);
     errors.push({endpoint: 'profile', error});
   }
 
   // Try working locations endpoint
   try {
-    console.log('🔄 Trying agent working locations endpoint...');
+    console.log('Trying agent working locations endpoint...');
     const locationsResponse = await getAgentWorkingLocations();
-    console.log('📊 Processing working locations data...', {
+    console.log('Processing working locations data...', {
       hasResponse: !!locationsResponse,
       responseType: typeof locationsResponse,
     });
@@ -184,7 +184,7 @@ export const fetchAgentData = async (agentId?: number) => {
         status: 0,
       };
       
-      console.log('✅ Agent data created from working locations endpoint');
+      console.log('Agent data created from working locations endpoint');
       return {
         success: true,
         data: agentData,
@@ -192,15 +192,15 @@ export const fetchAgentData = async (agentId?: number) => {
       };
     }
   } catch (error: any) {
-    console.log('⚠️ Agent working locations endpoint failed:', error?.response?.status);
+    console.log('Agent working locations endpoint failed:', error?.response?.status);
     errors.push({endpoint: 'working_locations', error});
   }
 
   // Try office address endpoint
   try {
-    console.log('🔄 Trying agent office address endpoint...');
+    console.log('Trying agent office address endpoint...');
     const addressResponse = await getAgentOfficeAddress();
-    console.log('📊 Processing office address data...', {
+    console.log('Processing office address data...', {
       hasResponse: !!addressResponse,
       responseType: typeof addressResponse,
     });
@@ -219,7 +219,7 @@ export const fetchAgentData = async (agentId?: number) => {
         status: 0,
       };
       
-      console.log('✅ Agent data created from office address endpoint');
+      console.log('Agent data created from office address endpoint');
       return {
         success: true,
         data: agentData,
@@ -227,16 +227,16 @@ export const fetchAgentData = async (agentId?: number) => {
       };
     }
   } catch (error: any) {
-    console.log('⚠️ Agent office address endpoint failed:', error?.response?.status);
+    console.log('Agent office address endpoint failed:', error?.response?.status);
     errors.push({endpoint: 'office_address', error});
   }
 
   // If agentId is provided, try the legacy endpoint as last resort
   if (agentId) {
     try {
-      console.log('🔄 Trying legacy agent details endpoint...');
+      console.log('Trying legacy agent details endpoint...');
       const response = await axiosInstance.get(`${ENDPOINT.get_agent_details}/${agentId}`);
-      console.log('📊 Processing legacy endpoint data...', {
+      console.log('Processing legacy endpoint data...', {
         hasResponse: !!response,
         responseType: typeof response,
       });
@@ -245,7 +245,7 @@ export const fetchAgentData = async (agentId?: number) => {
         let agentData = response?.data || response;
         
         if (agentData && typeof agentData === 'object') {
-          console.log('✅ Agent data retrieved from legacy endpoint');
+          console.log('Agent data retrieved from legacy endpoint');
           return {
             success: true,
             data: agentData,
@@ -254,13 +254,13 @@ export const fetchAgentData = async (agentId?: number) => {
         }
       }
     } catch (error: any) {
-      console.log('⚠️ Legacy agent details endpoint failed:', error?.response?.status);
+      console.log('Legacy agent details endpoint failed:', error?.response?.status);
       errors.push({endpoint: 'legacy', error});
     }
   }
 
   // All endpoints failed - create a minimal agent object to prevent app crashes
-  console.log('⚠️ All endpoints failed, creating minimal agent object');
+  console.log('All endpoints failed, creating minimal agent object');
   const minimalAgentData = {
     id: agentId || 'unknown',
     name: 'Agent',

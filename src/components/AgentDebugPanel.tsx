@@ -16,7 +16,7 @@ const AgentDebugPanel: React.FC<AgentDebugPanelProps> = ({ visible = __DEV__ }) 
     
     setIsRunning(true);
     try {
-      console.log('🔍 Running full agent authentication debug...');
+      console.log('Running full agent authentication debug...');
       const result = await debugAgentAuthentication();
       
       Alert.alert(

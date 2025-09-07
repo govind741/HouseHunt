@@ -22,7 +22,7 @@ export const checkAgentAuthState = async (): Promise<AgentAuthState> => {
     const role = await AsyncStorage.getItem('role');
     const userId = await AsyncStorage.getItem('userId');
     
-    console.log('🔍 Checking agent auth state:', {
+    console.log('Checking agent auth state:', {
       hasToken: !!token,
       role,
       userId,
@@ -64,7 +64,7 @@ export const checkAgentAuthState = async (): Promise<AgentAuthState> => {
         };
       }
     } catch (dataError: any) {
-      console.error('❌ Error fetching agent data in auth check:', dataError);
+      console.error('Error fetching agent data in auth check:', dataError);
       
       // If it's a 403/404, agent probably needs to complete profile
       if (dataError?.response?.status === 403 || dataError?.response?.status === 404) {
@@ -86,7 +86,7 @@ export const checkAgentAuthState = async (): Promise<AgentAuthState> => {
       };
     }
   } catch (error: any) {
-    console.error('❌ Error in agent auth state check:', error);
+    console.error('Error in agent auth state check:', error);
     return {
       isAuthenticated: false,
       hasCompleteProfile: false,
@@ -103,9 +103,9 @@ export const checkAgentAuthState = async (): Promise<AgentAuthState> => {
 export const clearAgentAuth = async (): Promise<void> => {
   try {
     await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
-    console.log('✅ Agent auth data cleared');
+    console.log('Agent auth data cleared');
   } catch (error) {
-    console.error('❌ Error clearing agent auth data:', error);
+    console.error('Error clearing agent auth data:', error);
   }
 };
 
@@ -120,9 +120,9 @@ export const saveAgentAuth = async (token: string, agentData: any, agentId: stri
       ['userId', agentId.toString()],
       ['userData', JSON.stringify(agentData)],
     ]);
-    console.log('✅ Agent auth data saved');
+    console.log('Agent auth data saved');
   } catch (error) {
-    console.error('❌ Error saving agent auth data:', error);
+    console.error('Error saving agent auth data:', error);
   }
 };
 
@@ -177,7 +177,7 @@ export const debugAgentAuth = async (): Promise<void> => {
   const authState = await checkAgentAuthState();
   const route = getAgentNavigationRoute(authState);
   
-  console.log('🔍 Agent Auth Debug:', {
+  console.log('Agent Auth Debug:', {
     authState,
     recommendedRoute: route,
     timestamp: new Date().toISOString(),

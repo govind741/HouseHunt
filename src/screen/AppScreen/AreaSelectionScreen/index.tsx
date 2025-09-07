@@ -37,12 +37,12 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
     if (location?.city_id) {
       getAllAreasList(location.city_id)
         .then(res => {
-          console.log('✅ Areas List Response:', res);
+          console.log('Areas List Response:', res);
           // Handle the response structure: res.formattedData
           setAreaList(res?.formattedData ?? []);
         })
         .catch(error => {
-          console.log('❌ Error in getting all areas:', error);
+          console.log('Error in getting all areas:', error);
           Toast.show({
             type: 'error',
             text1: error?.message || 'Failed to load areas',
@@ -58,7 +58,7 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
     };
     searchLocalities(payload)
       .then(res => {
-        console.log('✅ Search Localities Response:', res);
+        console.log('Search Localities Response:', res);
         // Handle the response structure: res.data (not formattedData for search)
         const data = res?.data ?? [];
         if (data.length > 0) {

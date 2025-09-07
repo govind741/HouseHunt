@@ -176,7 +176,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   }, [token, agent_id]);
   const fetchOfficeAddress = useCallback(async () => {
     try {
-      console.log('🏢 Fetching office address...');
+      console.log('Fetching office address...');
       console.log('🔑 Token available:', !!token);
       console.log('🆔 Agent ID:', agent_id);
       
@@ -185,9 +185,9 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       // Method 1: Try authenticated agent office address API (requires token)
       if (token) {
         try {
-          console.log('🔄 Trying authenticated office address API...');
+          console.log('Trying authenticated office address API...');
           const response = await getAuthenticatedAgentOfficeAddress();
-          console.log('🏢 Authenticated office address response:', JSON.stringify(response, null, 2));
+          console.log('Authenticated office address response:', JSON.stringify(response, null, 2));
           
           if (response?.data?.address) {
             address = response.data.address;
@@ -204,39 +204,39 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
           }
           
           if (address) {
-            console.log('✅ Got address from authenticated API:', address);
+            console.log('Got address from authenticated API:', address);
             setOfficeAddress(address);
             return;
           }
         } catch (authError: any) {
-          console.log('⚠️ Authenticated API failed:', authError?.response?.status, authError?.message);
+          console.log('Authenticated API failed:', authError?.response?.status, authError?.message);
         }
       }
       
       // Method 2: Try getting address from agent details (fallback)
       if (agent_id) {
         try {
-          console.log('🔄 Trying agent details fallback...');
+          console.log('Trying agent details fallback...');
           const agentAddress = await getAgentOfficeAddress(agent_id);
-          console.log('🏢 Agent details address:', agentAddress);
+          console.log('Agent details address:', agentAddress);
           
           if (agentAddress && agentAddress.trim() !== '') {
             address = agentAddress;
-            console.log('✅ Got address from agent details:', address);
+            console.log('Got address from agent details:', address);
             setOfficeAddress(address);
             return;
           }
         } catch (detailsError: any) {
-          console.log('⚠️ Agent details fallback failed:', detailsError?.message);
+          console.log('Agent details fallback failed:', detailsError?.message);
         }
       }
       
       // If no address found, set empty
-      console.log('❌ No address found from any method');
+      console.log('No address found from any method');
       setOfficeAddress('');
       
     } catch (error: any) {
-      console.log('❌ Error in fetchOfficeAddress:', error);
+      console.log('Error in fetchOfficeAddress:', error);
       setOfficeAddress('');
     }
   }, [token, agent_id]);
@@ -258,26 +258,26 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     let finalCityId = cityId;
     
     if (!finalCityId || finalCityId === 0) {
-      console.log('⚠️ Invalid cityId, trying fallbacks...');
+      console.log('Invalid cityId, trying fallbacks...');
       
       // Try location.city_id as fallback
       finalCityId = location?.city_id;
       if (finalCityId && finalCityId > 0) {
-        console.log('✅ Using location.city_id as fallback:', finalCityId);
+        console.log('Using location.city_id as fallback:', finalCityId);
       } else {
         // Try location.id as fallback (sometimes locality id can work)
         finalCityId = location?.id;
         if (finalCityId && finalCityId > 0) {
-          console.log('✅ Using location.id as fallback:', finalCityId);
+          console.log('Using location.id as fallback:', finalCityId);
         } else {
           // Last resort: use Delhi (city_id = 1) as default
           finalCityId = 1;
-          console.log('✅ Using default city_id (Delhi) as last resort:', finalCityId);
+          console.log('Using default city_id (Delhi) as last resort:', finalCityId);
         }
       }
     }
     
-    console.log('🎯 Making ads API call with final city_id:', finalCityId);
+    console.log('Making ads API call with final city_id:', finalCityId);
     
     handleSliderData(finalCityId)
       .then(res => {
@@ -292,13 +292,13 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
           buttonText: item.button_text || 'View Details',
         }));
 
-        console.log('✅ Ads loaded for PropertyDetailScreen:', adsArray.length, 'ads');
+        console.log('Ads loaded for PropertyDetailScreen:', adsArray.length, 'ads');
         console.log('Ads data:', JSON.stringify(adsArray, null, 2));
         setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('❌ Error in getSliderData:', error);
-        console.log('❌ Error details:', JSON.stringify(error, null, 2));
+        console.log('Error in getSliderData:', error);
+        console.log('Error details:', JSON.stringify(error, null, 2));
         setAdsData([]); // Set empty array on error
         // Show error toast only if it's not a network issue
         if (error?.message && !error?.message.includes('Network')) {
@@ -326,7 +326,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         getSliderData(cityId);
       }, 100); // Small delay to ensure state is cleared
     } else {
-      console.log('⚠️ No city_id available, ads will not load');
+      console.log('No city_id available, ads will not load');
       setAdsData([]);
     }
   }, [location?.city_id, location?.id, getSliderData]);
@@ -754,7 +754,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                   
                   const finalAddress = apiAddress || agentAddress || fallbackAddress;
                   
-                  console.log('🏢 Address display debug:', {
+                  console.log('Address display debug:', {
                     apiAddress,
                     agentAddress,
                     finalAddress,
