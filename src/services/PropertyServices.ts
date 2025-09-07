@@ -1,5 +1,6 @@
 import axiosInstance from '../axios';
 import {ENDPOINT} from '../constant/urls';
+import {getAgentDetailsById} from './HomeService';
 
 const getReviewsList = async (params: any) => {
   try {
@@ -183,6 +184,21 @@ const getAgentRatingCount = async (agentId: number): Promise<number> => {
   }
 };
 
+/**
+ * Get agent's office address
+ */
+const getAgentOfficeAddress = async (agentId: number): Promise<string> => {
+  try {
+    console.log('🏢 Get Agent Office Address Request:', {agentId});
+    const response = await getAgentDetailsById(agentId);
+    console.log('✅ Get Agent Office Address Success:', response);
+    return response?.data?.office_address || '';
+  } catch (error) {
+    console.error('❌ Get Agent Office Address Error:', error);
+    return '';
+  }
+};
+
 export {
   getReviewsList,
   AddNewReview,
@@ -193,4 +209,5 @@ export {
   handleDeleteAgentBookmark,
   handleSliderData,
   getAgentRatingCount,
+  getAgentOfficeAddress,
 };

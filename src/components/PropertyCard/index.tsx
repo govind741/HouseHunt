@@ -20,7 +20,7 @@ import {BASE_URL} from '../../constant/urls';
 import {useAppSelector} from '../../store';
 import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
 import {sharePropertyFromCard} from '../../utils/shareUtils';
-import {getAgentRatingCount} from '../../services/PropertyServices';
+import {getAgentRatingCount, getAgentOfficeAddress} from '../../services/PropertyServices';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -39,6 +39,7 @@ const PropertyCard = ({
 }: PropertyCardType) => {
   const {token} = useAppSelector(state => state.auth);
   const [totalRatings, setTotalRatings] = useState<number>(0);
+  const [officeAddress, setOfficeAddress] = useState<string>('');
 
   useEffect(() => {
     const fetchRatingCount = async () => {
@@ -55,7 +56,25 @@ const PropertyCard = ({
       }
     };
 
+    const fetchOfficeAddress = async () => {
+      if (item?.agent_id && token) {
+        try {
+          console.log('🏢 Fetching office address for agent:', item.agent_id);
+          const address = await getAgentOfficeAddress(item.agent_id);
+          console.log('🏢 Fetched office address:', address);
+          setOfficeAddress(address);
+        } catch (error) {
+          console.log('Error fetching office address:', error);
+          setOfficeAddress('');
+        }
+      } else {
+        console.log('🏢 Not fetching office address - missing agent_id or token:', {agent_id: item?.agent_id, hasToken: !!token});
+        setOfficeAddress('');
+      }
+    };
+
     fetchRatingCount();
+    fetchOfficeAddress();
   }, [item?.agent_id, token]);
   const handleShare = async () => {
     console.log('Sharing property from card:', item);
@@ -171,17 +190,25 @@ const PropertyCard = ({
   };
 
   const handleMap = () => {
-    // Try to use coordinates first, then fall back to address
+    // Use fetched office address first, then fall back to existing logic
+    const address = officeAddress || item?.office_address || item?.agent_address || item?.address;
     const latitude = item?.latitude;
     const longitude = item?.longitude;
-    const address = item?.office_address || item?.agent_address || item?.address;
+
+    console.log('🗺️ Map click - Address data:', {
+      officeAddress,
+      itemOfficeAddress: item?.office_address,
+      finalAddress: address,
+      latitude,
+      longitude
+    });
 
     let url = '';
     
     if (latitude && longitude) {
       // Use coordinates for precise location
       url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-    } else if (address) {
+    } else if (address && address !== 'Office address not available') {
       // Use address for approximate location
       const encodedAddress = encodeURIComponent(address);
       url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
@@ -189,6 +216,8 @@ const PropertyCard = ({
       Alert.alert('No Location', 'Location information is not available for this property');
       return;
     }
+
+    console.log('🗺️ Opening map URL:', url);
 
     Linking.canOpenURL(url)
       .then(supported => {
@@ -316,13 +345,13 @@ const PropertyCard = ({
         ) : null}
 
         {/* Address Row - Now below the icons */}
-        {token && item?.office_address ? (
+        {token ? (
           <TouchableOpacity onPress={handleMap} style={styles.addressRow}>
             <View>
               <GoogleLocationIcon />
             </View>
             <MagicText style={styles.addressText}>
-              {item.office_address}
+              {officeAddress || item?.office_address || 'Office address not available'}
             </MagicText>
           </TouchableOpacity>
         ) : null}
