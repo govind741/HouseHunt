@@ -67,7 +67,7 @@ const AccountSettings = ({navigation}: AccountSettingsProps) => {
           navigation.navigate('ProfileScreen');
         }}
         onBackPress={() => navigation.goBack()}
-        onHomePress={() => navigation.navigate('CitySelectionScreen')}
+        onHomePress={() => navigation.navigate('HomeScreen')}
       />
 
       <View style={styles.container}>

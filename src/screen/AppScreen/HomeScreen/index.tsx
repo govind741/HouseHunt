@@ -585,7 +585,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             screen: 'LoginScreen',
           });
         }}
-        onHomePress={() => navigation.navigate('CitySelectionScreen')}
+        onHomePress={() => {}} // Already on home screen
       />
       <View style={styles.scrollContainer}>
         {agentList?.length > 0 ? (

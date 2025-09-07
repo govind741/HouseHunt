@@ -244,12 +244,31 @@ export const getAgentProfile = async () => {
 
 export const getAgentOfficeAddress = async () => {
   try {
-    console.log('Get Agent Office Address Request');
+    if (__DEV__) console.log('Get Agent Office Address Request');
     const response = await axiosInstance.get(ENDPOINT.agent_office_address);
-    console.log('Get Agent Office Address Success:', response);
+    if (__DEV__) console.log('Get Agent Office Address Success:', response);
     return response;
-  } catch (error) {
-    console.error('Get Agent Office Address Error:', error);
+  } catch (error: any) {
+    // Handle 500 errors gracefully by returning fallback data (no logging)
+    if (error?.response?.status === 500) {
+      return {
+        data: {
+          success: false,
+          message: 'Office address temporarily unavailable',
+          data: {
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+          }
+        }
+      };
+    }
+    
+    // Only log non-500 errors
+    if (__DEV__) console.error('Get Agent Office Address Error:', error);
+    
+    // For other errors, still throw
     throw error;
   }
 };

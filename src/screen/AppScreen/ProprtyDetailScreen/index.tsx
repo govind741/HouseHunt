@@ -647,7 +647,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         showBackBtn
         onBackPress={() => navigation.goBack()}
         onPressProfile={() => navigation.navigate('ProfileScreen')}
-        onHomePress={() => navigation.navigate('CitySelectionScreen')}
+        onHomePress={() => navigation.navigate('HomeScreen')}
       />
       
       <ScrollView

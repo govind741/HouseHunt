@@ -75,6 +75,12 @@ axiosInstance.interceptors.response.use(
       await AsyncStorage.multiRemove(['token', 'userData', 'role', 'userId']);
     }
     
+    // Handle office-address 500 errors silently
+    if (error.response?.status === 500 && error.config?.url?.includes('office-address')) {
+      // Don't log this error, let the service handle it gracefully
+      return Promise.reject(error);
+    }
+    
     // Enhanced 403 error handling for agent property access
     if (error.response?.status === 403) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -99,8 +105,11 @@ axiosInstance.interceptors.response.use(
       console.log('🚫 Access forbidden:', errorMessage);
     }
 
-    // Only log errors that aren't the specific agent property permission error
-    if (!(error.response?.status === 403 && error.response?.data?.message?.includes('Agent is not allowed to view this property'))) {
+    // Only log errors that aren't the specific agent property permission error or office-address 500 errors
+    const isAgentPropertyError = error.response?.status === 403 && error.response?.data?.message?.includes('Agent is not allowed to view this property');
+    const isOfficeAddress500Error = error.response?.status === 500 && error.config?.url?.includes('office-address');
+    
+    if (!isAgentPropertyError && !isOfficeAddress500Error) {
       console.error('[API Response Error]', {
         url: error.config?.url,
         status: error.response?.status,
