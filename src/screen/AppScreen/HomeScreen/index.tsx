@@ -511,7 +511,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     <View style={styles.parent}>
       <SearchContainer
         key="home-search"
-        placeholder="Search for area, street name, locality"
+        placeholder="Search for area, locality, street name"
         onChangeText={handleTextChange}
         searchValue={searchText}
       />
@@ -609,7 +609,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             <View style={styles.parent}>
               <SearchContainer
                 key="home-search-scroll"
-                placeholder="Search for area, streetname, locality"
+                placeholder="Search for area, locality, street name"
                 onChangeText={handleTextChange}
                 searchValue={searchText}
               />

@@ -34,8 +34,11 @@ const GOOGLE_BUTTON_VARIANT: 'white' | 'blue' = 'white'; // Change to 'blue' for
 
 // Configure Google Sign-In
 GoogleSignin.configure({
-  webClientId: '1083768578728-oivr4obskcvsfr18vukr2vjjnul48iot.apps.googleusercontent.com',
+  webClientId: '1083768578728-v4hihcrlbmvg2j4i2p2tc9988tnddu8m.apps.googleusercontent.com',
   offlineAccess: true,
+  hostedDomain: '', // specify a domain if needed
+  forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
+  accountName: '', // [Android] specifies an account name on the device that should be used
 });
 
 const LoginScreen = ({navigation}: LoginScreenProps) => {
@@ -48,19 +51,30 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
+      console.log('🔵 Starting Google Sign-In...');
       
       // Check if device supports Google Play Services
-      await GoogleSignin.hasPlayServices();
+      console.log('🔵 Checking Google Play Services...');
+      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      console.log('✅ Google Play Services available');
       
       // Sign in with Google
+      console.log('🔵 Attempting Google Sign-In...');
       const userInfo = await GoogleSignin.signIn();
+      console.log('✅ Google Sign-In successful:', {
+        hasIdToken: !!userInfo.data?.idToken,
+        userEmail: userInfo.data?.user?.email,
+        userName: userInfo.data?.user?.name
+      });
       
       if (userInfo.data?.idToken) {
+        console.log('🔵 Sending token to backend...');
         // Send Google token to your backend
         const response = await handleGoogleAuth(userInfo.data.idToken);
+        console.log('✅ Backend response:', response.data);
         
-        if (response.data.success) {
-          // Store auth data
+        if (response.data && response.data.success) {
+          // User exists or was created successfully
           await AsyncStorage.setItem('token', response.data.data.token);
           await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.user));
           await AsyncStorage.setItem('role', 'user');
@@ -73,7 +87,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           Toast.show({
             type: 'success',
             text1: 'Success',
-            text2: 'Signed in with Google successfully!',
+            text2: response.data.message || 'Signed in with Google successfully!',
           });
           
           // Navigate to app
@@ -82,25 +96,72 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
             routes: [{name: 'AppRoutes'}],
           });
         } else {
+          console.error('❌ Backend rejected Google auth:', response.data);
           Toast.show({
             type: 'error',
             text1: 'Error',
-            text2: response.data.message || 'Google sign-in failed',
+            text2: response.data?.message || 'Google authentication failed',
           });
         }
+      } else {
+        console.error('❌ No ID token received from Google');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to get authentication token from Google',
+        });
       }
     } catch (error: any) {
-      console.error('Google Sign-In Error:', error);
+      console.error('❌ Google Sign-In Error:', {
+        code: error.code,
+        message: error.message,
+        responseData: error?.response?.data
+      });
       
       if (error.code === 'SIGN_IN_CANCELLED') {
-        // User cancelled the sign-in
+        console.log('ℹ️ User cancelled Google Sign-In');
         return;
+      }
+      
+      // Handle specific backend errors
+      if (error?.response?.data) {
+        const backendError = error.response.data;
+        
+        if (backendError.message?.includes('not registered') || backendError.message?.includes('signup required')) {
+          // User needs to sign up first
+          Toast.show({
+            type: 'info',
+            text1: 'Account Not Found',
+            text2: 'Please sign up first with Google',
+          });
+          
+          // Navigate to signup screen with Google data
+          navigation.navigate('SignupScreen', {
+            googleUserInfo: userInfo?.data?.user,
+            googleToken: userInfo?.data?.idToken
+          });
+          return;
+        }
+      }
+      
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      
+      switch (error.code) {
+        case 'PLAY_SERVICES_NOT_AVAILABLE':
+          errorMessage = 'Google Play Services not available. Please update Google Play Services.';
+          break;
+        case 'IN_PROGRESS':
+          errorMessage = 'Sign-in already in progress. Please wait.';
+          break;
+        case 'NETWORK_ERROR':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
       }
       
       Toast.show({
         type: 'error',
-        text1: 'Error',
-        text2: 'Google sign-in failed. Please try again.',
+        text1: 'Google Sign-In Error',
+        text2: errorMessage,
       });
     } finally {
       setIsGoogleLoading(false);

@@ -27,9 +27,10 @@ export const handleUserLogin = async (payload: {phone: string}) => {
 
 export const handleGoogleAuth = async (googleToken: string) => {
   try {
-    if (__DEV__) console.log('Google Auth Request');
+    if (__DEV__) console.log('Google Auth Request with token');
     const response = await axiosInstance.post(ENDPOINT.google_auth, {
-      token: googleToken
+      token: googleToken,
+      platform: 'mobile'
     });
     if (__DEV__) console.log('Google Auth Success:', response);
     return response;
