@@ -204,47 +204,35 @@ const PropertyCard = ({
   };
 
   const handleMap = () => {
-    // Use fetched office address first, then fall back to existing logic
-    const address = officeAddress || item?.office_address || item?.agent_address || item?.address;
-    const latitude = item?.latitude;
-    const longitude = item?.longitude;
+    // Use the same address logic as display
+    const address = officeAddress || item?.office_address;
 
-    console.log('Map click - Address data:', {
+    console.log('Map click - Address debug:', {
       officeAddress,
       itemOfficeAddress: item?.office_address,
       finalAddress: address,
-      latitude,
-      longitude
+      addressLength: address?.length
     });
 
-    let url = '';
-    
-    if (latitude && longitude) {
-      // Use coordinates for precise location
-      url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-    } else if (address && address !== 'Office address not available') {
-      // Use address for approximate location
-      const encodedAddress = encodeURIComponent(address);
-      url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    if (address && address.trim() !== '' && address !== 'Office address not available') {
+      // Use address for location
+      const encodedAddress = encodeURIComponent(address.trim());
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+      
+      console.log('Opening map URL:', url);
+
+      Linking.openURL(url)
+        .then(() => {
+          console.log('Map opened successfully');
+        })
+        .catch(err => {
+          console.error('Error opening maps:', err);
+          Alert.alert('Error', 'Unable to open location in maps');
+        });
     } else {
-      Alert.alert('No Location', 'Location information is not available for this property');
-      return;
+      console.log('No valid address available for map');
+      Alert.alert('No Location', 'Address information is not available');
     }
-
-    console.log('Opening map URL:', url);
-
-    Linking.canOpenURL(url)
-      .then(supported => {
-        if (supported) {
-          Linking.openURL(url);
-        } else {
-          Alert.alert('Error', 'Unable to open maps application');
-        }
-      })
-      .catch(err => {
-        console.error('Error opening maps:', err);
-        Alert.alert('Error', 'Unable to open location in maps');
-      });
   };
 
   const toAbsolute = (img?: string) => {

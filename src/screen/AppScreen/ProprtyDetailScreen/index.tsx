@@ -780,7 +780,39 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
 
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => handleUserInteraction('location')}>
+              onPress={() => {
+                // Use the same address logic as display
+                const apiAddress = officeAddress;
+                const agentAddress = agentDetails?.office_address || agentDetails?.data?.office_address;
+                const address = apiAddress || agentAddress;
+                
+                console.log('Map click - Address debug:', {
+                  apiAddress,
+                  agentAddress,
+                  finalAddress: address,
+                  addressLength: address?.length
+                });
+                
+                if (address && address.trim() !== '' && address !== 'Address not available') {
+                  const encodedAddress = encodeURIComponent(address.trim());
+                  const url = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                  
+                  console.log('Opening map URL:', url);
+                  
+                  Linking.openURL(url)
+                    .then(() => {
+                      console.log('Map opened successfully');
+                      handleUserInteraction('location');
+                    })
+                    .catch(err => {
+                      console.error('Error opening maps:', err);
+                      Alert.alert('Error', 'Unable to open location in maps');
+                    });
+                } else {
+                  console.log('No valid address available for map');
+                  Alert.alert('No Location', 'Address information is not available');
+                }
+              }}>
               <Image source={IMAGE.GoogleMapIcon} style={styles.icon3D} />
               <MagicText style={styles.actionText}>Location</MagicText>
             </TouchableOpacity>
