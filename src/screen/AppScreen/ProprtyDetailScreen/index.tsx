@@ -178,17 +178,14 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     try {
       console.log('Fetching office address...');
       console.log('🔑 Token available:', !!token);
-      console.log('🆔 Agent ID:', agent_id);
       
-      let address = '';
-      
-      // Method 1: Try authenticated agent office address API (requires token)
       if (token) {
         try {
           console.log('Trying authenticated office address API...');
           const response = await getAuthenticatedAgentOfficeAddress();
           console.log('Authenticated office address response:', JSON.stringify(response, null, 2));
           
+          let address = '';
           if (response?.data?.address) {
             address = response.data.address;
           } else if (response?.data?.office_address) {
@@ -203,43 +200,21 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
             address = response;
           }
           
-          if (address) {
-            console.log('Got address from authenticated API:', address);
-            setOfficeAddress(address);
-            return;
-          }
+          console.log('Got address from API:', address);
+          setOfficeAddress(address || '');
         } catch (authError: any) {
-          console.log('Authenticated API failed:', authError?.response?.status, authError?.message);
+          console.log('Office address API failed:', authError?.response?.status, authError?.message);
+          setOfficeAddress('');
         }
+      } else {
+        console.log('No token available');
+        setOfficeAddress('');
       }
-      
-      // Method 2: Try getting address from agent details (fallback)
-      if (agent_id) {
-        try {
-          console.log('Trying agent details fallback...');
-          const agentAddress = await getAgentOfficeAddress(agent_id);
-          console.log('Agent details address:', agentAddress);
-          
-          if (agentAddress && agentAddress.trim() !== '') {
-            address = agentAddress;
-            console.log('Got address from agent details:', address);
-            setOfficeAddress(address);
-            return;
-          }
-        } catch (detailsError: any) {
-          console.log('Agent details fallback failed:', detailsError?.message);
-        }
-      }
-      
-      // If no address found, set empty
-      console.log('No address found from any method');
-      setOfficeAddress('');
-      
     } catch (error: any) {
       console.log('Error in fetchOfficeAddress:', error);
       setOfficeAddress('');
     }
-  }, [token, agent_id]);
+  }, [token]);
 
   useEffect(() => {
     if (agent_id) {
@@ -542,34 +517,32 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     }
 
     // Get agent name for personalized message
-    const agentName = agentDetails?.data?.name || agentDetails?.name;
+    const agentName = agentDetails?.data?.agency_name || agentDetails?.data?.name || agentDetails?.agency_name || agentDetails?.name || name;
     
     try {
-      // First try using the utility
+      // Use the updated utility with new message format
       await openWhatsAppForAgent(
         whatsappNumber.toString(),
         agentName,
         () => {
-          // Success callback
           handleUserInteraction('whatsapp');
           console.log('WhatsApp opened successfully');
         },
         (error) => {
-          // Error callback
           console.error('WhatsApp utility error:', error);
         }
       );
     } catch (utilityError) {
       console.error('WhatsApp utility failed, trying fallback:', utilityError);
       
-      // Fallback method - direct Linking approach
+      // Fallback method with updated message format
       try {
         const cleanNumber = whatsappNumber.toString().replace(/\D/g, '');
         const formattedNumber = cleanNumber.startsWith('91') ? cleanNumber : `91${cleanNumber}`;
         const message = agentName 
-          ? `Hi ${agentName}, I'd like to speak with an agent about this property. Could you please help me?`
-          : "Hi, I'd like to speak with an agent.";
-        // Try multiple URLs without checking canOpenURL first
+          ? `Hi, I'd like to chat with an agent from ${agentName}.`
+          : "Hi, I'd like to chat with an agent.";
+        
         const fallbackURLs = [
           `https://wa.me/${formattedNumber}?text=${encodeURIComponent(message)}`,
           `whatsapp://send?phone=${formattedNumber}&text=${encodeURIComponent(message)}`,

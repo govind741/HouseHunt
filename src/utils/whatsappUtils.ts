@@ -8,9 +8,9 @@ export const WHATSAPP_MESSAGES = {
   AGENT_HELP: "Hi, I'd like to speak with an agent.",
   PROPERTY_INQUIRY: "Hello, I have a query. Could you please help me?",
   PROPERTY_SPECIFIC: (propertyName: string) => 
-    `Hi, I'd like to chat with an agent about ${propertyName}. Could you please help me?`,
+    `Hi, I'd like to chat with an agent from ${propertyName}.`,
   AGENT_SPECIFIC: (agentName: string) => 
-    `Hi ${agentName}, I'd like to speak with an agent about this property. Could you please help me?`,
+    `Hi, I'd like to chat with an agent from ${agentName}.`,
 };
 
 /**

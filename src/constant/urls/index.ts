@@ -1,8 +1,16 @@
 const BASE_URL = 'http://houseapp.in:81/';
 
+// App download links
+const APP_DOWNLOAD_LINKS = {
+  PLAY_STORE: 'https://play.google.com/store/apps/details?id=com.houseapp',
+  APP_STORE: 'https://apps.apple.com/app/houseapp/id123456789',
+  WEBSITE: 'https://houseapp.in/download',
+};
+
 const ENDPOINT = {
   //Auth
   user_login: 'v1/auth/users/login',
+  google_auth: 'v1/auth/user/auth/google',
   agent_login: 'v1/auth/agent/login',
 
   verify_user: 'v1/auth/users/verify-otp',
@@ -61,4 +69,4 @@ const ENDPOINT = {
   agent_payment_qr_upload: 'v1/auth/agent/payment-qr-upload',
 };
 
-export {BASE_URL, ENDPOINT};
+export {BASE_URL, ENDPOINT, APP_DOWNLOAD_LINKS};

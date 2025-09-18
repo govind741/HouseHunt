@@ -21,16 +21,91 @@ import {handleUserLogin} from '../../../services/authServices';
 import Toast from 'react-native-toast-message';
 import {BASE_URL} from '../../../constant/urls';
 import {GoogleIcon} from '../../../assets/icons';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {handleGoogleAuth} from '../../../services/authServices';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useAppDispatch} from '../../../store';
+import {setToken, setUserData, setGuestMode} from '../../../store/slice/authSlice';
 
 // Configuration for Google Sign-In button style
 // 'white' - White background with border (recommended for most cases)
 // 'blue' - Blue background with white text (alternative official style)
 const GOOGLE_BUTTON_VARIANT: 'white' | 'blue' = 'white'; // Change to 'blue' for blue variant
 
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: '1083768578728-oivr4obskcvsfr18vukr2vjjnul48iot.apps.googleusercontent.com',
+  offlineAccess: true,
+});
+
 const LoginScreen = ({navigation}: LoginScreenProps) => {
   const [mobile, setMobile] = useState('');
   const [selectedTab, setSelectedTab] = useState<'phone' | 'gmail'>('phone');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      
+      // Check if device supports Google Play Services
+      await GoogleSignin.hasPlayServices();
+      
+      // Sign in with Google
+      const userInfo = await GoogleSignin.signIn();
+      
+      if (userInfo.data?.idToken) {
+        // Send Google token to your backend
+        const response = await handleGoogleAuth(userInfo.data.idToken);
+        
+        if (response.data.success) {
+          // Store auth data
+          await AsyncStorage.setItem('token', response.data.data.token);
+          await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.user));
+          await AsyncStorage.setItem('role', 'user');
+          
+          // Update Redux state
+          dispatch(setToken(response.data.data.token));
+          dispatch(setUserData(response.data.data.user));
+          dispatch(setGuestMode(false));
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Signed in with Google successfully!',
+          });
+          
+          // Navigate to app
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'AppRoutes'}],
+          });
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: response.data.message || 'Google sign-in failed',
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+      
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        // User cancelled the sign-in
+        return;
+      }
+      
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Google sign-in failed. Please try again.',
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
@@ -175,23 +250,8 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
                   ? styles.googleSignInButtonBlue
                   : styles.googleSignInButton
               }
-              onPress={() => {
-                Alert.alert(
-                  'Google Sign-In Not Available',
-                  'Google sign-in is currently not available. Please use phone number to continue.',
-                  [
-                    {
-                      text: 'Use Phone Number',
-                      onPress: () => setSelectedTab('phone'),
-                      style: 'default',
-                    },
-                    {
-                      text: 'OK',
-                      style: 'cancel',
-                    },
-                  ]
-                );
-              }}
+              onPress={handleGoogleSignIn}
+              disabled={isGoogleLoading}
               activeOpacity={0.8}>
               <View style={styles.googleButtonContent}>
                 <View
@@ -208,7 +268,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
                       ? styles.googleButtonTextWhite
                       : styles.googleButtonText
                   }>
-                  Sign in with Google
+                  {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
                 </MagicText>
               </View>
             </TouchableOpacity>

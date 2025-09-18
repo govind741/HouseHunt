@@ -25,6 +25,20 @@ export const handleUserLogin = async (payload: {phone: string}) => {
   }
 };
 
+export const handleGoogleAuth = async (googleToken: string) => {
+  try {
+    if (__DEV__) console.log('Google Auth Request');
+    const response = await axiosInstance.post(ENDPOINT.google_auth, {
+      token: googleToken
+    });
+    if (__DEV__) console.log('Google Auth Success:', response);
+    return response;
+  } catch (error) {
+    if (__DEV__) console.error('Google Auth Error:', error);
+    throw error;
+  }
+};
+
 export const VerifyUserOtp = async (payload: {phone: string; otp: number}) => {
   try {
     if (__DEV__) console.log('User OTP Verification Request:', payload);

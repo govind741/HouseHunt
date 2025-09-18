@@ -20,7 +20,8 @@ import {BASE_URL} from '../../constant/urls';
 import {useAppSelector} from '../../store';
 import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
 import {sharePropertyFromCard} from '../../utils/shareUtils';
-import {getAgentRatingCount, getAgentOfficeAddress} from '../../services/PropertyServices';
+import {getAgentRatingCount} from '../../services/PropertyServices';
+import {getAgentOfficeAddress as getAuthenticatedAgentOfficeAddress} from '../../services/agentServices';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -57,25 +58,41 @@ const PropertyCard = ({
     };
 
     const fetchOfficeAddress = async () => {
-      if (item?.agent_id && token) {
+      if (token) {
         try {
-          console.log('Fetching office address for agent:', item.agent_id);
-          const address = await getAgentOfficeAddress(item.agent_id);
-          console.log('Fetched office address:', address);
-          setOfficeAddress(address);
+          console.log('Fetching office address for PropertyCard');
+          const response = await getAuthenticatedAgentOfficeAddress();
+          console.log('Fetched office address:', response);
+          
+          let address = '';
+          if (response?.data?.address) {
+            address = response.data.address;
+          } else if (response?.data?.office_address) {
+            address = response.data.office_address;
+          } else if (response?.address) {
+            address = response.address;
+          } else if (response?.office_address) {
+            address = response.office_address;
+          } else if (typeof response?.data === 'string') {
+            address = response.data;
+          } else if (typeof response === 'string') {
+            address = response;
+          }
+          
+          setOfficeAddress(address || '');
         } catch (error) {
           console.log('Error fetching office address:', error);
           setOfficeAddress('');
         }
       } else {
-        console.log('Not fetching office address - missing agent_id or token:', {agent_id: item?.agent_id, hasToken: !!token});
+        console.log('Not fetching office address - no token');
         setOfficeAddress('');
       }
     };
 
     fetchRatingCount();
     fetchOfficeAddress();
-  }, [item?.agent_id, token]);
+  }, [token]);
   const handleShare = async () => {
     console.log('Sharing property from card:', item);
 
@@ -121,35 +138,32 @@ const PropertyCard = ({
       return;
     }
 
-    // Get property name for personalized message
-    const propertyName = item.agency_name || item.name;
+    // Get property/agent name for personalized message
+    const agentName = item.agency_name || item.name;
     
     try {
-      // First try using the utility
+      // Use the updated utility with new message format
       await openWhatsAppForProperty(
         phoneNumber.toString(),
-        propertyName,
+        agentName,
         () => {
-          // Success callback
-          console.log('WhatsApp opened successfully for property:', propertyName);
+          console.log('WhatsApp opened successfully for agent:', agentName);
         },
         (error) => {
-          // Error callback - utility already shows alert, just log
-          console.error('WhatsApp utility error for property:', error);
+          console.error('WhatsApp utility error for agent:', error);
         }
       );
     } catch (utilityError) {
       console.error('WhatsApp utility failed, trying fallback:', utilityError);
       
-      // Fallback method - direct Linking approach without canOpenURL check
+      // Fallback method with updated message format
       try {
         const cleanNumber = phoneNumber.toString().replace(/[^\d+]/g, '');
         const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : `+91${cleanNumber}`;
-        const message = propertyName 
-          ? `Hi, I'd like to chat with an agent about ${propertyName}. Could you please help me?`
+        const message = agentName 
+          ? `Hi, I'd like to chat with an agent from ${agentName}.`
           : "Hi, I'd like to chat with an agent.";
         
-        // Try multiple URLs without checking canOpenURL first
         const fallbackURLs = [
           `https://wa.me/${formattedNumber.replace('+', '')}?text=${encodeURIComponent(message)}`,
           `whatsapp://send?phone=${formattedNumber.replace('+', '')}&text=${encodeURIComponent(message)}`,
