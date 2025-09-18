@@ -96,8 +96,6 @@ const AgentLoginScreen = ({navigation}: AgentLoginScreenProps) => {
             <MagicText style={styles.continueText}>Log in or sign up</MagicText>
             <View style={styles.hr} />
           </View>
-          
-          <MagicText style={styles.welcomeText}>Let's Go</MagicText>
         </View>
 
         <TextField
