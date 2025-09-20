@@ -117,11 +117,11 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
           const updatedList = data.map((item: any) => {
             console.log('Processing search item:', JSON.stringify(item, null, 2));
             
-            // Build hierarchical path: Locality > Area > City
+            // Build hierarchical path: City > Area > Locality
             const parts = [];
-            if (item.locality_name) parts.push(item.locality_name);
-            if (item.area_name) parts.push(item.area_name);
             if (item.city_name) parts.push(item.city_name);
+            if (item.area_name) parts.push(item.area_name);
+            if (item.locality_name) parts.push(item.locality_name);
             
             // Ensure city_id is properly extracted
             const cityId = item.city_id || item.cityId || item.city?.id || null;

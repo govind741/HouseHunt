@@ -67,9 +67,15 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
           );
 
           const updatedList: AreaType[] = list.map((item: any) => {
+            // Build hierarchical path: City > Area > Locality
+            const parts = [];
+            if (item.city_name) parts.push(item.city_name);
+            if (item.area_name) parts.push(item.area_name);
+            if (item.locality_name) parts.push(item.locality_name);
+            
             return {
               id: item.id,
-              name: `${item.area_name || item.locality_name} > ${item.locality_name || item.name}`,
+              name: parts.join(' > '),
             };
           });
           setFilteredList(updatedList);
