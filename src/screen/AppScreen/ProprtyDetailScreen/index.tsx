@@ -77,6 +77,26 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       image: 'https://via.placeholder.com/800x600/2196F3/ffffff?text=Property+Image+2',
     },
   ]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Auto-scroll images every 3 seconds
+  useEffect(() => {
+    if (propertyImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex(prevIndex => {
+          const nextIndex = (prevIndex + 1) % propertyImages.length;
+          scrollViewRef.current?.scrollTo({
+            x: nextIndex * screenWidth,
+            animated: true,
+          });
+          return nextIndex;
+        });
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [propertyImages.length, screenWidth]);
 
   // Ad banner state
   const [adsData, setAdsData] = useState<any[]>([]);
@@ -634,12 +654,19 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         {/* Property Images Slider */}
         <View style={styles.imageSliderContainer}>
           <ScrollView
+            ref={scrollViewRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast"
             snapToInterval={screenWidth}
-            snapToAlignment="start">
+            snapToAlignment="start"
+            onScroll={(event) => {
+              const slideSize = event.nativeEvent.layoutMeasurement.width;
+              const index = Math.floor(event.nativeEvent.contentOffset.x / slideSize);
+              setCurrentImageIndex(index);
+            }}
+            scrollEventThrottle={16}>
             {propertyImages.map((item) => {
               console.log('Rendering image:', item.id);
               return (
@@ -655,6 +682,21 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
             })}
           </ScrollView>
         </View>
+
+        {/* Dots Indicator - Below image */}
+        {propertyImages.length > 1 && (
+          <View style={styles.dotsSection}>
+            {propertyImages.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  index === currentImageIndex ? styles.activeDot : styles.inactiveDot
+                ]}
+              />
+            ))}
+          </View>
+        )}
         
         {/* Property/Agent Name with Rating - Right under the image */}
         <View style={styles.nameContainer}>
@@ -716,6 +758,8 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
 
           {/* Office Address Section */}
           <View style={styles.addressSection}>
+            {/* Line before address */}
+            <View style={styles.addressSeparatorLine} />
             <View style={styles.row}>
               <LocationIcon />
               <MagicText style={styles.addressText}>
@@ -738,6 +782,15 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 })()}
               </MagicText>
             </View>
+          </View>
+
+          {/* About Section */}
+          <View style={styles.aboutSection}>
+            <MagicText style={styles.aboutTitle}>About</MagicText>
+            <MagicText style={styles.aboutText}>
+              {agentDetails?.description || agentDetails?.data?.description || 
+               `Professional real estate agent helping you find perfect properties with expert service.`}
+            </MagicText>
           </View>
         </View>
         
@@ -839,9 +892,45 @@ const styles = StyleSheet.create({
   imageSliderContainer: {
     height: 250,
     backgroundColor: COLORS.WHITE_SMOKE,
+    position: 'relative',
+  },
+  dotsSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: COLORS.WHITE,
   },
   imageContainer: {
     height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 20,
+    borderRadius: 20,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  activeDot: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  inactiveDot: {
+    backgroundColor: '#CCCCCC',
   },
   propertyImage: {
     width: '100%',
@@ -911,12 +1000,35 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
+  addressSeparatorLine: {
+    height: 1,
+    backgroundColor: '#CCCCCC',
+    marginBottom: 12,
+  },
   addressText: {
     fontSize: 14,
     color: COLORS.TEXT_GRAY,
     marginLeft: 8,
     flex: 1,
     lineHeight: 20,
+  },
+  aboutSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#CCCCCC',
+  },
+  aboutTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.BLACK,
+    marginBottom: 8,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: COLORS.TEXT_GRAY,
+    lineHeight: 20,
+    textAlign: 'justify',
   },
   titleText: {
     fontSize: 18,
@@ -968,31 +1080,33 @@ const styles = StyleSheet.create({
   actionButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    padding: 16,
     backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 16,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 3,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    marginHorizontal: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    marginHorizontal: 8,
+    minWidth: 90,
   },
   icon3D: {
-    width: 70,
-    height: 70,
+    width: 48,
+    height: 48,
     resizeMode: 'contain',
-    borderRadius: 35,
+    marginBottom: 8,
   },
   actionRows: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-    marginTop: 15, // Reduced from 20 to 15 for better visual balance
+    marginTop: 8,
     marginBottom: 10,
+    paddingHorizontal: 10,
   },
   // Ad banner styles
   adsContainer: {

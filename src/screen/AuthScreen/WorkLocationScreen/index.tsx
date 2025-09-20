@@ -63,6 +63,57 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
   const {signupPayload, token} = route.params;
   const dispatch = useAppDispatch();
 
+  // Function to save office address with coordinates
+  const saveOfficeAddress = async (agentData: any, authToken: string) => {
+    try {
+      const address = agentData?.agent_address;
+      const latitude = agentData?.latitude;
+      const longitude = agentData?.longitude;
+
+      if (address && latitude && longitude) {
+        console.log('Saving office address:', { 
+          address: address.toString().substring(0, 50) + '...', 
+          latitude, 
+          longitude 
+        });
+        
+        const requestBody = {
+          address: address.toString(),
+          latitude: parseFloat(latitude.toString()),
+          longitude: parseFloat(longitude.toString()),
+        };
+        
+        console.log('Office address API request:', `${BASE_URL}${ENDPOINT.agent_office_address}`);
+        
+        const response = await fetch(`${BASE_URL}${ENDPOINT.agent_office_address}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('✅ Office address saved successfully:', responseData);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Failed to save office address:', response.status, errorText);
+        }
+      } else {
+        console.log('⚠️ Office address data incomplete:', { 
+          hasAddress: !!address, 
+          hasLatitude: !!latitude, 
+          hasLongitude: !!longitude 
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error saving office address:', error);
+      // Don't throw error to avoid breaking the signup flow
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       // Load cities on screen focus
@@ -571,6 +622,14 @@ const WorkLocationScreen = ({navigation, route}: WorkLocationScreenProps) => {
       } else {
         console.log('Agent data verified in storage');
       }
+      
+      // Save office address with coordinates using agent data from profile response
+      const agentProfileData = {
+        agent_address: signupPayload.get ? signupPayload.get('agent_address') : null,
+        latitude: signupPayload.get ? signupPayload.get('latitude') : null,
+        longitude: signupPayload.get ? signupPayload.get('longitude') : null,
+      };
+      await saveOfficeAddress(agentProfileData, token);
       
       console.log('All steps completed successfully');
       

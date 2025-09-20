@@ -348,7 +348,10 @@ const PropertyCard = ({
 
         {/* Address Row - Now below the icons */}
         {token ? (
-          <TouchableOpacity onPress={handleMap} style={styles.addressRow}>
+          <>
+            {/* Line before address */}
+            <View style={styles.addressSeparatorLine} />
+            <TouchableOpacity onPress={handleMap} style={styles.addressRow}>
             <View>
               <GoogleLocationIcon />
             </View>
@@ -356,6 +359,7 @@ const PropertyCard = ({
               {officeAddress || item?.office_address || 'Office address not available'}
             </MagicText>
           </TouchableOpacity>
+          </>
         ) : null}
       </View>
     </Pressable>
@@ -462,6 +466,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 6,
     backgroundColor: 'transparent',
+  },
+  addressSeparatorLine: {
+    height: 1,
+    backgroundColor: '#CCCCCC',
+    marginHorizontal: 15,
+    marginTop: 16,
   },
   heading: {
     fontSize: 20,

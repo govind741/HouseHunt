@@ -167,7 +167,7 @@ const MultiSelectDropdown = <T extends DropdownItem>({
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <MagicText style={styles.modalTitle}>
-                Select Localities ({selectedValues.length} selected)
+                Select Area ({selectedValues.length} selected)
               </MagicText>
               <TouchableOpacity
                 onPress={() => setIsVisible(false)}
