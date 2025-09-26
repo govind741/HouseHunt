@@ -59,8 +59,9 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
     searchLocalities(payload)
       .then(res => {
         console.log('Search Localities Response:', res);
-        // Handle the response structure: res.data (not formattedData for search)
-        const data = res?.data ?? [];
+        // Handle the response structure: use formattedData from the API response
+        const data = res?.formattedData ?? [];
+        console.log('Search Localities Raw Data:', data);
         if (data.length > 0) {
           const list = data.filter(
             (item: any) => item.city_name === location.city_name,
@@ -71,7 +72,7 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
             const parts = [];
             if (item.city_name) parts.push(item.city_name);
             if (item.area_name) parts.push(item.area_name);
-            if (item.locality_name) parts.push(item.locality_name);
+            if (item.locality_name || item.name) parts.push(item.locality_name || item.name);
             
             return {
               id: item.id,
@@ -101,14 +102,39 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
   };
 
   const areaSelectionHandler = async (item: AreaType) => {
-    const locationData: locationType = {
-      ...location,
-      area_id: item.id,
-      area_name: item.name,
-    };
+    // Check if this is a search result (contains " > " indicating full path)
+    const isSearchResult = item.name.includes(' > ');
+    
+    let locationData: locationType;
+    
+    if (isSearchResult) {
+      // Parse the hierarchical path: "City > Area > Locality"
+      const parts = item.name.split(' > ');
+      locationData = {
+        ...location,
+        id: item.id,
+        city_name: parts[0] || location.city_name,
+        area_name: parts[1] || '',
+        locality_name: parts[2] || '',
+      };
+    } else {
+      // Regular area selection
+      locationData = {
+        ...location,
+        area_id: item.id,
+        area_name: item.name,
+      };
+    }
+    
     dispatch(setLocation(locationData));
     await AsyncStorage.setItem('location', JSON.stringify({...locationData}));
-    navigation.navigate('LocalitiesScreen');
+    
+    // Navigate to home screen if it's a search result, otherwise go to localities
+    if (isSearchResult) {
+      navigation.navigate('HomeScreen');
+    } else {
+      navigation.navigate('LocalitiesScreen');
+    }
   };
 
   const renderArea = ({item, index}: {item: AreaType; index: number}) => {

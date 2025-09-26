@@ -15,6 +15,8 @@ export class AppBackHandler {
   private static instance: AppBackHandler;
   private navigationRef: React.RefObject<NavigationContainerRef<any>> | null = null;
   private backHandler: any = null;
+  private exitBackPressCount: number = 0;
+  private exitTimeout: NodeJS.Timeout | null = null;
 
   private constructor() {}
 

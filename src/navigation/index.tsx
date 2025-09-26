@@ -9,6 +9,7 @@ import {setLocation} from '../store/slice/locationSlice';
 import {defaultLocation} from '../constant';
 import {AppBackHandler} from '../utils/backHandlerUtils';
 import {DeepLinkManager} from '../utils/deepLinkUtils';
+import {testAPIConnection} from '../utils/networkDebug';
 
 const RootNavigator = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -17,6 +18,12 @@ const RootNavigator = () => {
 
   useEffect(() => {
     const getToken = async () => {
+      // Test API connectivity first
+      const isConnected = await testAPIConnection();
+      if (!isConnected) {
+        console.warn('⚠️ API server may be unreachable');
+      }
+
       //get token from local storage and set it to redux
       const accessToken = await AsyncStorage.getItem('token');
       dispatch(setToken(accessToken));

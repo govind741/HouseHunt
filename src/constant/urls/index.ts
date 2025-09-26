@@ -1,4 +1,4 @@
-const BASE_URL = 'http://houseapp.in:81/';
+const BASE_URL = 'https://api.houseapp.in/';
 
 // App download links
 const APP_DOWNLOAD_LINKS = {
@@ -67,6 +67,9 @@ const ENDPOINT = {
   //payment options
   agent_payment_details: 'v1/auth/admin/payment-details',
   agent_payment_qr_upload: 'v1/auth/agent/payment-qr-upload',
+
+  //expert help
+  add_expert_help: 'v1/auth/users/add/expert_help',
 };
 
 export {BASE_URL, ENDPOINT, APP_DOWNLOAD_LINKS};

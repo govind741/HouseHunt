@@ -1,5 +1,5 @@
 import axiosInstance from '../axios';
-import {ENDPOINT} from '../constant/urls';
+import {ENDPOINT, BASE_URL} from '../constant/urls';
 
 export const testApiEndpoints = async () => {
   console.log('🧪 Starting API Endpoint Tests...');
@@ -9,7 +9,7 @@ export const testApiEndpoints = async () => {
   // Test 1: Basic server health check
   try {
     console.log('🏥 Testing server health...');
-    const healthResponse = await fetch('http://houseapp.in:81/');
+    const healthResponse = await fetch(BASE_URL);
     const healthText = await healthResponse.text();
     testResults.push({
       test: 'Server Health',

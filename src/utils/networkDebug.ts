@@ -1,10 +1,12 @@
+import {BASE_URL} from '../constant/urls';
+
 export const testAPIConnection = async () => {
   try {
-    console.log('🔗 Testing API connection to http://houseapp.in:81/');
+    console.log(`🔗 Testing API connection to ${BASE_URL}`);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     
-    const response = await fetch('http://houseapp.in:81/', {
+    const response = await fetch(BASE_URL, {
       method: 'GET',
       signal: controller.signal,
     });
@@ -15,7 +17,6 @@ export const testAPIConnection = async () => {
       status: response.status,
       ok: response.ok,
       statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
     });
     
     return response.ok;
@@ -23,7 +24,6 @@ export const testAPIConnection = async () => {
     console.error('API Connection Test Failed:', {
       name: error.name,
       message: error.message,
-      stack: error.stack,
     });
     return false;
   }

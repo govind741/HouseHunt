@@ -1,12 +1,15 @@
 import React, {useState} from 'react';
 import {
+  Alert,
   Image,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  BackHandler,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {UserSignupScreenProps} from '../../../types/authTypes';
 import {COLORS} from '../../../assets/colors';
 import CustomBack from '../../../components/CustomBack';
@@ -33,6 +36,19 @@ import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   const {mobile_number, email, user_id} = route.params;
   const dispatch = useAppDispatch();
+
+  // Handle hardware back button
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   console.log('UserSignupScreen params:', {
     mobile_number,
@@ -210,6 +226,31 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   });
 
   const handleProfile = () => {
+    if (formik.values.profile_image) {
+      // Show options to change or remove image
+      Alert.alert(
+        'Profile Image',
+        'What would you like to do?',
+        [
+          { text: 'Change Image', onPress: selectImage },
+          { text: 'Remove Image', onPress: () => formik.setFieldValue('profile_image', null) },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    } else {
+      // Show options to select image or skip
+      Alert.alert(
+        'Profile Image',
+        'Would you like to add a profile image?',
+        [
+          { text: 'Select Image', onPress: selectImage },
+          { text: 'Skip', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
+  const selectImage = () => {
     launchImageLibrary({
       mediaType: 'photo',
       selectionLimit: 1,

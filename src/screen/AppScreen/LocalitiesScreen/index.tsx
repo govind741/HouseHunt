@@ -50,8 +50,8 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
       getAllLocalitiesList(payload)
         .then(res => {
           console.log('Localities List Response:', res);
-          // Handle the response structure: res.data (not res.formattedData)
-          const localities = res?.data ?? [];
+          // Handle the response structure: use formattedData from the API response
+          const localities = res?.formattedData ?? [];
           setLocalitiesList(localities);
         })
         .catch(error => {

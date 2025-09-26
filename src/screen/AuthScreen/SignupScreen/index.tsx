@@ -13,7 +13,9 @@ import {
   Alert,
   PermissionsAndroid,
   Animated,
+  BackHandler,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {SignupScreenProps} from '../../../types/authTypes';
 import MagicText from '../../../components/MagicText';
 import CustomBack from '../../../components/CustomBack';
@@ -43,6 +45,19 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
   const [isGeocodingAddress, setIsGeocodingAddress] = useState(false); // Track geocoding status
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const geocodingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // For debouncing geocoding
+
+  // Handle hardware back button
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   useEffect(() => {
     if (isGettingLocation || isGeocodingAddress) {
@@ -330,10 +345,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       ),
     email: yup
       .string()
-      .matches(
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-        'Please enter valid email address.',
-      )
+      .email('Please enter valid email address.')
       .required('Email is required.'),
     overview: yup.string().max(200).required('Overview is required.'),
     agent_address: yup.string().required('Agent address is required.'),
@@ -341,7 +353,6 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       .array()
       .of(yup.mixed().required('Image is required'))
       .min(1, 'At least one image is required'),
-    // profile_image: yup.mixed().notRequired(),
   });
 
   const formik = useFormik({

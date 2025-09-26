@@ -1,4 +1,4 @@
-import {StyleSheet, Text, TouchableOpacity, View, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, Modal, FlatList, TextInput} from 'react-native';
+import {StyleSheet, Text, TouchableOpacity, View, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, Modal, FlatList, TextInput, Alert} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import CustomBack from '../../../components/CustomBack';
 import {COLORS} from '../../../assets/colors';
@@ -9,6 +9,8 @@ import Button from '../../../components/Button';
 import {ExpertsScreenProps} from '../../../types/appTypes';
 import {getAllCityList, getAllAreasList, getAllLocalitiesList} from '../../../services/locationSelectionServices';
 import {CityType, AreaType, LocalityType} from '../../../types';
+import axiosInstance from '../../../axios';
+import {ENDPOINT} from '../../../constant/urls';
 
 const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const data = {
@@ -51,6 +53,10 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const [citySearchText, setCitySearchText] = useState<string>('');
   const [areaSearchText, setAreaSearchText] = useState<string>('');
   const [localitySearchText, setLocalitySearchText] = useState<string>('');
+  
+  // Form states
+  const [requirements, setRequirements] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Fetch cities when component mounts
   useEffect(() => {
@@ -280,6 +286,64 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
     setSelectedPropertySize('');
   };
 
+  // Submit expert help form
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!selectedYouWantTo) {
+      Alert.alert('Error', 'Please select what you want to do');
+      return;
+    }
+    if (!selectedPropertyType) {
+      Alert.alert('Error', 'Please select property type');
+      return;
+    }
+    if (!selectedPropertySize) {
+      Alert.alert('Error', 'Please select property size');
+      return;
+    }
+    if (!selectedCity) {
+      Alert.alert('Error', 'Please select a city');
+      return;
+    }
+    if (!selectedArea) {
+      Alert.alert('Error', 'Please select an area');
+      return;
+    }
+    if (!selectedLocality) {
+      Alert.alert('Error', 'Please select a locality');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        you_want_to: selectedYouWantTo,
+        property_type: selectedPropertyType,
+        property_size: selectedPropertySize,
+        city_id: selectedCity.id,
+        area_id: selectedArea.id,
+        locality_id: selectedLocality.id,
+        requirements: requirements || '',
+      };
+
+      console.log('Submitting expert help request:', payload);
+      const response = await axiosInstance.post(ENDPOINT.add_expert_help, payload);
+      console.log('Expert help response:', response);
+
+      Alert.alert('Success', 'Your request has been submitted successfully!', [
+        {
+          text: 'OK',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
+    } catch (error: any) {
+      console.error('Expert help submission error:', error);
+      Alert.alert('Error', error?.message || 'Failed to submit request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const renderFilterButton = (item: {label: string}, isSelected: boolean, onPress: () => void) => {
     return (
       <TouchableOpacity onPress={onPress} key={item.label}>
@@ -466,11 +530,18 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
                 style={styles.inputStyle}
                 returnKeyType="done"
                 blurOnSubmit={true}
+                value={requirements}
+                onChangeText={setRequirements}
               />
             </View>
             
             <View style={{marginTop: 30, marginBottom: 20}}>
-              <Button label="Submit" style={styles.btnStyle} />
+              <Button 
+                label={isSubmitting ? "Submitting..." : "Submit"} 
+                style={styles.btnStyle}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              />
             </View>
           </View>
         </ScrollView>
