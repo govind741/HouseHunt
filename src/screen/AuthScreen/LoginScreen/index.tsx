@@ -235,12 +235,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
       style={styles.parent} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={isKeyboardVisible}
-      >
+      <View style={styles.scrollContainer}>
         <Image source={IMAGE.COMPANY_LOGO} style={styles.logoStyle} />
         <View style={styles.row}>
           <View style={styles.hr} />
@@ -364,7 +359,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           </TouchableOpacity>
         </View>
         </View>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 };
