@@ -42,72 +42,7 @@ const getAllCityList = async () => {
       url: error?.config?.url,
     });
     
-    // Try alternative approach - direct fetch without authentication
-    try {
-      console.log('Trying alternative cities API call...');
-      const alternativeResponse = await fetch(`${BASE_URL}${ENDPOINT.get_city}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (alternativeResponse.ok) {
-        const data = await alternativeResponse.json();
-        console.log('Alternative cities API success:', {
-          hasData: !!data,
-          dataType: typeof data,
-          hasFormattedData: !!data?.formattedData,
-          isArray: Array.isArray(data),
-        });
-        
-        // Handle the response structure from direct fetch
-        if (data.formattedData && Array.isArray(data.formattedData)) {
-          return { 
-            data: data.formattedData,
-            formattedData: data.formattedData 
-          };
-        } else if (data.data && Array.isArray(data.data)) {
-          return { 
-            data: data.data,
-            formattedData: data.data 
-          };
-        } else if (Array.isArray(data)) {
-          return { 
-            data: data,
-            formattedData: data 
-          };
-        } else {
-          console.warn('Alternative API returned unexpected structure:', data);
-          return { data: [], formattedData: [] };
-        }
-      } else {
-        console.error('Alternative API failed with status:', alternativeResponse.status);
-        throw new Error(`Alternative API failed: ${alternativeResponse.status}`);
-      }
-    } catch (alternativeError) {
-      console.error('Alternative cities API also failed:', alternativeError);
-      
-      // Return mock data as last resort to prevent app crash
-      console.log('Returning mock city data as fallback');
-      const mockCities = [
-        { id: 1, name: 'Delhi' },
-        { id: 2, name: 'Mumbai' },
-        { id: 3, name: 'Bangalore' },
-        { id: 4, name: 'Chennai' },
-        { id: 5, name: 'Hyderabad' },
-        { id: 6, name: 'Pune' },
-        { id: 7, name: 'Kolkata' },
-        { id: 8, name: 'Ahmedabad' },
-        { id: 9, name: 'Jaipur' },
-        { id: 10, name: 'Lucknow' },
-      ];
-      return {
-        data: mockCities,
-        formattedData: mockCities
-      };
-    }
+    throw error;
   }
 };
 

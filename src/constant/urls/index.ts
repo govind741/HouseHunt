@@ -1,4 +1,4 @@
-const BASE_URL = 'http://houseapp.in:81/';
+const BASE_URL = 'https://api.houseapp.in/';
 
 // App download links
 const APP_DOWNLOAD_LINKS = {
