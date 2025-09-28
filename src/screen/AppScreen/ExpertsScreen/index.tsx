@@ -9,6 +9,9 @@ import Button from '../../../components/Button';
 import {ExpertsScreenProps} from '../../../types/appTypes';
 import {getAllCityList, getAllAreasList, getAllLocalitiesList} from '../../../services/locationSelectionServices';
 import {CityType, AreaType, LocalityType} from '../../../types';
+import axiosInstance from '../../../axios';
+import {ENDPOINT} from '../../../constant/urls';
+import Toast from 'react-native-toast-message';
 
 const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const data = {
@@ -51,6 +54,10 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
   const [citySearchText, setCitySearchText] = useState<string>('');
   const [areaSearchText, setAreaSearchText] = useState<string>('');
   const [localitySearchText, setLocalitySearchText] = useState<string>('');
+  
+  // Form states
+  const [additionalRequirements, setAdditionalRequirements] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Fetch cities when component mounts
   useEffect(() => {
@@ -280,6 +287,45 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
     setSelectedPropertySize('');
   };
 
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      const payload = {
+        you_want_to: selectedYouWantTo,
+        property_type: selectedPropertyType,
+        property_size: selectedPropertySize,
+        city_id: selectedCity?.id,
+        area_id: selectedArea?.id,
+        locality_id: selectedLocality?.id,
+        additional_requirements: additionalRequirements,
+      };
+      
+      const response = await axiosInstance.post(ENDPOINT.expert_help, payload);
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Expert Help Request Sent',
+        text2: 'We will contact you soon!',
+      });
+      
+      console.log('Expert help request sent successfully:', response);
+      
+      // Navigate back after successful submission
+      navigation.goBack();
+      
+    } catch (error: any) {
+      console.error('Error sending expert help request:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Request Failed',
+        text2: error?.message || 'Unable to send expert help request',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const renderFilterButton = (item: {label: string}, isSelected: boolean, onPress: () => void) => {
     return (
       <TouchableOpacity onPress={onPress} key={item.label}>
@@ -466,11 +512,18 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
                 style={styles.inputStyle}
                 returnKeyType="done"
                 blurOnSubmit={true}
+                value={additionalRequirements}
+                onChangeText={setAdditionalRequirements}
               />
             </View>
             
             <View style={{marginTop: 30, marginBottom: 20}}>
-              <Button label="Submit" style={styles.btnStyle} />
+              <Button 
+                label={isSubmitting ? "Submitting..." : "Submit"} 
+                style={styles.btnStyle} 
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              />
             </View>
           </View>
         </ScrollView>

@@ -43,6 +43,7 @@ const ENDPOINT = {
   verify_delete_user: 'v1/auth/users/verify-delete-account',
 
   user_interaction: 'v1/auth/users/interactions/click',
+  expert_help: 'v1/auth/users/add/expert_help',
   get_city: 'v1/auth/cities',
   get_areas: 'v1/auth/areas',
   get_localities: 'v1/auth/localities',
