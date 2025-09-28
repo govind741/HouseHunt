@@ -25,6 +25,8 @@ import {
   OverviewIcon,
   LocationIcon,
   CurrentLocationIcon,
+  CameraIcon,
+  ProfileIcon,
 } from '../../../assets/icons';
 import TextField from '../../../components/TextField';
 import Button from '../../../components/Button';
@@ -306,14 +308,14 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     }
   };
 
-  // const handleProfile = () => {
-  //   launchImageLibrary({
-  //     mediaType: 'photo',
-  //     selectionLimit: 1,
-  //   }).then(response => {
-  //     formik.setFieldValue('profile_image', response.assets?.[0] ?? null);
-  //   });
-  // };
+  const handleProfile = () => {
+    launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 1,
+    }).then(response => {
+      formik.setFieldValue('profile_image', response.assets?.[0] ?? null);
+    });
+  };
 
   const handleValidation = yup.object().shape({
     agency_name: yup.string().required('Agency name is required.'),
@@ -341,7 +343,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       .array()
       .of(yup.mixed().required('Image is required'))
       .min(1, 'At least one image is required'),
-    // profile_image: yup.mixed().notRequired(),
+    profile_image: yup.mixed().notRequired(),
   });
 
   const formik = useFormik({
@@ -355,7 +357,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       latitude: null,
       longitude: null,
       images: [],
-      // profile_image: null,
+      profile_image: null,
     },
     validationSchema: handleValidation,
     onSubmit: values => {
@@ -397,14 +399,14 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
         });
       }
 
-      // if (formik.values.profile_image) {
-      //   const image: any = formik.values.profile_image ?? null;
-      //   formData.append('image_url', {
-      //     uri: image.uri,
-      //     name: image.name || `image_${new Date().getTime()}.jpg`,
-      //     type: image.type || 'image/jpeg',
-      //   });
-      // }
+      if (formik.values.profile_image) {
+        const image: any = formik.values.profile_image ?? null;
+        formData.append('image_url', {
+          uri: image.uri,
+          name: image.name || `profile_${new Date().getTime()}.jpg`,
+          type: image.type || 'image/jpeg',
+        });
+      }
 
       navigation.navigate('WorkLocationScreen', {
         signupPayload: formData,
@@ -531,22 +533,32 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             Fill your information to continue
           </MagicText>
 
-        {/* <TouchableOpacity style={styles.formView} onPress={handleProfile}>
-          <View style={styles.roundView}>
-            {formik.values.profile_image !== null ? (
-              <Image
-                source={{uri: (formik.values.profile_image as any)?.uri}}
-                style={styles.profileImage}
-              />
-            ) : (
-              <ProfileIcon width={80} height={80} />
-            )}
+          <TouchableOpacity style={styles.formView} onPress={handleProfile}>
+            <View style={styles.roundView}>
+              {formik.values.profile_image !== null ? (
+                <Image
+                  source={{uri: (formik.values.profile_image as any)?.uri}}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <ProfileIcon width={80} height={80} />
+              )}
 
-            <View style={styles.absoluteView}>
-              <CameraIcon />
+              <View style={styles.absoluteView}>
+                <CameraIcon />
+              </View>
+              
+              {formik.values.profile_image !== null && (
+                <TouchableOpacity
+                  style={styles.removeProfileButton}
+                  onPress={() => formik.setFieldValue('profile_image', null)}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                >
+                  <MagicText style={styles.removeProfileButtonText}>×</MagicText>
+                </TouchableOpacity>
+              )}
             </View>
-          </View>
-        </TouchableOpacity> */}
+          </TouchableOpacity>
 
         <View>
           <TextField
@@ -1017,5 +1029,31 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 60,
     resizeMode: 'cover',
+  },
+  removeProfileButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.RED,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
+  },
+  removeProfileButtonText: {
+    color: COLORS.WHITE,
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 20,
   },
 });

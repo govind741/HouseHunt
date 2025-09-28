@@ -244,6 +244,19 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
             <View style={styles.absoluteView}>
               <CameraIcon />
             </View>
+            
+            {formik.values.profile_image !== null && (
+              <TouchableOpacity
+                style={styles.removeProfileButton}
+                onPress={() => formik.setFieldValue('profile_image', null)}
+                hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              >
+                <View style={styles.crossContainer}>
+                  <View style={styles.crossLine1} />
+                  <View style={styles.crossLine2} />
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </TouchableOpacity>
 
@@ -391,6 +404,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     color: COLORS.GRAY,
+  },
+  removeProfileButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.RED,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
+  },
+  crossContainer: {
+    width: 12,
+    height: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossLine1: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    backgroundColor: COLORS.WHITE,
+    transform: [{rotate: '45deg'}],
+  },
+  crossLine2: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    backgroundColor: COLORS.WHITE,
+    transform: [{rotate: '-45deg'}],
   },
 });
 
