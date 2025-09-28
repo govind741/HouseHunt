@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
-  ScrollView,
   Platform,
   Keyboard,
 } from 'react-native';
@@ -235,12 +234,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
       style={styles.parent} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={isKeyboardVisible}
-      >
+      <View style={styles.container}>
         <Image source={IMAGE.COMPANY_LOGO} style={styles.logoStyle} />
         <View style={styles.row}>
           <View style={styles.hr} />
@@ -364,7 +358,7 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           </TouchableOpacity>
         </View>
         </View>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -376,8 +370,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.WHITE,
   },
-  scrollContainer: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     paddingBottom: 20,
   },
   logoStyle: {
