@@ -200,9 +200,29 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     
     handleSliderData(finalCityId)
       .then(res => {
-        console.log('Slider Data Response:', res);
+        console.log('=== ADS API SUCCESS ===');
+        console.log('Full API Response:', JSON.stringify(res, null, 2));
+        console.log('Response data:', res?.data);
+        console.log('Data type:', typeof res?.data);
+        console.log('Data length:', res?.data?.length);
+        
         // Handle the response structure: res.data
         const data = res?.data ?? [];
+        console.log('Processed data:', data);
+        
+        if (data.length === 0) {
+          console.log('❌ No ads data returned from API - using mock data');
+          const mockAds = [{
+            id: 'mock-1',
+            title: 'Find Your Dream Home',
+            description: 'Discover amazing properties in your area with trusted agents',
+            image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+            buttonText: 'Explore Now'
+          }];
+          setAdsData(mockAds);
+          return;
+        }
+        
         const adsArray = data.map((item: any) => ({
           id: item.id,
           title: item.title || 'Featured Property',
@@ -211,14 +231,28 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           buttonText: item.button_text || 'View Details',
         }));
 
-        console.log('Ads loaded for HomeScreen:', adsArray.length, 'ads');
-        console.log('Ads data:', JSON.stringify(adsArray, null, 2));
+        console.log('✅ Ads loaded for HomeScreen:', adsArray.length, 'ads');
+        console.log('Final ads data:', JSON.stringify(adsArray, null, 2));
         setAdsData(adsArray);
       })
       .catch(error => {
-        console.log('Error in getSliderData:', error);
-        console.log('Error details:', JSON.stringify(error, null, 2));
-        setAdsData([]); // Set empty array on error
+        console.log('=== ADS API ERROR ===');
+        console.log('Error type:', typeof error);
+        console.log('Error message:', error?.message);
+        console.log('Error response:', error?.response?.data);
+        console.log('Error status:', error?.response?.status);
+        console.log('Full error:', JSON.stringify(error, null, 2));
+        
+        // Use mock data when API fails
+        const mockAds = [{
+          id: 'mock-1',
+          title: 'Find Your Dream Home',
+          description: 'Discover amazing properties in your area with trusted agents',
+          image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+          buttonText: 'Explore Now'
+        }];
+        setAdsData(mockAds);
+        
         // Show error toast only if it's not a network issue
         if (error?.message && !error?.message.includes('Network')) {
           Toast.show({
@@ -408,7 +442,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       area_id: item.area_id || null,
       area_name: item.area_name || '',
       locality_name: item.locality_name || '',
-      name: item.locality_name || item.area_name || item.city_name || '',
+      name: item.locality_name || item.area_name || item.city_name || '', // Use individual name, not the full path
       ranking: null,
     };
     

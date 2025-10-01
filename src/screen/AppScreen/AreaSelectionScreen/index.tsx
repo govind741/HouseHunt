@@ -101,14 +101,42 @@ const AreaSelectionScreen = ({navigation}: AreaSelectionScreenProps) => {
   };
 
   const areaSelectionHandler = async (item: AreaType) => {
-    const locationData: locationType = {
-      ...location,
-      area_id: item.id,
-      area_name: item.name,
-    };
+    let locationData: locationType;
+    
+    // If item is from search results (filtered list), extract individual components
+    if (searchText && filteredList.length > 0) {
+      // Parse the hierarchical name to extract individual components
+      const parts = item.name.split(' > ');
+      const cityName = parts[0] || location.city_name;
+      const areaName = parts[1] || '';
+      const localityName = parts[2] || '';
+      
+      locationData = {
+        ...location,
+        id: item.id,
+        area_id: item.id,
+        area_name: areaName,
+        locality_name: localityName,
+        name: localityName || areaName || cityName,
+      };
+    } else {
+      // Regular area selection (not from search)
+      locationData = {
+        ...location,
+        area_id: item.id,
+        area_name: item.name,
+      };
+    }
+    
     dispatch(setLocation(locationData));
     await AsyncStorage.setItem('location', JSON.stringify({...locationData}));
-    navigation.navigate('LocalitiesScreen');
+    
+    // If item is from search results (filtered list), go to home screen
+    if (searchText && filteredList.length > 0) {
+      navigation.navigate('HomeScreen');
+    } else {
+      navigation.navigate('LocalitiesScreen');
+    }
   };
 
   const renderArea = ({item, index}: {item: AreaType; index: number}) => {

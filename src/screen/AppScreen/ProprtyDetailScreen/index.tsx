@@ -279,6 +279,20 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         console.log('Slider Data Response:', res);
         // Handle the response structure: res.data
         const data = res?.data ?? [];
+        
+        if (data.length === 0) {
+          console.log('❌ No ads data returned from API - using mock data');
+          const mockAds = [{
+            id: 'mock-1',
+            title: 'Connect with Top Agents',
+            description: 'Get expert advice and find the perfect property match',
+            image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+            buttonText: 'Contact Agent'
+          }];
+          setAdsData(mockAds);
+          return;
+        }
+        
         const adsArray = data.map((item: any) => ({
           id: item.id,
           title: item.title || 'Featured Property',
@@ -294,7 +308,16 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
       .catch(error => {
         console.log('Error in getSliderData:', error);
         console.log('Error details:', JSON.stringify(error, null, 2));
-        setAdsData([]); // Set empty array on error
+        
+        // Use mock data when API fails
+        const mockAds = [{
+          id: 'mock-1',
+          title: 'Connect with Top Agents',
+          description: 'Get expert advice and find the perfect property match',
+          image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+          buttonText: 'Contact Agent'
+        }];
+        setAdsData(mockAds);
         // Show error toast only if it's not a network issue
         if (error?.message && !error?.message.includes('Network')) {
           Toast.show({
@@ -358,10 +381,16 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   };
 
   const renderAdsCard = () => {
-    // Hide ads card if no data
-    if (adsData.length === 0) {
-      return null;
-    }
+    // Use mock data if no real data available
+    const mockAds = [{
+      id: 'mock-1',
+      title: 'Connect with Top Agents',
+      description: 'Get expert advice and find the perfect property match',
+      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400',
+      buttonText: 'Contact Agent'
+    }];
+    
+    const displayAds = adsData.length > 0 ? adsData : mockAds;
 
     return (
       <View style={styles.adsContainer}>

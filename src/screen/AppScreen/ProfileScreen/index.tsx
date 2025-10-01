@@ -59,7 +59,13 @@ const ProfileScreen = ({navigation}: ProfileScreennProps) => {
       if (!requireAuth()) {
         return; // User will be redirected to login
       }
-    }, [requireAuth])
+      
+      // Refresh user data when screen comes into focus
+      if (userData?.id) {
+        console.log('ProfileScreen focused - refreshing user data');
+        getDetails(userData.id, userData.role || 'user');
+      }
+    }, [requireAuth, userData?.id, userData?.role])
   );
 
   useEffect(() => {

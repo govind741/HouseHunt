@@ -343,7 +343,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       .array()
       .of(yup.mixed().required('Image is required'))
       .min(1, 'At least one image is required'),
-    profile_image: yup.mixed().notRequired(),
+    profile_image: yup.mixed().nullable(),
   });
 
   const formik = useFormik({
@@ -363,80 +363,57 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     onSubmit: values => {
       handleSignup(values);
     },
-    validateOnChange: false,
-    validateOnBlur: false,
+    validateOnChange: true,
+    validateOnBlur: true,
   });
 
   const handleSignup = (values: FormikValues) => {
-    if (formik.isValid) {
-      const formData = new FormData();
-      formData.append('name', values.agent_name);
-      formData.append('agency_name', values.agency_name);
-      formData.append('whatsapp_number', values.whatsapp_number);
-      formData.append('email', values.email);
-      formData.append('description', values.overview);
-      formData.append('agent_address', values.agent_address);
-      
-      // Add coordinates if available
-      if (values.latitude && values.longitude) {
-        formData.append('latitude', values.latitude.toString());
-        formData.append('longitude', values.longitude.toString());
-      }
-      
-      if (formik.values.images.length > 0) {
-        formik.values.images.forEach((image: any, index: number) => {
-          const isMainImage = index === mainImageIndex;
-          formData.append('image', {
-            uri: image.uri,
-            name: image.name || `image_${index}.jpg`,
-            type: image.type || 'image/jpeg',
-          });
-          
-          // Mark the main image
-          if (isMainImage) {
-            formData.append('main_image_index', index.toString());
-          }
-        });
-      }
-
-      if (formik.values.profile_image) {
-        const image: any = formik.values.profile_image ?? null;
-        formData.append('image_url', {
+    console.log('handleSignup called with values:', values);
+    
+    const formData = new FormData();
+    formData.append('name', values.agent_name);
+    formData.append('agency_name', values.agency_name);
+    formData.append('whatsapp_number', values.whatsapp_number);
+    formData.append('email', values.email);
+    formData.append('description', values.overview);
+    formData.append('agent_address', values.agent_address);
+    
+    // Add coordinates if available
+    if (values.latitude && values.longitude) {
+      formData.append('latitude', values.latitude.toString());
+      formData.append('longitude', values.longitude.toString());
+    }
+    
+    if (formik.values.images.length > 0) {
+      formik.values.images.forEach((image: any, index: number) => {
+        const isMainImage = index === mainImageIndex;
+        formData.append('image', {
           uri: image.uri,
-          name: image.name || `profile_${new Date().getTime()}.jpg`,
+          name: image.name || `image_${index}.jpg`,
           type: image.type || 'image/jpeg',
         });
-      }
-
-      navigation.navigate('WorkLocationScreen', {
-        signupPayload: formData,
-        token,
+        
+        // Mark the main image
+        if (isMainImage) {
+          formData.append('main_image_index', index.toString());
+        }
       });
-
-      // axios
-      //   .patch(`${BASE_URL}${ENDPOINT.update_agent_profile}`, formData, {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //       'Content-Type': 'multipart/form-data',
-      //     },
-      //   })
-      //   .then(() => {
-      //     Toast.show({
-      //       type: 'success',
-      //       text1: 'Account created successfully',
-      //     });
-      //     navigation.navigate('HomeScreenStack', {
-      //       screen: 'HomeScreen',
-      //     });
-      //   })
-      //   .catch(error => {
-      //     console.log('error in handleSignup:', error);
-      //     Toast.show({
-      //       type: 'error',
-      //       text1: error?.response?.data?.message,
-      //     });
-      //   });
     }
+
+    if (formik.values.profile_image) {
+      const image: any = formik.values.profile_image ?? null;
+      formData.append('image_url', {
+        uri: image.uri,
+        name: image.name || `profile_${new Date().getTime()}.jpg`,
+        type: image.type || 'image/jpeg',
+      });
+    }
+
+    console.log('Navigating to WorkLocationScreen');
+    navigation.navigate('WorkLocationScreen', {
+      signupPayload: formData,
+      token,
+    });
   };
 
   const renderImageContainer = () => {
@@ -738,7 +715,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             label="Continue"
             style={styles.btnStyle}
             labelStyle={styles.btnLabel}
-            onPress={() => handleSignup(formik.values)}
+            onPress={() => formik.handleSubmit()}
           />
         </View>
       </ScrollView>
