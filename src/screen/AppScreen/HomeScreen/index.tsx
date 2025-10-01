@@ -463,7 +463,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     loadAdsData();
   };
 
-  const handleTextChange = (text: string) => {
+  const handleTextChange = useCallback((text: string) => {
     setSearchText(text);
     if (inputRef.current) {
       clearTimeout(inputRef.current);
@@ -476,7 +476,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         setFilteredList([]);
       }
     }, 300);
-  };
+  }, []);
 
   const handleAdPress = (ad: any) => {
     console.log('Ad pressed:', ad.title);
@@ -627,8 +627,8 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
   const renderListHeader = useCallback(() => (
     <View style={styles.parent}>
       <SearchContainer
-        key="home-search"
         placeholder="Search for area, locality, street name"
+        style={styles.searchStyle}
         onChangeText={handleTextChange}
         searchValue={searchText}
         rightIcon={renderRightIcon()}
@@ -658,7 +658,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         </ScrollView>
       )}
     </View>
-  ), [searchText, filteredList, location, handleTextChange]);
+  ), [searchText, filteredList, location]);
 
   if (isLoading) {
     return <LoadingAndErrorComponent />;
@@ -700,8 +700,8 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             keyboardShouldPersistTaps="handled">
             <View style={styles.parent}>
               <SearchContainer
-                key="home-search-scroll"
                 placeholder="Search for area, locality, street name"
+                style={styles.searchStyle}
                 onChangeText={handleTextChange}
                 searchValue={searchText}
                 rightIcon={renderRightIcon()}
@@ -805,10 +805,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
+  searchStyle: {
+    marginBottom: 15,
+  },
   searchListContainer: {
     backgroundColor: COLORS.WHITE,
     borderRadius: 8,
     marginTop: 8,
+    marginBottom: 26,
     maxHeight: 200,
     elevation: 5,
     shadowColor: '#000',
