@@ -59,11 +59,31 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
   const adScrollViewRef = useRef<ScrollView>(null);
 
-  // Handle back button press to navigate to city selection
+  // Handle back button press with step-by-step navigation
   const handleBackPress = useCallback(() => {
-    navigation.navigate('CitySelectionScreen');
+    console.log('Back pressed, current location:', location);
+    
+    // Step-by-step back navigation based on location state
+    if (location?.locality_name) {
+      // If locality is selected, go back to LocalitiesScreen
+      console.log('Going back to LocalitiesScreen');
+      navigation.navigate('LocalitiesScreen');
+    } else if (location?.area_name || location?.area_id) {
+      // If area is selected but no locality, go back to AreaSelectionScreen
+      console.log('Going back to AreaSelectionScreen');
+      navigation.navigate('AreaSelectionScreen');
+    } else if (location?.city_name || location?.city_id) {
+      // If only city is selected, go back to CitySelectionScreen
+      console.log('Going back to CitySelectionScreen');
+      navigation.navigate('CitySelectionScreen');
+    } else {
+      // No location selected, go to CitySelectionScreen
+      console.log('No location, going to CitySelectionScreen');
+      navigation.navigate('CitySelectionScreen');
+    }
+    
     return true;
-  }, [navigation]);
+  }, [navigation, location]);
 
   // Check agent authentication state on screen focus
   useEffect(() => {

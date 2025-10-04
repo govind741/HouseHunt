@@ -177,14 +177,24 @@ const SavedScreen = ({navigation}: SavedScreenProps) => {
     handleDeleteAgentBookmark(payload)
       .then(res => {
         console.log('Delete bookmark response:', res);
-        const filteredData = bookmarkList?.filter(
-          (ele: any) => ele?.agent_id !== agent_id,
-        );
-        Toast.show({
-          type: 'success',
-          text1: res?.message || 'Bookmark removed successfully'
-        });
-        setBookmarkList(filteredData);
+        
+        // Check if bookmark was actually removed
+        if (res?.data?.bookmarked === false || res?.success) {
+          const filteredData = bookmarkList?.filter(
+            (ele: any) => ele?.agent_id !== agent_id,
+          );
+          Toast.show({
+            type: 'success',
+            text1: 'Agent Bookmark removed Successfully'
+          });
+          setBookmarkList(filteredData);
+        } else {
+          // Backend didn't remove the bookmark
+          Toast.show({
+            type: 'error',
+            text1: 'Failed to remove bookmark - please try again'
+          });
+        }
       })
       .catch(error => {
         console.log('Error in deleteBookmarkList:', error);
