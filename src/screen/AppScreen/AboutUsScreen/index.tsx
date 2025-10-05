@@ -24,54 +24,23 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
   const aboutUsUrl = `${BASE_URL}v1/auth/about-us`;
 
   // Helper function to extract text from structured content
-  const extractTextFromStructuredContent = (data: any): string => {
+  const extractTextFromStructuredContent = (contentString: string): string => {
     try {
-      // Handle Draft.js or similar block-based content
-      if (data && typeof data === 'object') {
-        // Check for blocks array (Draft.js format)
-        if (data.blocks && Array.isArray(data.blocks)) {
-          return data.blocks
-            .map((block: any) => {
-              if (block && block.text) {
-                return block.text;
-              }
-              return '';
-            })
-            .filter((text: string) => text.trim().length > 0)
-            .join('\n\n');
-        }
-        
-        // Check for entityMap or other structured formats
-        if (data.entityMap && data.blocks) {
-          return data.blocks
-            .map((block: any) => block.text || '')
-            .filter((text: string) => text.trim().length > 0)
-            .join('\n\n');
-        }
-        
-        // Handle array of content blocks
-        if (Array.isArray(data)) {
-          return data
-            .map((item: any) => {
-              if (typeof item === 'string') return item;
-              if (item && item.text) return item.text;
-              if (item && item.content) return item.content;
-              return '';
-            })
-            .filter((text: string) => text.trim().length > 0)
-            .join('\n\n');
-        }
-        
-        // Handle single content object
-        if (data.text) return data.text;
-        if (data.content) return data.content;
-        if (data.description) return data.description;
+      // Parse the JSON string
+      const data = JSON.parse(contentString);
+      
+      // Handle Draft.js format
+      if (data && data.blocks && Array.isArray(data.blocks)) {
+        return data.blocks
+          .map((block: any) => block.text || '')
+          .filter((text: string) => text.trim().length > 0)
+          .join('\n\n');
       }
       
-      return '';
+      return contentString;
     } catch (error) {
-      console.error('Error extracting text from structured content:', error);
-      return '';
+      // If parsing fails, return original content
+      return contentString;
     }
   };
 
@@ -106,58 +75,20 @@ const AboutUsScreen = ({navigation}: AboutUsScreenProps) => {
           }
           
           // Extract content from various possible fields
-          if (dataObj.content) {
-            content = dataObj.content;
-          } else if (dataObj.data) {
-            // Handle array or object data
-            if (Array.isArray(dataObj.data)) {
-              // If it's an array, try to extract content from first item or join items
-              if (dataObj.data.length > 0) {
-                const firstItem = dataObj.data[0];
-                if (typeof firstItem === 'string') {
-                  content = dataObj.data.join('\n');
-                } else if (typeof firstItem === 'object') {
-                  // Try to extract structured content first
-                  const extractedText = extractTextFromStructuredContent(firstItem);
-                  if (extractedText) {
-                    content = extractedText;
-                  } else {
-                    content = firstItem.content || firstItem.text || firstItem.description || JSON.stringify(firstItem, null, 2);
-                  }
-                } else {
-                  content = String(firstItem);
-                }
-              } else {
-                content = 'No content available';
-              }
-            } else if (typeof dataObj.data === 'string') {
-              content = dataObj.data;
-            } else if (typeof dataObj.data === 'object') {
-              // Try to extract structured content first
-              const extractedText = extractTextFromStructuredContent(dataObj.data);
-              if (extractedText) {
-                content = extractedText;
-              } else {
-                content = dataObj.data.content || dataObj.data.text || dataObj.data.description || JSON.stringify(dataObj.data, null, 2);
-              }
+          if (dataObj.data && Array.isArray(dataObj.data) && dataObj.data.length > 0) {
+            const firstItem = dataObj.data[0];
+            if (firstItem && firstItem.content) {
+              // Parse Draft.js content
+              content = extractTextFromStructuredContent(firstItem.content);
+            } else if (firstItem && firstItem.text) {
+              content = firstItem.text;
             } else {
-              content = String(dataObj.data);
+              content = 'No content available';
             }
-          } else if (dataObj.message) {
-            content = dataObj.message;
-          } else if (dataObj.text) {
-            content = dataObj.text;
-          } else if (dataObj.description) {
-            content = dataObj.description;
+          } else if (dataObj.content) {
+            content = extractTextFromStructuredContent(dataObj.content);
           } else {
-            // Try to extract structured content from the entire object
-            const extractedText = extractTextFromStructuredContent(dataObj);
-            if (extractedText) {
-              content = extractedText;
-            } else {
-              // Convert entire object to readable text
-              content = JSON.stringify(dataObj, null, 2);
-            }
+            content = 'No content available';
           }
           
           isHtml = typeof content === 'string' && (content.includes('<html>') || (content.includes('<') && content.includes('>')));
