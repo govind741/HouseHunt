@@ -21,27 +21,20 @@ const TermsConditionsScreen = ({navigation}: any) => {
 
   const termsUrl = `${BASE_URL}v1/auth/terms`;
 
-  const parseDraftJsContent = (blocks: any[]) => {
-    if (!Array.isArray(blocks)) return '';
-    
-    return blocks.map(block => {
-      if (!block || !block.text) return '';
-      
-      let text = block.text;
-      const styles = block.inlineStyleRanges || [];
-      
-      // Apply bold styling
-      styles.forEach((style: any) => {
-        if (style.style === 'BOLD') {
-          const before = text.substring(0, style.offset);
-          const bold = text.substring(style.offset, style.offset + style.length);
-          const after = text.substring(style.offset + style.length);
-          text = before + '**' + bold + '**' + after;
-        }
-      });
-      
-      return text;
-    }).filter(text => text.trim()).join('\n\n');
+  // Helper function to extract text from Draft.js content
+  const extractTextFromStructuredContent = (contentString: string): string => {
+    try {
+      const data = JSON.parse(contentString);
+      if (data && data.blocks && Array.isArray(data.blocks)) {
+        return data.blocks
+          .map((block: any) => block.text || '')
+          .filter((text: string) => text.trim().length > 0)
+          .join('\n\n');
+      }
+      return contentString;
+    } catch (error) {
+      return contentString;
+    }
   };
 
   const fetchTermsContent = async () => {
@@ -64,48 +57,23 @@ const TermsConditionsScreen = ({navigation}: any) => {
         } else if (typeof response.data === 'object') {
           let dataObj = response.data;
           
-          // Handle nested data structure
-          if (dataObj.data && Array.isArray(dataObj.data) && dataObj.data.length > 0) {
-            const firstItem = dataObj.data[0];
-            
-            // Check if content is a JSON string
-            if (firstItem.content && typeof firstItem.content === 'string') {
-              try {
-                const parsedContent = JSON.parse(firstItem.content);
-                if (parsedContent.blocks && Array.isArray(parsedContent.blocks)) {
-                  content = parseDraftJsContent(parsedContent.blocks);
-                } else {
-                  content = firstItem.content;
-                }
-              } catch {
-                content = firstItem.content;
-              }
-            } else if (firstItem.blocks && Array.isArray(firstItem.blocks)) {
-              content = parseDraftJsContent(firstItem.blocks);
-            } else {
-              content = String(firstItem.content || firstItem.text || firstItem);
-            }
-          } else if (dataObj.data && typeof dataObj.data === 'object') {
+          if (dataObj.data && typeof dataObj.data === 'object') {
             dataObj = dataObj.data;
           }
           
-          // Check for Draft.js format at current level
-          if (!content && dataObj.blocks && Array.isArray(dataObj.blocks)) {
-            content = parseDraftJsContent(dataObj.blocks);
-          } else if (!content && dataObj.content) {
-            // Check if content is Draft.js format
-            try {
-              const parsed = typeof dataObj.content === 'string' ? JSON.parse(dataObj.content) : dataObj.content;
-              if (parsed.blocks && Array.isArray(parsed.blocks)) {
-                content = parseDraftJsContent(parsed.blocks);
-              } else {
-                content = dataObj.content;
-              }
-            } catch {
-              content = dataObj.content;
+          if (dataObj.data && Array.isArray(dataObj.data) && dataObj.data.length > 0) {
+            const firstItem = dataObj.data[0];
+            if (firstItem && firstItem.content) {
+              content = extractTextFromStructuredContent(firstItem.content);
+            } else if (firstItem && firstItem.text) {
+              content = firstItem.text;
+            } else {
+              content = 'No content available';
             }
-          } else if (!content) {
-            content = String(dataObj.message || dataObj.text || dataObj.description || JSON.stringify(dataObj, null, 2));
+          } else if (dataObj.content) {
+            content = extractTextFromStructuredContent(dataObj.content);
+          } else {
+            content = 'No content available';
           }
           
           isHtml = typeof content === 'string' && (content.includes('<html>') || (content.includes('<') && content.includes('>')));

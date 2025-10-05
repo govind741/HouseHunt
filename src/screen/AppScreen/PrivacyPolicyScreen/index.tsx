@@ -21,6 +21,22 @@ const PrivacyPolicyScreen = ({navigation}: any) => {
 
   const privacyPolicyUrl = `${BASE_URL}v1/auth/privacy-policy`;
 
+  // Helper function to extract text from Draft.js content
+  const extractTextFromStructuredContent = (contentString: string): string => {
+    try {
+      const data = JSON.parse(contentString);
+      if (data && data.blocks && Array.isArray(data.blocks)) {
+        return data.blocks
+          .map((block: any) => block.text || '')
+          .filter((text: string) => text.trim().length > 0)
+          .join('\n\n');
+      }
+      return contentString;
+    } catch (error) {
+      return contentString;
+    }
+  };
+
   const fetchPrivacyPolicyContent = async () => {
     try {
       setLoading(true);
@@ -45,16 +61,19 @@ const PrivacyPolicyScreen = ({navigation}: any) => {
             dataObj = dataObj.data;
           }
           
-          if (dataObj.content) {
-            content = dataObj.content;
-          } else if (dataObj.data) {
-            if (Array.isArray(dataObj.data)) {
-              content = dataObj.data.length > 0 ? String(dataObj.data[0].content || dataObj.data[0].text || dataObj.data[0]) : 'No content available';
+          if (dataObj.data && Array.isArray(dataObj.data) && dataObj.data.length > 0) {
+            const firstItem = dataObj.data[0];
+            if (firstItem && firstItem.content) {
+              content = extractTextFromStructuredContent(firstItem.content);
+            } else if (firstItem && firstItem.text) {
+              content = firstItem.text;
             } else {
-              content = String(dataObj.data.content || dataObj.data.text || dataObj.data);
+              content = 'No content available';
             }
+          } else if (dataObj.content) {
+            content = extractTextFromStructuredContent(dataObj.content);
           } else {
-            content = String(dataObj.message || dataObj.text || dataObj.description || JSON.stringify(dataObj, null, 2));
+            content = 'No content available';
           }
           
           isHtml = typeof content === 'string' && (content.includes('<html>') || (content.includes('<') && content.includes('>')));

@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
@@ -10,16 +11,166 @@ import CustomBack from '../../../components/CustomBack';
 import MagicText from '../../../components/MagicText';
 import {COLORS} from '../../../assets/colors';
 import {BASE_URL} from '../../../constant/urls';
+import axios from 'axios';
 
 const CustomerCareScreen = ({navigation}: any) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [htmlContent, setHtmlContent] = useState('');
+  const [useWebView, setUseWebView] = useState(false);
 
-  const customerCareUrl = `${BASE_URL}v1/auth/customer-care`;
+  const customerCareUrl = `${BASE_URL}v1/auth/contact-us`;
+
+  // Helper function to extract text from Draft.js content
+  const extractTextFromStructuredContent = (contentString: string): string => {
+    try {
+      const data = JSON.parse(contentString);
+      if (data && data.blocks && Array.isArray(data.blocks)) {
+        return data.blocks
+          .map((block: any) => block.text || '')
+          .filter((text: string) => text.trim().length > 0)
+          .join('\n\n');
+      }
+      return contentString;
+    } catch (error) {
+      return contentString;
+    }
+  };
+
+  const fetchCustomerCareContent = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      
+      const response = await axios.get(customerCareUrl);
+      
+      if (response.data) {
+        let content = '';
+        let isHtml = false;
+        
+        if (typeof response.data === 'string') {
+          content = response.data;
+          isHtml = content.includes('<html>') || (content.includes('<') && content.includes('>'));
+        } else if (typeof response.data === 'object') {
+          let dataObj = response.data;
+          
+          if (dataObj.data && typeof dataObj.data === 'object') {
+            dataObj = dataObj.data;
+          }
+          
+          if (dataObj.data && Array.isArray(dataObj.data) && dataObj.data.length > 0) {
+            const firstItem = dataObj.data[0];
+            if (firstItem && firstItem.content) {
+              content = extractTextFromStructuredContent(firstItem.content);
+            } else if (firstItem && firstItem.text) {
+              content = firstItem.text;
+            } else {
+              content = 'No content available';
+            }
+          } else if (dataObj.content) {
+            content = extractTextFromStructuredContent(dataObj.content);
+          } else {
+            content = 'No content available';
+          }
+          
+          isHtml = typeof content === 'string' && (content.includes('<html>') || (content.includes('<') && content.includes('>')));
+        } else {
+          content = String(response.data);
+        }
+        
+        content = String(content || '');
+        
+        if (content && content.trim().length > 0) {
+          setHtmlContent(content);
+          setUseWebView(isHtml);
+          setError(false);
+        } else {
+          setError(true);
+        }
+      } else {
+        setError(true);
+      }
+    } catch (err) {
+      console.error('Error fetching Customer Care content:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomerCareContent();
+  }, []);
 
   const handleRetry = () => {
-    setLoading(true);
-    setError(false);
+    fetchCustomerCareContent();
+  };
+
+  const renderHtmlContent = () => {
+    if (useWebView && htmlContent) {
+      const fullHtmlContent = htmlContent.includes('<html>') 
+        ? htmlContent 
+        : `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Customer Care</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  background-color: ${COLORS.WHITE};
+                  color: ${COLORS.BLACK};
+                  padding: 16px;
+                  margin: 0;
+                  line-height: 1.6;
+                }
+                h1, h2, h3, h4, h5, h6 {
+                  color: ${COLORS.BLACK};
+                  font-weight: 600;
+                  margin-top: 20px;
+                  margin-bottom: 10px;
+                }
+                p {
+                  color: ${COLORS.TEXT_GRAY};
+                  line-height: 1.6;
+                  font-size: 16px;
+                  margin-bottom: 12px;
+                }
+                a {
+                  color: ${COLORS.PRIMARY};
+                  text-decoration: none;
+                }
+              </style>
+            </head>
+            <body>
+              ${htmlContent}
+            </body>
+          </html>
+        `;
+
+      return (
+        <WebView
+          source={{html: fullHtmlContent}}
+          style={styles.webView}
+          scalesPageToFit={true}
+          showsVerticalScrollIndicator={false}
+          onError={() => setUseWebView(false)}
+        />
+      );
+    } else {
+      return (
+        <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.textContent}>
+            <MagicText style={styles.contentTitle}>Customer Care</MagicText>
+            <MagicText style={styles.contentText}>
+              {htmlContent}
+            </MagicText>
+          </View>
+        </ScrollView>
+      );
+    }
   };
 
   const renderError = () => (
@@ -53,19 +204,7 @@ const CustomerCareScreen = ({navigation}: any) => {
       </View>
 
       <View style={styles.content}>
-        {loading && renderLoading()}
-        {error ? renderError() : (
-          <WebView
-            source={{uri: customerCareUrl}}
-            style={styles.webView}
-            onLoadEnd={() => setLoading(false)}
-            onError={() => {
-              setLoading(false);
-              setError(true);
-            }}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
+        {loading ? renderLoading() : error ? renderError() : renderHtmlContent()}
       </View>
     </SafeAreaView>
   );
@@ -153,6 +292,26 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 16,
     fontWeight: '600',
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
+  textContent: {
+    padding: 20,
+  },
+  contentTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.BLACK,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  contentText: {
+    fontSize: 16,
+    color: COLORS.TEXT_GRAY,
+    lineHeight: 24,
+    textAlign: 'justify',
   },
 });
 
