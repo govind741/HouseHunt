@@ -22,6 +22,7 @@ import {openWhatsAppForProperty} from '../../utils/whatsappUtils';
 import {sharePropertyFromCard} from '../../utils/shareUtils';
 import {getAgentRatingCount} from '../../services/PropertyServices';
 import {getAgentOfficeAddress as getAuthenticatedAgentOfficeAddress} from '../../services/agentServices';
+import {handleInteraction} from '../../services/HomeService';
 
 type PropertyCardType = {
   item: AgentUserType;
@@ -114,6 +115,18 @@ const PropertyCard = ({
   };
 
   const handleCall = () => {
+    // Track interaction
+    if (token) {
+      const payload = {
+        agentId: item?.agent_id,
+        click_type: 'call',
+        clicked_from: 'mobile',
+      };
+      handleInteraction(payload).catch(error => 
+        console.log('Call interaction tracking error:', error)
+      );
+    }
+
     const phoneNumber = item?.phone || item?.mobile || item?.whatsapp_number;
     if (phoneNumber) {
       const url = `tel:${phoneNumber}`;
@@ -135,6 +148,18 @@ const PropertyCard = ({
   };
 
   const handleWhatsApp = async () => {
+    // Track interaction
+    if (token) {
+      const payload = {
+        agentId: item?.agent_id,
+        click_type: 'whatsapp',
+        clicked_from: 'mobile',
+      };
+      handleInteraction(payload).catch(error => 
+        console.log('WhatsApp interaction tracking error:', error)
+      );
+    }
+
     const phoneNumber = item?.whatsapp_number || item?.phone || item?.mobile;
     
     if (!phoneNumber) {
@@ -208,6 +233,18 @@ const PropertyCard = ({
   };
 
   const handleMap = () => {
+    // Track interaction
+    if (token) {
+      const payload = {
+        agentId: item?.agent_id,
+        click_type: 'map',
+        clicked_from: 'mobile',
+      };
+      handleInteraction(payload).catch(error => 
+        console.log('Map interaction tracking error:', error)
+      );
+    }
+
     // Use the same address logic as display
     const address = officeAddress || item?.office_address;
 
