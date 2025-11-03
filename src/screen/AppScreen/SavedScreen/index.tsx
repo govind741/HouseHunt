@@ -40,21 +40,28 @@ const SavedScreen = ({navigation}: SavedScreenProps) => {
   const getBookmarkList = () => {
     handleGetAgentBookmark()
       .then(res => {
-        console.log('Bookmark API response:', res);
+        console.log('=== BOOKMARK DEBUG ===');
+        console.log('Full API response:', JSON.stringify(res, null, 2));
+        console.log('Response success:', res?.success);
+        console.log('Response data:', res?.data);
+        console.log('Data length:', res?.data?.length);
+        console.log('=== END BOOKMARK DEBUG ===');
         
-        if (res?.success && res?.data) {
+        if (res?.success && res?.data && Array.isArray(res.data) && res.data.length > 0) {
           const updatedData = res.data.map((item: any) => ({
-            ...item,
-            agent_id: item?.agent_id || item?.id,
-            agency_name: item?.agency_name || item?.agent_name || item?.name || 'Unknown Agent',
-            image_urls: item?.agent_images ? item.agent_images.split(',').map((img: string) => toAbsolute(img.trim())).filter(Boolean) : [],
-            image_url: item?.agent_images ? toAbsolute(item.agent_images.split(',')[0]?.trim()) : '',
-            rating: Number(item?.rating || 0),
+            ...item.agent, // Use the nested agent object
+            agent_id: item.agent?.id,
+            agency_name: item.agent?.agency_name || item.agent?.name || 'Unknown Agent',
+            image_urls: item.agent?.profile_image ? [toAbsolute(item.agent.profile_image)] : [],
+            image_url: item.agent?.profile_image ? toAbsolute(item.agent.profile_image) : '',
+            rating: Number(item.agent?.rating || 0),
             isBookmarked: true,
           }));
           
+          console.log('Setting bookmark list with', updatedData.length, 'items');
           setBookmarkList(updatedData);
         } else {
+          console.log('No bookmarks found or invalid response, setting empty array');
           setBookmarkList([]);
         }
       })
