@@ -339,6 +339,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       .required('Email is required.'),
     overview: yup.string().max(200).required('Overview is required.'),
     agent_address: yup.string().required('Agent address is required.'),
+    manual_address: yup.string().required('Manual address is required.'),
     images: yup
       .array()
       .of(yup.mixed().required('Image is required'))
@@ -354,6 +355,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
       email: '',
       overview: '',
       agent_address: '',
+      manual_address: '',
       latitude: null,
       longitude: null,
       images: [],
@@ -377,6 +379,7 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     formData.append('email', values.email);
     formData.append('description', values.overview);
     formData.append('agent_address', values.agent_address);
+    formData.append('manual_address', values.manual_address);
     
     // Add coordinates if available
     if (values.latitude && values.longitude) {
@@ -619,6 +622,22 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
             errorStyle={styles.errorLabel}
             multiline
             maxLength={200}
+          />
+
+          <TextField
+            placeholder="Address"
+            leftIcon={<LocationIcon />}
+            style={[
+              styles.textFieldStyle,
+              formik.errors.manual_address ? {} : {marginBottom: 18},
+            ]}
+            value={formik.values.manual_address}
+            onChangeText={(text) => formik.setFieldValue('manual_address', text)}
+            isValid={formik.errors.manual_address ? false : true}
+            errorMessage={formik.errors.manual_address}
+            errorStyle={styles.errorLabel}
+            multiline
+            numberOfLines={2}
           />
 
           <View style={styles.addressContainer}>
