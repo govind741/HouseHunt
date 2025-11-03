@@ -752,11 +752,11 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
             </View>
             <View style={styles.bookmarkShareContainer}>
               <TouchableOpacity onPress={() => addNewBookmark()}>
-                <View style={[
-                  styles.bookmarkIconView,
-                  isBookmarked && styles.bookmarkIconViewActive
-                ]}>
-                  <BookmarkIcon color={isBookmarked ? COLORS.WHITE : COLORS.TEXT_GRAY} />
+                <View style={styles.bookmarkIconView}>
+                  <BookmarkIcon 
+                    filled={isBookmarked}
+                    color={isBookmarked ? COLORS.MINT_BLUE : COLORS.WHITE} 
+                  />
                 </View>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1073,9 +1073,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
-  },
-  bookmarkIconViewActive: {
-    backgroundColor: '#1976D2',
   },
   shareIconContainer: {
     backgroundColor: COLORS.SHADOW_COLOR,

@@ -17,4 +17,5 @@ export enum COLORS {
   'MODAL_BACKGROUND' = 'rgba(0,0,0,0.7)',
   'MODAL_CONTAINER' = '#6B6B6B',
   'PRIMARY' = '#507089',
+  'MINT_BLUE' = '#40E0D0',
 }

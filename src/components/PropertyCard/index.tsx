@@ -325,12 +325,10 @@ const PropertyCard = ({
             {/* Right Side - Bookmark and Share */}
             <View style={styles.rightIconsContainer}>
               <TouchableOpacity onPress={() => onBookmarkPress()}>
-                <View style={[
-                  styles.bookmarkIconView,
-                  isBookmarked && styles.bookmarkIconViewActive
-                ]}>
+                <View style={styles.bookmarkIconView}>
                   <BookmarkIcon 
-                    color={isBookmarked ? COLORS.WHITE : COLORS.TEXT_GRAY} 
+                    filled={isBookmarked}
+                    color={isBookmarked ? COLORS.MINT_BLUE : COLORS.WHITE} 
                   />
                 </View>
               </TouchableOpacity>
@@ -394,9 +392,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
-  },
-  bookmarkIconViewActive: {
-    backgroundColor: '#1976D2', // Active blue background when bookmarked
   },
   shareIconContainer: {
     backgroundColor: COLORS.SHADOW_COLOR,
