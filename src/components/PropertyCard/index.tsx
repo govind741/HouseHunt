@@ -303,9 +303,6 @@ const PropertyCard = ({
               totalRatings={item?.total_ratings}
               showTotalRatings={false}
             />
-            <MagicText style={styles.totalRatingsText}>
-              ({totalRatings} rating{totalRatings !== 1 ? 's' : ''})
-            </MagicText>
           </View>
         </View>
         
