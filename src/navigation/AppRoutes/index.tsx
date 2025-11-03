@@ -13,7 +13,7 @@ const AppRoutes = () => {
   return (
     <AppStack.Navigator 
       screenOptions={{headerShown: false}}
-      initialRouteName="HomeScreenStack"
+      initialRouteName={token ? "HomeScreenStack" : "AuthStack"}
     >
       <AppStack.Screen name="HomeScreenStack" component={HomeScreenStack} />
       <AppStack.Screen name="AuthStack" component={AuthRoutes} />
