@@ -95,8 +95,8 @@ const CustomSlider = ({
                   key={index}
                   currentIndex={currentIndex}
                   index={index}
-                  activeColor={COLORS.LIGHT_GREEN}
-                  InActiveColor={COLORS.GRAY}
+                  activeColor="#FFFFFF"
+                  InActiveColor="#87CEEB"
                 />
               );
             })
