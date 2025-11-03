@@ -63,6 +63,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
   const [totalRatings, setTotalRatings] = useState<number>(0);
   const [officeAddress, setOfficeAddress] = useState<string>('Loading address...');
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [isShared, setIsShared] = useState<boolean>(false);
   const [sliderData, setSliderData] = useState<{id: string; image: string}[]>(
     [],
   );
@@ -474,6 +475,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
     }
 
     console.log('Sharing property details:', agentDetails);
+    setIsShared(true);
 
     await sharePropertyFromDetail(
       agentDetails,
@@ -481,10 +483,12 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
         // Success callback
         console.log('Property shared successfully');
         handleUserInteraction('share');
+        setTimeout(() => setIsShared(false), 2000);
       },
       (error) => {
         // Error callback
         console.error('Share error:', error);
+        setTimeout(() => setIsShared(false), 2000);
       }
     );
   };
@@ -762,7 +766,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
               <TouchableOpacity
                 onPress={() => handleShare()}
                 style={styles.shareIconContainer}>
-                <ShareIcon />
+                <ShareIcon filled={isShared} color={isShared ? COLORS.LIGHT_GREEN : undefined} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1009,9 +1013,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.LIGHT_GREEN,
     borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minHeight: 28,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minHeight: 24,
   },
   ratingText: {
     fontSize: 14,
@@ -1020,10 +1024,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   totalRatingsText: {
-    fontSize: 12,
-    color: COLORS.TEXT_GRAY,
-    marginTop: 4,
-    textAlign: 'right',
+    fontSize: 14,
+    color: COLORS.BLACK,
+    marginLeft: 8,
+    textAlign: 'left',
   },
   addressSection: {
     marginTop: 8,

@@ -41,6 +41,7 @@ const PropertyCard = ({
   const {token} = useAppSelector(state => state.auth);
   const [totalRatings, setTotalRatings] = useState<number>(0);
   const [officeAddress, setOfficeAddress] = useState<string>('');
+  const [isShared, setIsShared] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchRatingCount = async () => {
@@ -95,16 +96,19 @@ const PropertyCard = ({
   }, [token]);
   const handleShare = async () => {
     console.log('Sharing property from card:', item);
+    setIsShared(true);
 
     await sharePropertyFromCard(
       item,
       () => {
         // Success callback
         console.log('Property shared successfully from card');
+        setTimeout(() => setIsShared(false), 2000);
       },
       (error) => {
         // Error callback
         console.error('Share error from card:', error);
+        setTimeout(() => setIsShared(false), 2000);
       }
     );
   };
@@ -335,7 +339,7 @@ const PropertyCard = ({
               <TouchableOpacity
                 onPress={() => handleShare()}
                 style={styles.shareIconContainer}>
-                <ShareIcon />
+                <ShareIcon filled={isShared} color={isShared ? COLORS.LIGHT_GREEN : undefined} />
               </TouchableOpacity>
             </View>
           </View>
