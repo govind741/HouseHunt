@@ -47,11 +47,41 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
           areaId: location.area_id,
         };
       }
+      
       getAllLocalitiesList(payload)
         .then(res => {
-          console.log('Localities List Response:', res);
-          // Handle the response structure: res.data (not res.formattedData)
-          const localities = res?.data ?? [];
+          let localities = res?.data ?? [];
+          
+          // Client-side filtering if API doesn't filter properly
+          if (localities.length > 0) {
+            let filteredLocalities = localities;
+            
+            if (location?.area_id) {
+              filteredLocalities = localities.filter((locality: LocalityType) => 
+                locality.area_id === location.area_id
+              );
+            } else if (location?.area_name) {
+              // Map area names to area_ids based on the data structure
+              const areaMapping: {[key: string]: number} = {
+                'Central Delhi': 1,
+                'South Delhi': 2, 
+                'West Delhi': 3,
+                'North Delhi': 4,
+                'East Delhi': 5
+              };
+              
+              const mappedAreaId = areaMapping[location.area_name];
+              
+              if (mappedAreaId) {
+                filteredLocalities = localities.filter((locality: LocalityType) => 
+                  locality.area_id === mappedAreaId
+                );
+              }
+            }
+            
+            localities = filteredLocalities;
+          }
+          
           setLocalitiesList(localities);
         })
         .catch(error => {
@@ -151,7 +181,7 @@ const LocalitiesScreen = ({navigation}: LocalitiesScreenProps) => {
 
   const handleOnPress = async (item: LocalityType) => {
     const locationData: locationType = {
-      area_id: location.area_id,
+      area_id: item.area_id ?? null,
       city_id: location?.city_id ?? null,
       id: item.id ?? null,
       name: '',

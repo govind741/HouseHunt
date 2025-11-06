@@ -28,8 +28,8 @@ import {
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
-import {searchLocalities} from '../../../services/locationSelectionServices';
 import {setLocation} from '../../../store/slice/locationSlice';
+import {searchLocalities} from '../../../services/locationSelectionServices';
 import ScreenHeader from '../../../components/ScreenHeader';
 import {BASE_URL} from '../../../constant/urls';
 import {getBreadcrumText} from '../../../utils';
@@ -67,6 +67,15 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     if (location?.locality_name) {
       // If locality is selected, go back to LocalitiesScreen
       console.log('Going back to LocalitiesScreen');
+      // Clear locality_name but preserve area context
+      const updatedLocation = {
+        ...location,
+        locality_name: '',
+        id: null,
+        name: '',
+      };
+      dispatch(setLocation(updatedLocation));
+      AsyncStorage.setItem('location', JSON.stringify(updatedLocation));
       navigation.navigate('LocalitiesScreen');
     } else if (location?.area_name || location?.area_id) {
       // If area is selected but no locality, go back to AreaSelectionScreen

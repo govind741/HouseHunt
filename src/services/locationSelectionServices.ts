@@ -107,21 +107,12 @@ const getAllLocalitiesList = async (payload: {
   areaId: number | undefined;
 }) => {
   try {
-    console.log('Get All Localities Request:', payload);
     let url = `${ENDPOINT.get_localities}?cityId=${payload?.cityId}`;
     if (payload?.areaId) {
       url = url + `&areaId=${payload?.areaId}`;
     }
     
     const response = await axiosInstance.get(url);
-    console.log('Get All Localities Success:', {
-      hasResponse: !!response,
-      responseType: typeof response,
-      hasData: !!response?.data,
-      hasFormattedData: !!response?.formattedData,
-      isArray: Array.isArray(response),
-      responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
-    });
     
     // Handle different response structures and return consistent format
     if (response && response.formattedData && Array.isArray(response.formattedData)) {
