@@ -672,7 +672,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         }}
         onHomePress={() => {}} // Already on home screen
       />
-      <View style={styles.parent}>
+      <View style={styles.searchSection}>
         <SearchContainer
           placeholder="Search for area, locality, street name"
           style={styles.searchStyle}
@@ -705,7 +705,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
           </ScrollView>
         )}
       </View>
-      <View style={styles.scrollContainer}>
+      <View style={styles.listContainer}>
         {agentList?.length > 0 ? (
           <FlatList
             data={agentList}
@@ -787,6 +787,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.WHITE,
   },
+  searchSection: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: COLORS.WHITE,
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: COLORS.WHITE,
+  },
   parent: {
     flex: 1,
     paddingHorizontal: 16,
@@ -798,7 +807,6 @@ const styles = StyleSheet.create({
   },
   flatlistView: {
     paddingBottom: 20,
-    paddingTop: 8,
     backgroundColor: COLORS.WHITE,
   },
   locationCrumb: {
