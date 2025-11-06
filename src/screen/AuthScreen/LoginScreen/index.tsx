@@ -9,7 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Modal,
 } from 'react-native';
+import {WebView} from 'react-native-webview';
 import MagicText from '../../../components/MagicText';
 import {COLORS} from '../../../assets/colors';
 import {IMAGE} from '../../../assets/images';
@@ -20,150 +22,107 @@ import {handleUserLogin} from '../../../services/authServices';
 import Toast from 'react-native-toast-message';
 import {BASE_URL} from '../../../constant/urls';
 import {GoogleIcon} from '../../../assets/icons';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {handleGoogleAuth} from '../../../services/authServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAppDispatch} from '../../../store';
 import {setToken, setUserData, setGuestMode} from '../../../store/slice/authSlice';
 
-// Configuration for Google Sign-In button style
-// 'white' - White background with border (recommended for most cases)
-// 'blue' - Blue background with white text (alternative official style)
-const GOOGLE_BUTTON_VARIANT: 'white' | 'blue' = 'white'; // Change to 'blue' for blue variant
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId: '1083768578728-v4hihcrlbmvg2j4i2p2tc9988tnddu8m.apps.googleusercontent.com',
-  offlineAccess: true,
-  hostedDomain: '', // specify a domain if needed
-  forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
-  accountName: '', // [Android] specifies an account name on the device that should be used
-});
 
 const LoginScreen = ({navigation}: LoginScreenProps) => {
   const [mobile, setMobile] = useState('');
   const [selectedTab, setSelectedTab] = useState<'phone' | 'gmail'>('phone');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [showWebView, setShowWebView] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const dispatch = useAppDispatch();
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
+    setIsGoogleLoading(true);
+    setShowWebView(true);
+  };
+
+  const handleWebViewMessage = (event: any) => {
     try {
-      setIsGoogleLoading(true);
-      console.log('🔵 Starting Google Sign-In...');
-      
-      // Check if device supports Google Play Services
-      console.log('🔵 Checking Google Play Services...');
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
-      console.log('✅ Google Play Services available');
-      
-      // Sign in with Google
-      console.log('🔵 Attempting Google Sign-In...');
-      const userInfo = await GoogleSignin.signIn();
-      console.log('✅ Google Sign-In successful:', {
-        hasIdToken: !!userInfo.data?.idToken,
-        userEmail: userInfo.data?.user?.email,
-        userName: userInfo.data?.user?.name
-      });
-      
-      if (userInfo.data?.idToken) {
-        console.log('🔵 Sending token to backend...');
-        // Send Google token to your backend
-        const response = await handleGoogleAuth(userInfo.data.idToken);
-        console.log('✅ Backend response:', response.data);
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.success && data.tokens && data.user) {
+        const token = data.tokens.access.token;
+        const user = data.user;
         
-        if (response.data && response.data.success) {
-          // User exists or was created successfully
-          await AsyncStorage.setItem('token', response.data.data.token);
-          await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.user));
-          await AsyncStorage.setItem('role', 'user');
+        AsyncStorage.setItem('token', token);
+        AsyncStorage.setItem('userData', JSON.stringify(user));
+        AsyncStorage.setItem('role', 'user');
+        
+        dispatch(setToken(token));
+        dispatch(setUserData(user));
+        dispatch(setGuestMode(false));
+        
+        setShowWebView(false);
+        setIsGoogleLoading(false);
+        
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Signed in with Google successfully!',
+        });
+        
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'HomeScreenStack'}],
+        });
+      }
+    } catch (error) {
+      console.log('Error parsing WebView message:', error);
+    }
+  };
+
+  const handleWebViewNavigationStateChange = (navState: any) => {
+    const {url} = navState;
+    
+    if (url.includes('token=')) {
+      const urlParams = new URLSearchParams(url.split('?')[1]);
+      const token = urlParams.get('token');
+      const userStr = urlParams.get('user');
+      
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(decodeURIComponent(userStr));
           
-          // Update Redux state
-          dispatch(setToken(response.data.data.token));
-          dispatch(setUserData(response.data.data.user));
+          AsyncStorage.setItem('token', token);
+          AsyncStorage.setItem('userData', JSON.stringify(user));
+          AsyncStorage.setItem('role', 'user');
+          
+          dispatch(setToken(token));
+          dispatch(setUserData(user));
           dispatch(setGuestMode(false));
+          
+          setShowWebView(false);
+          setIsGoogleLoading(false);
           
           Toast.show({
             type: 'success',
             text1: 'Success',
-            text2: response.data.message || 'Signed in with Google successfully!',
+            text2: 'Signed in with Google successfully!',
           });
           
-          // Navigate to app
           navigation.reset({
             index: 0,
             routes: [{name: 'AppRoutes'}],
           });
-        } else {
-          console.error('❌ Backend rejected Google auth:', response.data);
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: response.data?.message || 'Google authentication failed',
-          });
-        }
-      } else {
-        console.error('❌ No ID token received from Google');
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to get authentication token from Google',
-        });
-      }
-    } catch (error: any) {
-      console.error('❌ Google Sign-In Error:', {
-        code: error.code,
-        message: error.message,
-        responseData: error?.response?.data
-      });
-      
-      if (error.code === 'SIGN_IN_CANCELLED') {
-        console.log('ℹ️ User cancelled Google Sign-In');
-        return;
-      }
-      
-      // Handle specific backend errors
-      if (error?.response?.data) {
-        const backendError = error.response.data;
-        
-        if (backendError.message?.includes('not registered') || backendError.message?.includes('signup required')) {
-          // User needs to sign up first
-          Toast.show({
-            type: 'info',
-            text1: 'Account Not Found',
-            text2: 'Please sign up first with Google',
-          });
-          
-          // Navigate to signup screen with Google data
-          navigation.navigate('SignupScreen', {
-            googleUserInfo: userInfo?.data?.user,
-            googleToken: userInfo?.data?.idToken
-          });
-          return;
+        } catch (error) {
+          setShowWebView(false);
+          setIsGoogleLoading(false);
         }
       }
-      
-      let errorMessage = 'Google sign-in failed. Please try again.';
-      
-      switch (error.code) {
-        case 'PLAY_SERVICES_NOT_AVAILABLE':
-          errorMessage = 'Google Play Services not available. Please update Google Play Services.';
-          break;
-        case 'IN_PROGRESS':
-          errorMessage = 'Sign-in already in progress. Please wait.';
-          break;
-        case 'NETWORK_ERROR':
-          errorMessage = 'Network error. Please check your internet connection.';
-          break;
-      }
-      
+    }
+    
+    if (url.includes('/auth/error')) {
+      setShowWebView(false);
+      setIsGoogleLoading(false);
       Toast.show({
         type: 'error',
-        text1: 'Google Sign-In Error',
-        text2: errorMessage,
+        text1: 'Error',
+        text2: 'Google authentication failed',
       });
-    } finally {
-      setIsGoogleLoading(false);
     }
   };
 
@@ -300,35 +259,74 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
           <>
             {/* Google Sign-In Button - Following Official Google Design Guidelines */}
             <TouchableOpacity
-              style={
-                GOOGLE_BUTTON_VARIANT === 'blue'
-                  ? styles.googleSignInButtonBlue
-                  : styles.googleSignInButton
-              }
+              style={styles.googleSignInButton}
               onPress={handleGoogleSignIn}
               disabled={isGoogleLoading}
               activeOpacity={0.8}>
               <View style={styles.googleButtonContent}>
-                <View
-                  style={
-                    GOOGLE_BUTTON_VARIANT === 'blue'
-                      ? styles.googleIconContainer
-                      : styles.googleIconContainerWhite
-                  }>
+                <View style={styles.googleIconContainerWhite}>
                   <GoogleIcon width={18} height={18} />
                 </View>
-                <MagicText
-                  style={
-                    GOOGLE_BUTTON_VARIANT === 'blue'
-                      ? styles.googleButtonTextWhite
-                      : styles.googleButtonText
-                  }>
+                <MagicText style={styles.googleButtonText}>
                   {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
                 </MagicText>
               </View>
             </TouchableOpacity>
           </>
         )}
+
+        {/* Google OAuth WebView Modal */}
+        <Modal
+          visible={showWebView}
+          animationType="slide"
+          onRequestClose={() => setShowWebView(false)}>
+          <View style={{flex: 1}}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: COLORS.WHITE}}>
+              <MagicText style={{fontSize: 18, fontWeight: '600'}}>Sign in with Google</MagicText>
+              <TouchableOpacity onPress={() => setShowWebView(false)}>
+                <MagicText style={{fontSize: 16, color: COLORS.BLUE}}>Cancel</MagicText>
+              </TouchableOpacity>
+            </View>
+            <WebView
+              source={{uri: 'https://api.houseapp.in/v1/auth/user/auth/google'}}
+              onNavigationStateChange={handleWebViewNavigationStateChange}
+              onMessage={handleWebViewMessage}
+              startInLoadingState={true}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              userAgent="Mozilla/5.0 (Linux; Android 10; Mobile; rv:81.0) Gecko/81.0 Firefox/81.0"
+              injectedJavaScript={`
+                (function() {
+                  const originalFetch = window.fetch;
+                  window.fetch = function(...args) {
+                    return originalFetch.apply(this, args).then(response => {
+                      if (response.url.includes('/auth/user/auth/google/callback')) {
+                        response.clone().json().then(data => {
+                          if (data.success && data.tokens) {
+                            window.ReactNativeWebView.postMessage(JSON.stringify(data));
+                          }
+                        }).catch(() => {});
+                      }
+                      return response;
+                    });
+                  };
+                  
+                  // Also check for direct JSON responses in the page
+                  setTimeout(() => {
+                    try {
+                      const bodyText = document.body.innerText;
+                      if (bodyText.includes('"success":true') && bodyText.includes('"tokens"')) {
+                        const data = JSON.parse(bodyText);
+                        window.ReactNativeWebView.postMessage(JSON.stringify(data));
+                      }
+                    } catch (e) {}
+                  }, 1000);
+                })();
+                true;
+              `}
+            />
+          </View>
+        </Modal>
 
         <View style={styles.bottomView}>
           <TouchableOpacity
