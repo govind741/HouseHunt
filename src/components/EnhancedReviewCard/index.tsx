@@ -28,14 +28,12 @@ interface EnhancedReviewCardProps {
   item: Review;
   currentUserId?: number;
   onEdit: () => void;
-  onDelete: () => void;
 }
 
 const EnhancedReviewCard = ({
   item,
   currentUserId,
   onEdit,
-  onDelete,
 }: EnhancedReviewCardProps) => {
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   
@@ -81,11 +79,6 @@ const EnhancedReviewCard = ({
   const handleEdit = () => {
     setShowOptionsModal(false);
     onEdit();
-  };
-
-  const handleDelete = () => {
-    setShowOptionsModal(false);
-    onDelete();
   };
 
   return (
@@ -158,14 +151,6 @@ const EnhancedReviewCard = ({
           <View style={styles.optionsModal}>
             <TouchableOpacity style={styles.optionItem} onPress={handleEdit}>
               <MagicText style={styles.optionText}>Edit Review</MagicText>
-            </TouchableOpacity>
-            <View style={styles.optionDivider} />
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={handleDelete}>
-              <MagicText style={[styles.optionText, styles.deleteText]}>
-                Delete Review
-              </MagicText>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -301,9 +286,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.BLACK,
     fontWeight: '500',
-  },
-  deleteText: {
-    color: '#FF3B30',
   },
 });
 

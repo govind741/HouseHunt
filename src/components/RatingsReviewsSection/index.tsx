@@ -20,7 +20,6 @@ import {
   getReviewsList,
   AddNewReview,
   updateReview,
-  deleteReview,
 } from '../../services/PropertyServices';
 import {useAppSelector} from '../../store';
 import Toast from 'react-native-toast-message';
@@ -413,50 +412,6 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
     }
   };
 
-  const handleDeleteReview = async (reviewId: number) => {
-    Alert.alert(
-      'Delete Review',
-      'Are you sure you want to delete this review?',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await deleteReview({
-                review_id: reviewId,
-                userId: user?.id || userData?.id
-              });
-              
-              Toast.show({
-                type: 'success',
-                text1: 'Review deleted successfully',
-              });
-
-              // Immediately update local state by removing the deleted review
-              const updatedReviews = reviews.filter(review => review.id !== reviewId);
-              setReviews(updatedReviews);
-              calculateRatingsFromReviews(updatedReviews);
-              
-              // Fetch fresh data from server
-              setTimeout(() => fetchReviews(), 500);
-            } catch (error) {
-              console.log('Error deleting review:', error);
-              Toast.show({
-                type: 'error',
-                text1: 'Failed to delete review',
-              });
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        },
-      ],
-    );
-  };
-
   const openEditModal = (review: Review) => {
     setEditingReview(review);
     setNewRating(review.rating);
@@ -590,7 +545,6 @@ const RatingsReviewsSection = ({agentId}: RatingsReviewsSectionProps) => {
                 item={item}
                 currentUserId={user?.id || userData?.id}
                 onEdit={() => openEditModal(item)}
-                onDelete={() => handleDeleteReview(item.id)}
               />
             );
           })
