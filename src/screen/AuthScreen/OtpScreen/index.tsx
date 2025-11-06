@@ -34,10 +34,19 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
 
   // Helper function to format phone number for display
   const formatPhoneForDisplay = (phone: string) => {
-    // Remove any existing country code prefixes and formatting
-    let cleanPhone = phone.replace(/^\+91-?/, '').replace(/^\+?91-?/, '').replace(/^91-?/, '');
+    // Remove any existing +91 formatting first
+    let cleanPhone = phone.replace(/^\+91-?\s*/, '');
     
-    // Return formatted phone with single +91 prefix
+    // If it's exactly 10 digits, just add +91- prefix (don't remove anything)
+    if (cleanPhone.length === 10) {
+      return `+91- ${cleanPhone}`;
+    }
+    
+    // If it starts with 91 and is more than 10 digits, remove the 91 country code
+    if (cleanPhone.startsWith('91') && cleanPhone.length > 10) {
+      cleanPhone = cleanPhone.substring(2);
+    }
+    
     return `+91- ${cleanPhone}`;
   };
 
