@@ -19,7 +19,7 @@ import {launchImageLibrary} from 'react-native-image-picker';
 
 import Button from '../../../components/Button';
 import {useAppDispatch} from '../../../store';
-import {setUserData} from '../../../store/slice/authSlice';
+import {setUserData, setGuestMode, setToken} from '../../../store/slice/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import {userFormValidationSchema, UserFormValues} from './constants';
@@ -33,16 +33,20 @@ import {BASE_URL, ENDPOINT} from '../../../constant/urls';
 const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
   const {mobile_number, email, user_id} = route.params;
   const dispatch = useAppDispatch();
+  
+  // Detect if this is Google signup
+  const isGoogleSignup = email && (!mobile_number || mobile_number === '');
 
   console.log('UserSignupScreen params:', {
     mobile_number,
     email,
+    isGoogleSignup,
   });
 
   const handleSignup = async (values: UserFormValues) => {
     try {
       console.log('🚀 Starting user signup process...');
-      console.log('Signup type: Mobile Login');
+      console.log('Signup type:', isGoogleSignup ? 'Google Login' : 'Mobile Login');
       
       // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('token');
@@ -53,7 +57,46 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       // Debug current state
       await debugUserData();
       
-      // Handle mobile login signup
+      if (isGoogleSignup) {
+        // For Google signup, user already exists, just complete the flow
+        console.log('Processing Google signup completion...');
+        
+        // Get user details and complete signup
+        let userDetails;
+        try {
+          userDetails = await handleUserDetails(Number(user_id));
+          console.log('Retrieved Google user details:', userDetails);
+        } catch (detailsError) {
+          console.warn('Failed to fetch user details:', detailsError);
+          userDetails = null;
+        }
+
+        if (userDetails && userDetails.id) {
+          const userData = prepareUserObj(userDetails);
+          
+          // Store user data
+          await AsyncStorage.setItem('userData', JSON.stringify(userData));
+          await AsyncStorage.setItem('role', 'user');
+          
+          dispatch(setToken(token));
+          dispatch(setUserData(userData));
+          dispatch(setGuestMode(false));
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Welcome!',
+            text2: 'Your account is ready to use.',
+          });
+          
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'HomeScreenStack'}],
+          });
+          return;
+        }
+      }
+      
+      // Handle mobile login signup (original flow)
       console.log('Processing mobile login signup...');
       
       const formData = new FormData();
@@ -61,6 +104,10 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       
       if (values.email) {
         formData.append('email', values.email);
+      }
+      
+      if (values.phone) {
+        formData.append('phone', values.phone);
       }
       
       // Fix: Send location as JSON string properly
@@ -84,8 +131,8 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
       console.log('Updating user profile with data:', {
         name: values.name,
         email: values.email,
+        phone: values.phone,
         hasImage: formik.values.profile_image !== null,
-        phone: mobile_number,
       });
 
       // Step 1: Update the profile using fetch API
@@ -201,6 +248,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
     initialValues: {
       name: '',
       email: email || '',
+      phone: mobile_number || '',
       profile_image: null,
     },
     validationSchema: userFormValidationSchema,
@@ -280,15 +328,17 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
         />
 
         <MagicText style={styles.inputLabel}>
-          Phone <MagicText style={styles.astricStyle}>*</MagicText>
+          Phone {!isGoogleSignup && <MagicText style={styles.astricStyle}>*</MagicText>}
+          {isGoogleSignup && <MagicText style={styles.optionalTextStyle}> (optional)</MagicText>}
         </MagicText>
         <TextField
           placeholder="Phone"
           style={[styles.textFieldStyle, {marginBottom: 18}]}
-          value={mobile_number}
+          value={formik.values.phone}
+          onChangeText={formik.handleChange('phone')}
           isValid
-          editable={false}
-          showCountryCode
+          editable={isGoogleSignup}
+          showCountryCode={!isGoogleSignup}
         />
 
         <Text style={styles.inputLabel}>

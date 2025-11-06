@@ -48,27 +48,51 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
         const token = data.tokens.access.token;
         const user = data.user;
         
-        AsyncStorage.setItem('token', token);
-        AsyncStorage.setItem('userData', JSON.stringify(user));
-        AsyncStorage.setItem('role', 'user');
-        
-        dispatch(setToken(token));
-        dispatch(setUserData(user));
-        dispatch(setGuestMode(false));
-        
         setShowWebView(false);
         setIsGoogleLoading(false);
         
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: 'Signed in with Google successfully!',
-        });
+        // Check if user has complete profile (existing user) or needs signup (new user)
+        // For Google users, only check if name exists (phone is optional)
+        const isNewUser = !user.name;
         
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'HomeScreenStack'}],
-        });
+        if (isNewUser) {
+          // New user - show signup form
+          AsyncStorage.setItem('token', token);
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Welcome!',
+            text2: 'Please complete your profile.',
+          });
+          
+          navigation.navigate('UserSignupScreen', {
+            mobile_number: user.phone || '',
+            email: user.email || '',
+            token: token,
+            role: 'user',
+            user_id: user.id?.toString() || ''
+          });
+        } else {
+          // Existing user - login directly
+          AsyncStorage.setItem('token', token);
+          AsyncStorage.setItem('userData', JSON.stringify(user));
+          AsyncStorage.setItem('role', 'user');
+          
+          dispatch(setToken(token));
+          dispatch(setUserData(user));
+          dispatch(setGuestMode(false));
+          
+          Toast.show({
+            type: 'success',
+            text1: 'Welcome back!',
+            text2: 'Signed in successfully.',
+          });
+          
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'HomeScreenStack'}],
+          });
+        }
       }
     } catch (error) {
       console.log('Error parsing WebView message:', error);
@@ -87,27 +111,51 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
         try {
           const user = JSON.parse(decodeURIComponent(userStr));
           
-          AsyncStorage.setItem('token', token);
-          AsyncStorage.setItem('userData', JSON.stringify(user));
-          AsyncStorage.setItem('role', 'user');
-          
-          dispatch(setToken(token));
-          dispatch(setUserData(user));
-          dispatch(setGuestMode(false));
-          
           setShowWebView(false);
           setIsGoogleLoading(false);
           
-          Toast.show({
-            type: 'success',
-            text1: 'Success',
-            text2: 'Signed in with Google successfully!',
-          });
+          // Check if user has complete profile (existing user) or needs signup (new user)
+          // For Google users, only check if name exists (phone is optional)
+          const isNewUser = !user.name;
           
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'AppRoutes'}],
-          });
+          if (isNewUser) {
+            // New user - show signup form
+            AsyncStorage.setItem('token', token);
+            
+            Toast.show({
+              type: 'success',
+              text1: 'Welcome!',
+              text2: 'Please complete your profile.',
+            });
+            
+            navigation.navigate('UserSignupScreen', {
+              mobile_number: user.phone || '',
+              email: user.email || '',
+              token: token,
+              role: 'user',
+              user_id: user.id?.toString() || ''
+            });
+          } else {
+            // Existing user - login directly
+            AsyncStorage.setItem('token', token);
+            AsyncStorage.setItem('userData', JSON.stringify(user));
+            AsyncStorage.setItem('role', 'user');
+            
+            dispatch(setToken(token));
+            dispatch(setUserData(user));
+            dispatch(setGuestMode(false));
+            
+            Toast.show({
+              type: 'success',
+              text1: 'Welcome back!',
+              text2: 'Signed in successfully.',
+            });
+            
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'HomeScreenStack'}],
+            });
+          }
         } catch (error) {
           setShowWebView(false);
           setIsGoogleLoading(false);
