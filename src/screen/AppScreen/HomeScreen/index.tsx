@@ -430,7 +430,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       });
   };
 
-  const renderRightIcon = () => {
+  const renderRightIcon = useCallback(() => {
     if (searchText) {
       return (
         <TouchableOpacity
@@ -443,7 +443,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       );
     }
     return null;
-  };
+  }, [searchText]);
 
   const localitySelectionHandler = async (item: any) => {
     console.log('=== LOCALITY SELECTION DEBUG ===');
@@ -653,42 +653,6 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     );
   }, [bookmarkedAgents, searchText, adsData, token, navigation]);
 
-  const renderListHeader = useCallback(() => (
-    <View style={styles.parent}>
-      <SearchContainer
-        placeholder="Search for area, locality, street name"
-        style={styles.searchStyle}
-        onChangeText={handleTextChange}
-        searchValue={searchText}
-        rightIcon={renderRightIcon()}
-      />
-      <MagicText style={styles.locationCrumb}>
-        {getBreadcrumText(location)}
-      </MagicText>
-      {filteredList?.length > 0 && (
-        <ScrollView
-          style={styles.searchListContainer}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
-          {filteredList?.map((item: any, index: number) => {
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.row}
-                onPress={() => localitySelectionHandler(item)}
-                activeOpacity={0.7}>
-                <MagicText style={styles.locationText} numberOfLines={2}>
-                  {item.name}
-                </MagicText>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
-    </View>
-  ), [searchText, filteredList, location]);
-
   if (isLoading) {
     return <LoadingAndErrorComponent />;
   }
@@ -708,6 +672,39 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
         }}
         onHomePress={() => {}} // Already on home screen
       />
+      <View style={styles.parent}>
+        <SearchContainer
+          placeholder="Search for area, locality, street name"
+          style={styles.searchStyle}
+          onChangeText={handleTextChange}
+          searchValue={searchText}
+          rightIcon={renderRightIcon()}
+        />
+        <MagicText style={styles.locationCrumb}>
+          {getBreadcrumText(location)}
+        </MagicText>
+        {filteredList?.length > 0 && (
+          <ScrollView
+            style={styles.searchListContainer}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {filteredList?.map((item: any, index: number) => {
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.row}
+                  onPress={() => localitySelectionHandler(item)}
+                  activeOpacity={0.7}>
+                  <MagicText style={styles.locationText} numberOfLines={2}>
+                    {item.name}
+                  </MagicText>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
       <View style={styles.scrollContainer}>
         {agentList?.length > 0 ? (
           <FlatList
@@ -715,7 +712,6 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
             showsVerticalScrollIndicator={false}
             keyExtractor={(item, index) => `agent-${item.agent_id}-${index}`}
             renderItem={renderPropertyItem}
-            ListHeaderComponent={renderListHeader}
             contentContainerStyle={styles.flatlistView}
             keyboardShouldPersistTaps="handled"
             removeClippedSubviews={false}
