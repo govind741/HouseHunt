@@ -342,7 +342,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
         />
 
         <Text style={styles.inputLabel}>
-          Email <Text style={styles.optionalTextStyle}>(optional)</Text>
+          Email {!isGoogleSignup && <Text style={styles.optionalTextStyle}>(optional)</Text>}
         </Text>
         <TextField
           placeholder="Enter Email"
@@ -358,6 +358,7 @@ const UserSignupScreen = ({navigation, route}: UserSignupScreenProps) => {
           keyboardType="email-address"
           returnKeyType="next"
           blurOnSubmit={false}
+          editable={!isGoogleSignup}
         />
 
         <Button
