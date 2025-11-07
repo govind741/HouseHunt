@@ -8,7 +8,6 @@ import {
   View,
   Image,
   Dimensions,
-  BackHandler,
 } from 'react-native';
 import {CurrentLocationIcon} from '../../../assets/icons';
 import {COLORS} from '../../../assets/colors';
@@ -59,41 +58,6 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
 
   const adScrollViewRef = useRef<ScrollView>(null);
 
-  // Handle back button press with step-by-step navigation
-  const handleBackPress = useCallback(() => {
-    console.log('Back pressed, current location:', location);
-    
-    // Step-by-step back navigation based on location state
-    if (location?.locality_name) {
-      // If locality is selected, go back to LocalitiesScreen
-      console.log('Going back to LocalitiesScreen');
-      // Clear locality_name but preserve area context
-      const updatedLocation = {
-        ...location,
-        locality_name: '',
-        id: null,
-        name: '',
-      };
-      dispatch(setLocation(updatedLocation));
-      AsyncStorage.setItem('location', JSON.stringify(updatedLocation));
-      navigation.navigate('LocalitiesScreen');
-    } else if (location?.area_name || location?.area_id) {
-      // If area is selected but no locality, go back to AreaSelectionScreen
-      console.log('Going back to AreaSelectionScreen');
-      navigation.navigate('AreaSelectionScreen');
-    } else if (location?.city_name || location?.city_id) {
-      // If only city is selected, go back to CitySelectionScreen
-      console.log('Going back to CitySelectionScreen');
-      navigation.navigate('CitySelectionScreen');
-    } else {
-      // No location selected, go to CitySelectionScreen
-      console.log('No location, going to CitySelectionScreen');
-      navigation.navigate('CitySelectionScreen');
-    }
-    
-    return true;
-  }, [navigation, location]);
-
   // Check agent authentication state on screen focus
   useEffect(() => {
     const checkAgentAuth = async () => {
@@ -134,21 +98,6 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
       checkAgentAuth();
     }
   }, [isFocused, userData?.role, agentAuthChecked, navigation]);
-
-  // Handle hardware back button
-  useEffect(() => {
-    const backAction = () => {
-      handleBackPress();
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => backHandler.remove();
-  }, [handleBackPress]);
 
   // Check if user has selected a location, redirect to CitySelectionScreen if not
   useEffect(() => {
@@ -661,7 +610,7 @@ const HomeScreen = ({navigation}: HomeScreenProps) => {
     <SafeAreaView style={styles.container}>
       <ScreenHeader
         showBackBtn
-        onBackPress={handleBackPress}
+        onBackPress={() => navigation.goBack()}
         onPressProfile={() => {
           navigation.navigate('ProfileScreen');
         }}

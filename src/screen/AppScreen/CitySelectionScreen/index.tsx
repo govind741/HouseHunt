@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  BackHandler,
   Alert,
 } from 'react-native';
 import SearchContainer from '../../../components/SearchContainer';
@@ -37,33 +36,6 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
   const searchInputRef = useRef<any>(null);
   const {location} = useAppSelector(state => state.location);
 
-  // Handle back button press - show exit confirmation if this is the root screen
-  const handleBackPress = useCallback(() => {
-    // Check if we can go back in navigation stack
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      // If this is the root screen, show exit confirmation
-      Alert.alert(
-        'Exit App',
-        'Are you sure you want to exit the application?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Exit',
-            style: 'destructive',
-            onPress: () => BackHandler.exitApp(),
-          },
-        ],
-        { cancelable: false }
-      );
-    }
-    return true;
-  }, [navigation]);
-
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
@@ -83,23 +55,6 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
           });
         });
     }, []),
-  );
-
-  // Handle hardware back button
-  useFocusEffect(
-    useCallback(() => {
-      const backAction = () => {
-        handleBackPress();
-        return true;
-      };
-
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        backAction,
-      );
-
-      return () => backHandler.remove();
-    }, [handleBackPress]),
   );
 
   const getGlobalSearchLocalitiesList = (value: string) => {
@@ -271,7 +226,7 @@ const CitySelectionScreen = ({navigation}: CitySelectionScreenProps) => {
   return (
     <SafeAreaView style={styles.parent}>
       <ScreenHeader
-        onBackPress={handleBackPress}
+        onBackPress={() => navigation.goBack()}
         onPressProfile={() => {
           navigation.navigate('ProfileScreen');
         }}
