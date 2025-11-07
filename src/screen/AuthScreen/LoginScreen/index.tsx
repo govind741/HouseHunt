@@ -41,6 +41,11 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
     setShowWebView(true);
   };
 
+  const handleGoogleCancel = () => {
+    setShowWebView(false);
+    setIsGoogleLoading(false);
+  };
+
   const handleWebViewMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -327,11 +332,11 @@ const LoginScreen = ({navigation}: LoginScreenProps) => {
         <Modal
           visible={showWebView}
           animationType="slide"
-          onRequestClose={() => setShowWebView(false)}>
+          onRequestClose={handleGoogleCancel}>
           <View style={{flex: 1}}>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: COLORS.WHITE}}>
               <MagicText style={{fontSize: 18, fontWeight: '600'}}>Sign in with Google</MagicText>
-              <TouchableOpacity onPress={() => setShowWebView(false)}>
+              <TouchableOpacity onPress={handleGoogleCancel}>
                 <MagicText style={{fontSize: 16, color: COLORS.BLUE}}>Cancel</MagicText>
               </TouchableOpacity>
             </View>
