@@ -369,7 +369,7 @@ const PropertyCard = ({
                 <View style={styles.bookmarkIconView}>
                   <BookmarkIcon 
                     filled={isBookmarked}
-                    color={isBookmarked ? COLORS.MINT_BLUE : COLORS.WHITE} 
+                    color={isBookmarked ? '#007AFE' : COLORS.BLACK} 
                   />
                 </View>
               </TouchableOpacity>
@@ -426,22 +426,38 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   bookmarkIconView: {
-    backgroundColor: COLORS.SHADOW_COLOR,
+    backgroundColor: COLORS.WHITE_SMOKE,
     borderRadius: 25,
     width: 50,
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   shareIconContainer: {
-    backgroundColor: COLORS.SHADOW_COLOR,
+    backgroundColor: COLORS.WHITE_SMOKE,
     borderRadius: 25,
     width: 50,
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   bottomContainer: {
     padding: 15,

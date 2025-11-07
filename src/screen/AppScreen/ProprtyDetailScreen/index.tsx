@@ -759,7 +759,7 @@ const ProprtyDetailScreen = ({navigation, route}: ProprtyDetailScreenProps) => {
                 <View style={styles.bookmarkIconView}>
                   <BookmarkIcon 
                     filled={isBookmarked}
-                    color={isBookmarked ? COLORS.MINT_BLUE : COLORS.WHITE} 
+                    color={isBookmarked ? '#007AFE' : COLORS.BLACK} 
                   />
                 </View>
               </TouchableOpacity>
@@ -1070,21 +1070,37 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   bookmarkIconView: {
-    backgroundColor: COLORS.SHADOW_COLOR,
+    backgroundColor: COLORS.WHITE_SMOKE,
     borderRadius: 25,
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   shareIconContainer: {
-    backgroundColor: COLORS.SHADOW_COLOR,
+    backgroundColor: COLORS.WHITE_SMOKE,
     borderRadius: 25,
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   subText: {
     fontSize: 16,
