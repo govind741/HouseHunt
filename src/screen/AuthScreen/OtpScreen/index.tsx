@@ -317,13 +317,12 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                 return;
               }
               
-              // Existing agent with complete profile - check if explicitly verified by admin
-              // For now, all existing agents should go to PendingApprovalScreen unless explicitly verified
-              const isExplicitlyVerified = agentData.verified === 'approved' || agentData.status === 'active';
+              // Existing agent with complete profile - check if approved (status === 1 means active/approved)
+              const isExplicitlyVerified = agentData.status === 1;
               
               if (isExplicitlyVerified) {
-                // Explicitly verified agent - navigate to HomeScreen
-                console.log('Explicitly verified agent - navigating to HomeScreen');
+                // Approved agent - navigate to CitySelectionScreen
+                console.log('Approved agent - navigating to CitySelectionScreen');
                 
                 const agentObj = {
                   id: agentId,
@@ -331,8 +330,8 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                   phone: agentData.phone || mobile,
                   email: agentData.email || '',
                   role: 'agent',
-                  verified: true,
-                  status: 1,
+                  verified: agentData.verified || 0,
+                  status: agentData.status || 1,
                   working_locations: agentData.working_locations || [],
                 };
 
@@ -345,7 +344,7 @@ const OtpScreen = ({navigation, route}: OtpScreenProps) => {
                     {
                       name: 'HomeScreenStack',
                       params: {
-                        screen: 'HomeScreen',
+                        screen: 'CitySelectionScreen',
                       },
                     },
                   ],
