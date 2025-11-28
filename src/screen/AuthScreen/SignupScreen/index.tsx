@@ -378,38 +378,12 @@ const SignupScreen = ({navigation, route}: SignupScreenProps) => {
     formData.append('whatsapp_number', values.whatsapp_number);
     formData.append('email', values.email);
     formData.append('description', values.overview);
-    formData.append('agent_address', values.agent_address);
-    formData.append('manual_address', values.manual_address);
     
-    // Add coordinates if available
+    // Add coordinates and address if available
     if (values.latitude && values.longitude) {
       formData.append('latitude', values.latitude.toString());
       formData.append('longitude', values.longitude.toString());
-    }
-    
-    if (formik.values.images.length > 0) {
-      formik.values.images.forEach((image: any, index: number) => {
-        const isMainImage = index === mainImageIndex;
-        formData.append('image', {
-          uri: image.uri,
-          name: image.name || `image_${index}.jpg`,
-          type: image.type || 'image/jpeg',
-        });
-        
-        // Mark the main image
-        if (isMainImage) {
-          formData.append('main_image_index', index.toString());
-        }
-      });
-    }
-
-    if (formik.values.profile_image) {
-      const image: any = formik.values.profile_image ?? null;
-      formData.append('image_url', {
-        uri: image.uri,
-        name: image.name || `profile_${new Date().getTime()}.jpg`,
-        type: image.type || 'image/jpeg',
-      });
+      formData.append('office_address', values.agent_address);
     }
 
     console.log('Navigating to WorkLocationScreen');
