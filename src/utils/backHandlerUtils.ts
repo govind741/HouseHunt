@@ -71,7 +71,7 @@ export class AppBackHandler {
   }
 
   private shouldShowExitPrompt(routeName?: string): boolean {
-    const exitPromptScreens = ['CitySelectionScreen', 'HomeScreen', 'PendingApprovalScreen'];
+    const exitPromptScreens = ['CitySelectionScreen', 'PendingApprovalScreen'];
     return routeName ? exitPromptScreens.includes(routeName) : false;
   }
 
@@ -141,7 +141,7 @@ export class AppBackHandler {
   }
 
   static shouldShowExitPrompt(routeName: string): boolean {
-    const mainRootScreens = ['CitySelectionScreen', 'HomeScreen', 'PendingApprovalScreen'];
+    const mainRootScreens = ['CitySelectionScreen', 'PendingApprovalScreen'];
     return mainRootScreens.includes(routeName);
   }
 }
