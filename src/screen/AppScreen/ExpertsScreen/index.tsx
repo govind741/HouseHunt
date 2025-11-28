@@ -1,5 +1,5 @@
 import {StyleSheet, Text, TouchableOpacity, View, ScrollView, SafeAreaView, KeyboardAvoidingView, Platform, Modal, FlatList, TextInput} from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import CustomBack from '../../../components/CustomBack';
 import {COLORS} from '../../../assets/colors';
 import MagicText from '../../../components/MagicText';
@@ -14,6 +14,7 @@ import {ENDPOINT} from '../../../constant/urls';
 import Toast from 'react-native-toast-message';
 
 const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
+  const requirementsInputRef = useRef<TextInput>(null);
   const data = {
     youWantTo: [{label: 'Sell'}, {label: 'Buy'}, {label: 'Rent'}],
     propertyType: [{label: 'Residential'}, {label: 'Commercial'}],
@@ -505,16 +506,22 @@ const ExpertsScreen = ({navigation}: ExpertsScreenProps) => {
             
             <View style={{marginTop: 20}}>
               <MagicText style={styles.subheader}>Your Requirements</MagicText>
-              <TextField
-                placeholder="Additional Details(Optional)"
-                numberOfLines={4}
-                multiline={true}
-                style={styles.inputStyle}
-                returnKeyType="done"
-                blurOnSubmit={true}
-                value={additionalRequirements}
-                onChangeText={setAdditionalRequirements}
-              />
+              <TouchableOpacity 
+                activeOpacity={1}
+                onPress={() => requirementsInputRef.current?.focus()}>
+                <TextField
+                  placeholder="Additional Details(Optional)"
+                  numberOfLines={4}
+                  multiline={true}
+                  style={styles.inputStyle}
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  value={additionalRequirements}
+                  onChangeText={setAdditionalRequirements}
+                  setRef={requirementsInputRef}
+                  editable={true}
+                />
+              </TouchableOpacity>
             </View>
             
             <View style={{marginTop: 30, marginBottom: 20}}>
