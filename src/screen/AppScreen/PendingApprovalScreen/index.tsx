@@ -28,10 +28,11 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
       
       setCheckingStatus(true);
       try {
-        const agentDetails = await handleAgentDetails(userData.id);
+        const response = await handleAgentDetails(userData.id);
+        const agentData = response?.agentdetail?.data;
         
-        // Check if agent is now approved
-        if (agentDetails && (agentDetails.verified === 1 || agentDetails.status === 1)) {
+        // Check if agent is now approved (status === 1 means active/approved)
+        if (agentData && agentData.status === 1) {
           console.log('Agent approved, redirecting to city selection');
           navigation.reset({
             index: 0,
@@ -59,7 +60,7 @@ const PendingApprovalScreen = ({navigation}: PendingApprovalScreenProps) => {
     const interval = setInterval(checkApprovalStatus, 30000);
     
     return () => clearInterval(interval);
-  }, [token, userData?.id, navigation, checkingStatus]);
+  }, [token, userData?.id, navigation]);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
